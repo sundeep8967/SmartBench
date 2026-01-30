@@ -1,153 +1,230 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-    Users,
     Search,
-    Filter,
-    MapPin,
-    MoreHorizontal,
+    Users,
     Briefcase,
-    Phone,
-    Mail,
-    ShieldCheck
+    MapPin,
+    ShieldCheck,
+    PenSquare,
+    UserPlus,
+    ChevronDown,
+    BadgeCheck
 } from "lucide-react";
 
-// Mock roster data
+// Mock roster data matched to Roster.png columns
 const roster = [
-    { id: 1, name: "Mike Ross", role: "Master Electrician", project: "Lakeside Remodel", status: "Deployed", phone: "(555) 123-4567", email: "mike@example.com", avatar: "MR" },
-    { id: 2, name: "Rachel Zane", role: "Project Manager", project: "Downtown Loft", status: "Deployed", phone: "(555) 987-6543", email: "rachel@example.com", avatar: "RZ" },
-    { id: 3, name: "Harvey Specter", role: "Site Foreman", project: "Pearson HQ", status: "Deployed", phone: "(555) 555-5555", email: "harvey@example.com", avatar: "HS" },
-    { id: 4, name: "Jessica Pearson", role: "Architect", project: "-", status: "On Bench", phone: "(555) 000-0000", email: "jessica@example.com", avatar: "JP" },
-    { id: 5, name: "Louis Litt", role: "HVAC Tech", project: "-", status: "On Bench", phone: "(555) 111-2222", email: "louis@example.com", avatar: "LL" },
+    {
+        id: 1,
+        name: "Mike Ross",
+        role: "Electrician",
+        status: "Deployed",
+        rate: 55.00,
+        isListed: true,
+        avatarUrl: "/avatars/mike_ross.png",
+        avatar: "MR"
+    },
+    {
+        id: 2,
+        name: "Rachel Zane",
+        role: "Plumber",
+        status: "Bench",
+        rate: 60.00,
+        isListed: false,
+        avatarUrl: "/avatars/rachel_zane.png",
+        avatar: "RZ"
+    },
+    {
+        id: 3,
+        name: "Harvey Specter",
+        role: "Carpenter",
+        status: "Deployed",
+        rate: 50.00,
+        isListed: true,
+        avatarUrl: "/avatars/harvey_specter.png",
+        avatar: "HS"
+    },
+    {
+        id: 4,
+        name: "Donna Paulsen",
+        role: "General Labor",
+        status: "Listed",
+        rate: 35.00,
+        isListed: true,
+        avatarUrl: "/avatars/donna_paulsen.png",
+        avatar: "DP"
+    },
+    {
+        id: 5,
+        name: "Louis Litt",
+        role: "HVAC Tech",
+        status: "Bench",
+        rate: 65.00,
+        isListed: false,
+        avatarUrl: "/avatars/louis_litt.png",
+        avatar: "LL"
+    },
+    {
+        id: 6,
+        name: "Jessica Pearson",
+        role: "Architect",
+        status: "Deployed",
+        rate: 120.00,
+        isListed: true,
+        avatarUrl: "/avatars/jessica_p.png",
+        avatar: "JP"
+    }
 ];
 
 export default function RosterPage() {
     return (
         <div className="space-y-6">
-            {/* Overview Cards */}
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold text-gray-900">Roster Management</h1>
+                <p className="text-gray-500 mt-1">Manage your workforce availability and marketplace listings.</p>
+            </div>
+
+            {/* Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="p-6 border-l-4 border-l-blue-600 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500">Total Workers</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-1">12</p>
-                        </div>
-                        <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                            <Users size={20} />
-                        </div>
+                <Card className="p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500">Total Workers</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">12</p>
+                    </div>
+                    <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                        <Users size={20} />
                     </div>
                 </Card>
-                <Card className="p-6 border-l-4 border-l-green-500 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500">Deployed</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-1">8</p>
+                <Card className="p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium text-gray-500">Deployed (Working)</p>
+                            <div className="h-2 w-2 bg-green-500 rounded-full"></div>
                         </div>
-                        <div className="h-10 w-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
-                            <Briefcase size={20} />
-                        </div>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">8</p>
+                    </div>
+                    <div className="h-10 w-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+                        <Briefcase size={20} />
                     </div>
                 </Card>
-                <Card className="p-6 border-l-4 border-l-gray-400 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500">On Bench</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-1">4</p>
+                <Card className="p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium text-gray-500">On Bench (Idle)</p>
+                            <div className="h-2 w-2 bg-orange-400 rounded-full"></div>
                         </div>
-                        <div className="h-10 w-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center">
-                            <MapPin size={20} />
-                        </div>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">4</p>
+                    </div>
+                    <div className="h-10 w-10 bg-orange-50 text-orange-500 rounded-lg flex items-center justify-center">
+                        <MapPin size={20} />
                     </div>
                 </Card>
             </div>
 
-            {/* Roster Table */}
-            <Card className="shadow-sm border-gray-200 overflow-hidden">
-                <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h2 className="text-lg font-bold text-gray-900">Your Team</h2>
-                    <div className="flex items-center space-x-3 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-64">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search workers..."
-                                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                            />
-                        </div>
-                        <Button variant="outline" size="sm" className="hidden md:flex">
-                            <Filter size={16} className="mr-2" /> Filter
-                        </Button>
+            {/* Search and Controls */}
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+                <div className="flex w-full md:w-auto overflow-hidden rounded-md border border-gray-300">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search workers..."
+                            className="w-full md:w-64 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-none"
+                        />
+                    </div>
+                    <div className="border-l border-gray-300 bg-white">
+                        <button className="flex items-center justify-between w-32 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                            All Statuses <ChevronDown size={14} className="ml-2 text-gray-400" />
+                        </button>
                     </div>
                 </div>
+                <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+                    <UserPlus size={16} className="mr-2" /> Invite Worker
+                </Button>
+            </div>
 
+            {/* Roster Table */}
+            <Card className="border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-semibold border-b border-gray-200">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-white border-b border-gray-100 divide-x divide-gray-100 text-xs uppercase font-semibold text-gray-500">
                             <tr>
-                                <th className="px-6 py-4">Worker</th>
-                                <th className="px-6 py-4">Project</th>
-                                <th className="px-6 py-4">Contact</th>
-                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 w-1/4">Worker</th>
+                                <th className="px-6 py-4 text-center">Status</th>
+                                <th className="px-6 py-4 text-center">Lending Rate</th>
+                                <th className="px-6 py-4 text-center">Compliance</th>
+                                <th className="px-6 py-4 text-center">Marketplace Listing</th>
                                 <th className="px-6 py-4 text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 bg-white">
                             {roster.map((worker) => (
                                 <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center space-x-3">
-                                            <div className="h-9 w-9 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold border border-gray-200">
-                                                {worker.avatar}
+                                            <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                                                {worker.avatarUrl ? (
+                                                    <img src={worker.avatarUrl} alt={worker.name} className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <span className="font-bold text-gray-500 text-xs">{worker.avatar}</span>
+                                                )}
                                             </div>
                                             <div>
-                                                <div className="flex items-center">
-                                                    <p className="font-semibold text-gray-900 mr-1">{worker.name}</p>
-                                                    <ShieldCheck size={14} className="text-green-500" />
-                                                </div>
+                                                <p className="font-bold text-gray-900">{worker.name}</p>
                                                 <p className="text-xs text-gray-500">{worker.role}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        {worker.status === "Deployed" ? (
-                                            <span className="font-medium text-gray-900">{worker.project}</span>
-                                        ) : (
-                                            <span className="text-gray-400 italic">Not Assigned</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col space-y-1">
-                                            <div className="flex items-center text-gray-600">
-                                                <Phone size={12} className="mr-1.5" />
-                                                {worker.phone}
-                                            </div>
-                                            <div className="flex items-center text-gray-600">
-                                                <Mail size={12} className="mr-1.5" />
-                                                {worker.email}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${worker.status === "Deployed"
-                                            ? "bg-green-50 text-green-700 border-green-100"
-                                            : "bg-gray-100 text-gray-700 border-gray-200"
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${worker.status === "Deployed" ? "bg-green-50 text-green-600 border border-green-100" :
+                                                worker.status === "Bench" ? "bg-orange-50 text-orange-500 border border-orange-100" :
+                                                    "bg-blue-50 text-blue-600 border border-blue-100"
                                             }`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${worker.status === "Deployed" ? "bg-green-500" : "bg-gray-400"
-                                                }`}></span>
                                             {worker.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 text-center font-bold text-gray-900">
+                                        ${worker.rate.toFixed(2)}/hr
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center justify-center space-x-2">
+                                            <ShieldCheck size={18} className="text-green-500" />
+                                            <div className="relative">
+                                                <BadgeCheck size={18} className="text-green-500" />
+                                                {/* Tiny red dot for variation if needed, but styling green for compliance */}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex justify-center">
+                                            <div className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${worker.isListed ? "bg-orange-500" : "bg-gray-300"
+                                                }`}>
+                                                <div className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform ${worker.isListed ? "translate-x-4" : "translate-x-0"
+                                                    }`}></div>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                            <MoreHorizontal size={16} className="text-gray-400" />
+                                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">
+                                            <PenSquare size={16} />
                                         </Button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                </div>
+                <div className="border-t border-gray-100 p-4 flex items-center justify-between">
+                    <p className="text-sm text-gray-500">Showing 1 to 6 of 12 results</p>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="text-xs hidden" disabled>Previous</Button>
+                        <Button variant="outline" size="sm" className="text-xs">Previous</Button>
+                        <Button variant="outline" size="sm" className="text-xs">Next</Button>
+                    </div>
                 </div>
             </Card>
         </div>

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Search, MapPin, BadgeCheck, Star } from "lucide-react";
 
 const workers = [
-    { id: 1, name: "Mike Ross", role: "Master Electrician", rating: 4.9, rate: 55, skills: ["Industrial", "High Voltage", "Wiring"], avatar: "MR", verified: true },
-    { id: 2, name: "Rachel Zane", role: "Project Manager", rating: 4.8, rate: 75, skills: ["Planning", "Budgeting", "Safety"], avatar: "RZ", verified: true },
-    { id: 3, name: "Harvey Specter", role: "Site Foreman", rating: 5.0, rate: 95, skills: ["Leadership", "Commercial", "Zoning"], avatar: "HS", verified: true },
-    { id: 4, name: "Donna Paulsen", role: "Interior Specialist", rating: 4.9, rate: 65, skills: ["Finishing", "Design", "Detailing"], avatar: "DP", verified: true },
-    { id: 5, name: "Louis Litt", role: "HVAC Technician", rating: 4.7, rate: 60, skills: ["Ventilation", "Heating", "Repairs"], avatar: "LL", verified: true },
-    { id: 6, name: "Jessica P.", role: "Senior Architect", rating: 5.0, rate: 120, skills: ["Blueprints", "Modeling", "Surveying"], avatar: "JP", verified: true },
+    { id: 1, name: "Mike Ross", role: "Master Electrician", rating: 4.9, rate: 55, skills: ["Industrial", "High Voltage", "Wiring"], avatar: "MR", avatarUrl: "/avatars/mike_ross.png", verified: true },
+    { id: 2, name: "Rachel Zane", role: "Project Manager", rating: 4.8, rate: 75, skills: ["Planning", "Budgeting", "Safety"], avatar: "RZ", avatarUrl: "/avatars/rachel_zane.png", verified: true },
+    { id: 3, name: "Harvey Specter", role: "Site Foreman", rating: 5.0, rate: 95, skills: ["Leadership", "Commercial", "Zoning"], avatar: "HS", avatarUrl: "/avatars/harvey_specter.png", verified: true },
+    { id: 4, name: "Donna Paulsen", role: "Interior Specialist", rating: 4.9, rate: 65, skills: ["Finishing", "Design", "Detailing"], avatar: "DP", avatarUrl: "/avatars/donna_paulsen.png", verified: true },
+    { id: 5, name: "Louis Litt", role: "HVAC Technician", rating: 4.7, rate: 60, skills: ["Ventilation", "Heating", "Repairs"], avatar: "LL", avatarUrl: "/avatars/louis_litt.png", verified: true },
+    { id: 6, name: "Jessica P.", role: "Senior Architect", rating: 5.0, rate: 120, skills: ["Blueprints", "Modeling", "Surveying"], avatar: "JP", avatarUrl: "/avatars/jessica_p.png", verified: true },
 ];
 
 export default function MarketplacePage() {
@@ -73,8 +73,12 @@ export default function MarketplacePage() {
                     <Card key={worker.id} className="p-5 shadow-sm border-gray-200 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-3">
-                                <div className="h-12 w-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm">
-                                    {worker.avatar}
+                                <div className="h-12 w-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm border border-gray-100 overflow-hidden shrink-0">
+                                    {worker.avatarUrl ? (
+                                        <img src={worker.avatarUrl} alt={worker.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        worker.avatar
+                                    )}
                                 </div>
                                 <div>
                                     <div className="flex items-center">
