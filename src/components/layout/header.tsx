@@ -1,22 +1,71 @@
-import { Button } from "../ui/button";
+"use client";
+
+import { usePathname } from "next/navigation";
+import { Plus, Upload, ShoppingCart, Bookmark, Download, Filter, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const routeConfig: Record<string, { section: string; page: string }> = {
+  "/dashboard": { section: "Dashboard", page: "Overview" },
+  "/dashboard/marketplace": { section: "Marketplace", page: "Search" },
+  "/dashboard/bookings": { section: "Bookings", page: "Management" },
+  "/dashboard/roster": { section: "Roster", page: "Team" },
+  "/dashboard/time-clock": { section: "Time Clock", page: "Tracker" },
+  "/dashboard/timesheets": { section: "Verification", page: "Queue" },
+  "/dashboard/financials": { section: "Financials", page: "Overview" },
+  "/dashboard/settings": { section: "System", page: "Settings" },
+};
 
 export function Header() {
-    return (
-        <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 sticky top-0 z-30">
-            <div className="flex items-center">
-                <h1 className="text-lg font-semibold text-gray-800">Dashboard</h1>
-            </div>
+  const pathname = usePathname() || "";
+  const config = routeConfig[pathname] || { section: "Dashboard", page: "Overview" };
+  const isMarketplace = pathname.includes("/marketplace");
+  const isRoster = pathname.includes("/roster");
 
-            <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm" className="relative">
-                    <span className="text-xl">🔔</span>
-                    <span className="absolute top-0 right-1 h-2 w-2 rounded-full bg-red-500"></span>
-                </Button>
-                <div className="h-8 w-px bg-gray-200 mx-2"></div>
-                <Button variant="outline" size="sm">
-                    Help
-                </Button>
-            </div>
-        </header>
-    );
+  return (
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
+      {/* Breadcrumbs */}
+      <div className="flex items-center text-sm">
+        <span className="text-gray-500 font-medium">
+          {config.section}
+        </span>
+        <span className="mx-2 text-gray-400">›</span>
+        <span className="text-gray-900 font-semibold bg-gray-100 px-2 py-0.5 rounded text-xs">
+          {config.page}
+        </span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center space-x-3">
+        {isMarketplace ? (
+          <>
+            <Button variant="outline" size="sm" className="hidden md:flex items-center text-gray-700 h-9">
+              <Bookmark size={16} className="mr-2" />
+              Saved
+            </Button>
+            <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm relative h-9 px-4">
+              <ShoppingCart size={16} className="mr-2" />
+              Cart
+              <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold border-2 border-white">2</span>
+            </Button>
+          </>
+        ) : isRoster ? (
+          <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-4">
+            <UserPlus size={16} className="mr-2" />
+            Add Worker
+          </Button>
+        ) : (
+          <>
+            <Button variant="outline" size="sm" className="hidden md:flex items-center text-gray-700 h-9">
+              <Download size={16} className="mr-2" />
+              Export
+            </Button>
+            <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-4">
+              <Plus size={16} className="mr-1" />
+              New Project
+            </Button>
+          </>
+        )}
+      </div>
+    </header>
+  );
 }
