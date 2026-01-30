@@ -294,7 +294,8 @@ def main():
     script_dir = Path(__file__).parent.absolute()
     
     # Docs directory is relative to project root
-    project_root = script_dir.parent.parent
+    # script is in the root, so project_root is script_dir
+    project_root = script_dir
     docs_dir = project_root / 'docs'
     
     if not docs_dir.exists():
