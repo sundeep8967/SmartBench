@@ -1,0 +1,113 @@
+docs/
+│
+├── index.md
+├── architecture.md
+├── prd.md
+├── document-reference-map.md
+├── FILE_TREE.txt
+│
+├── architecture/
+│   ├── index.md
+│   ├── schema.md
+│   ├── data-dictionary.md
+│   ├── api-contracts.md
+│   ├── data-dictionary-audit.md
+│   ├── data-dictionary-booking.md
+│   ├── data-dictionary-financial.md
+│   ├── data-dictionary-fulfillment.md
+│   ├── data-dictionary-identity.md
+│   ├── data-dictionary-marketplace.md
+│   ├── data-dictionary-messaging.md
+│   ├── data-dictionary-notifications.md
+│   ├── database-migrations.md
+│   ├── error-handling-resilience.md
+│   ├── error-message-catalog.md
+│   ├── financial-architecture.md
+│   ├── global-scaling-strategy.md
+│   ├── observability-monitoring.md
+│   ├── offline-time-clock-trust.md
+│   ├── repository-structure-development-standards.md
+│   ├── schema-audit.md
+│   ├── schema-booking.md
+│   ├── schema-financial.md
+│   ├── schema-fulfillment.md
+│   ├── schema-identity.md
+│   ├── schema-marketplace.md
+│   ├── schema-messaging.md
+│   ├── schema-notifications.md
+│   ├── security-architecture.md
+│   ├── tech-stack.md
+│   ├── timezone-handling.md
+│   │
+│   └── blueprints/
+│       ├── index.md
+│       │
+│       ├── booking/
+│       │   ├── index.md
+│       │   ├── supervisor-assignment.md
+│       │   └── weekly-payments.md
+│       │
+│       ├── financial/
+│       │   └── tax-adapter.md
+│       │
+│       ├── fulfillment/
+│       │   ├── index.md
+│       │   └── time-tracking-verification.md
+│       │
+│       ├── identity/
+│       │   ├── index.md
+│       │   ├── authentication-system.md
+│       │   ├── company-onboarding.md
+│       │   ├── magic-link-onboarding.md
+│       │   └── unified-user-model.md
+│       │
+│       ├── marketplace/
+│       │   ├── index.md
+│       │   ├── availability-management.md
+│       │   ├── cart-atomic-relocking.md
+│       │   ├── geo-availability.md
+│       │   ├── optimistic-concurrency.md
+│       │   ├── saved-searches-alerts.md
+│       │   └── worker-search-engine.md
+│       │
+│       ├── messaging/
+│       │   ├── index.md
+│       │   └── real-time-chat.md
+│       │
+│       ├── notifications/
+│       │   ├── index.md
+│       │   └── notification-delivery.md
+│       │
+│       └── system/
+│           ├── background-jobs.md
+│           └── error-handling.md
+│
+├── prd/
+│   ├── index.md
+│   ├── executive-summary.md
+│   ├── goals-and-background-context.md
+│   ├── ui-design-goals.md
+│   ├── checklist-results.md
+│   ├── notifications-rbac-matrix.md
+│   ├── next-steps.md
+│   ├── epic-list.md
+│   ├── epic-1.md
+│   ├── epic-1-1.md
+│   ├── epic-2.md
+│   ├── epic-3.md
+│   ├── epic-4.md
+│   ├── epic-5.md
+│   ├── epic-6.md
+│   ├── epic-7.md
+│   ├── customer-journey.md
+│   ├── data-retention-policy.md
+│   ├── feature-blueprint.md
+│   ├── glossary.md
+│   ├── rbac-acceptance-criteria.md
+│   └── user-roles-and-actors.md
+│
+└── ux/
+    ├── index.md
+    ├── front-end-specification.md
+    ├── navigation-structure.md
+    └── ux-analysis.md
