@@ -12,6 +12,9 @@ const routeConfig: Record<string, { section: string; page: string }> = {
   "/dashboard/time-clock": { section: "Time Clock", page: "Tracker" },
   "/dashboard/timesheets": { section: "Verification", page: "Queue" },
   "/dashboard/financials": { section: "Financials", page: "Overview" },
+  "/dashboard/projects": { section: "Projects", page: "Active" },
+  "/dashboard/saved-searches": { section: "System", page: "Saved Searches" },
+  "/dashboard/notifications": { section: "System", page: "Notifications" },
   "/dashboard/settings": { section: "System", page: "Settings" },
 };
 
