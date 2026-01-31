@@ -70,9 +70,10 @@ export default function MarketplacePage() {
             {/* Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {workers.map((worker) => (
-                    <Card key={worker.id} className="p-5 shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center space-x-3">
+                    <Card key={worker.id} className="p-5 shadow-sm border-gray-200 hover:shadow-md transition-shadow relative group">
+                        <a href={`/dashboard/worker/${worker.id}`} className="absolute inset-0 z-0"></a>
+                        <div className="flex items-start justify-between mb-2 relative z-10 pointer-events-none">
+                            <div className="flex items-center space-x-3 pointer-events-auto">
                                 <div className="h-12 w-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm border border-gray-100 overflow-hidden shrink-0">
                                     {worker.avatarUrl ? (
                                         <img src={worker.avatarUrl} alt={worker.name} className="h-full w-full object-cover" />
@@ -82,7 +83,7 @@ export default function MarketplacePage() {
                                 </div>
                                 <div>
                                     <div className="flex items-center">
-                                        <h3 className="font-bold text-gray-900 mr-1">{worker.name}</h3>
+                                        <h3 className="font-bold text-gray-900 mr-1 group-hover:text-blue-900 transition-colors">{worker.name}</h3>
                                         {worker.verified && <BadgeCheck size={16} className="text-green-500 fill-green-100" />}
                                     </div>
                                     <p className="text-xs text-gray-500">{worker.role}</p>
@@ -95,7 +96,7 @@ export default function MarketplacePage() {
                         </div>
 
                         {/* Skills */}
-                        <div className="flex flex-wrap gap-2 mt-4 mb-6">
+                        <div className="flex flex-wrap gap-2 mt-4 mb-6 relative z-10 pointer-events-none">
                             {worker.skills.map(skill => (
                                 <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium border border-gray-200">
                                     {skill}
@@ -104,13 +105,20 @@ export default function MarketplacePage() {
                         </div>
 
                         {/* Footer */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 relative z-10">
                             <div>
                                 <span className="text-xl font-bold text-gray-900">${worker.rate}</span>
                                 <span className="text-xs text-gray-500">/hr</span>
                             </div>
-                            <Button variant="outline" size="sm" className="text-blue-900 border-blue-200 hover:bg-blue-50">
-                                Add to Cart
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-blue-900 border-blue-200 hover:bg-blue-50 relative z-10 cursor-pointer"
+                                asChild
+                            >
+                                <a href={`/dashboard/checkout?workerId=${worker.id}`}>
+                                    Add to Cart
+                                </a>
                             </Button>
                         </div>
                     </Card>
