@@ -1,8 +1,9 @@
 "use client";
 
+import { motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Construction } from "lucide-react";
+
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,69 +21,109 @@ export default function LoginPage() {
         }, 1000);
     };
 
+    const containerVariants: Variants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.15,
+                delayChildren: 0.2
+            }
+        }
+    };
+
+    const itemVariants: Variants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: {
+                type: "spring",
+                stiffness: 100,
+                damping: 10
+            }
+        }
+    };
+
     return (
-        <div className="min-h-screen w-full flex">
-            {/* Left Side - Visual Branding */}
-            <div className="hidden lg:flex w-1/2 relative overflow-hidden items-center justify-center bg-gray-900">
-                {/* Realistic Background Image */}
-                <div
-                    className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center"
-                />
+        <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-gray-900">
+            {/* Full Screen Background Image */}
+            <div
+                className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center"
+            />
 
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+            {/* Gradient Overlay for Text Readability - Darker for better contrast */}
+            <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-blue-900/40" />
 
-                {/* Content */}
-                <div className="relative z-20 text-white max-w-lg px-12">
-                    <div className="mb-8 p-3 bg-white/10 backdrop-blur-md rounded-xl w-fit border border-white/20">
-                        <Construction size={48} className="text-white" />
+            {/* Content Container */}
+            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+
+                {/* Left Side - Visual Branding (Floating Text) */}
+                <motion.div
+                    className="hidden lg:block text-white"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+
+
+                    <div className="overflow-hidden">
+                        <motion.h1 variants={itemVariants} className="text-5xl lg:text-6xl font-bold tracking-tight mb-2 leading-tight drop-shadow-lg">
+                            Build your workforce,
+                        </motion.h1>
                     </div>
-                    <h1 className="text-5xl font-bold tracking-tight mb-6 leading-tight drop-shadow-sm">
-                        Build your workforce, <br />
-                        <span className="text-blue-400">faster than ever.</span>
-                    </h1>
-                    <p className="text-gray-200 text-lg leading-relaxed mb-8 drop-shadow-sm">
+
+                    <div className="overflow-hidden mb-6">
+                        <motion.h1 variants={itemVariants} className="text-5xl lg:text-6xl font-bold tracking-tight leading-tight drop-shadow-lg text-blue-400">
+                            faster than ever.
+                        </motion.h1>
+                    </div>
+
+                    <motion.p variants={itemVariants} className="text-gray-200 text-lg lg:text-xl leading-relaxed mb-10 drop-shadow-md max-w-lg">
                         SmartBench connects you with top-tier construction talent instantly.
                         Manage projects, track time, and handle payments all in one place.
-                    </p>
+                    </motion.p>
 
-                    <div className="flex items-center space-x-4 text-sm font-medium text-white">
-                        <div className="flex -space-x-3">
-                            <img src="/avatars/mike_ross.png" alt="User" className="w-10 h-10 rounded-full border-2 border-gray-900 object-cover" />
-                            <img src="/avatars/rachel_zane.png" alt="User" className="w-10 h-10 rounded-full border-2 border-gray-900 object-cover" />
-                            <img src="/avatars/harvey_specter.png" alt="User" className="w-10 h-10 rounded-full border-2 border-gray-900 object-cover" />
+                    <motion.div variants={itemVariants} className="flex items-center space-x-5 text-sm font-medium text-white">
+                        <div className="flex -space-x-4">
+                            <img src="/avatars/mike_ross.png" alt="User" className="w-12 h-12 rounded-full border-2 border-gray-900 object-cover shadow-lg" />
+                            <img src="/avatars/rachel_zane.png" alt="User" className="w-12 h-12 rounded-full border-2 border-gray-900 object-cover shadow-lg" />
+                            <img src="/avatars/harvey_specter.png" alt="User" className="w-12 h-12 rounded-full border-2 border-gray-900 object-cover shadow-lg" />
                         </div>
-                        <p className="text-gray-300">Trusted by 2,000+ construction pros</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Side - Login Form */}
-            <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 bg-white">
-                <div className="mx-auto w-full max-w-sm lg:w-96">
-                    <div className="mb-10">
-                        <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                            <Construction className="text-white" size={24} />
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-1">
+                                <span className="font-bold text-base">2,000+</span>
+                            </div>
+                            <span className="text-gray-300">Construction pros trust us</span>
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
-                        <p className="mt-2 text-sm text-gray-500">
-                            Don't have an account?{" "}
-                            <Link href="#" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors">
-                                Sign up for free
-                            </Link>
-                        </p>
-                    </div>
+                    </motion.div>
+                </motion.div>
 
-                    <div className="mt-8 space-y-6">
-                        <div className="flex flex-col gap-3">
+                {/* Right Side - Login Card */}
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+                    className="w-full max-w-md mx-auto"
+                >
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl p-8 rounded-2xl ring-1 ring-white/5">
+                        <div className="mb-8 text-center">
+
+                            <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
+                            <p className="mt-2 text-sm text-gray-300">
+                                Sign in to access your dashboard
+                            </p>
+                        </div>
+
+                        <div className="space-y-6">
                             <Button
-                                variant="outline"
-                                className="w-full h-12 border-gray-300 hover:bg-gray-50 hover:text-gray-900 text-gray-700 font-semibold text-base shadow-sm transition-all flex items-center justify-center gap-3 relative"
+                                variant="ghost"
+                                className="w-full h-12 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-base shadow-lg transition-all flex items-center justify-center gap-3 relative border-0"
                                 onClick={handleLogin}
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
-                                    <div className="h-5 w-5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                                    <div className="h-5 w-5 border-2 border-gray-600 border-t-blue-600 rounded-full animate-spin" />
                                 ) : (
                                     <>
                                         <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -107,9 +148,19 @@ export default function LoginPage() {
                                     </>
                                 )}
                             </Button>
+
+                            <p className="text-center text-xs text-gray-400 mt-6">
+                                By signing in, you agree to our <Link href="#" className="underline hover:text-gray-300 text-gray-400">Terms</Link> and <Link href="#" className="underline hover:text-gray-300 text-gray-400">Privacy Policy</Link>.
+                            </p>
                         </div>
                     </div>
-                </div>
+
+                    <div className="mt-8 text-center lg:hidden">
+                        <p className="text-gray-300 text-sm">
+                            Trusted by 2,000+ construction pros
+                        </p>
+                    </div>
+                </motion.div>
             </div>
         </div>
     );
