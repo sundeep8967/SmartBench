@@ -29,8 +29,8 @@ const mainNav = [
 ];
 
 const systemNav = [
-    { name: "Saved Searches", href: "#", icon: Bookmark },
-    { name: "Notifications", href: "#", icon: Bell },
+    { name: "Saved Searches", href: "/dashboard/saved-searches", icon: Bookmark },
+    { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -63,8 +63,8 @@ export function Sidebar() {
                                 key={item.name}
                                 href={item.href}
                                 className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${isActive
-                                        ? "bg-blue-900 text-white shadow-sm"
-                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                    ? "bg-blue-900 text-white shadow-sm"
+                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                     }`}
                             >
                                 <item.icon
@@ -91,8 +91,8 @@ export function Sidebar() {
                                     key={item.name}
                                     href={item.href}
                                     className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${isActive
-                                            ? "bg-blue-900 text-white shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                        ? "bg-blue-900 text-white shadow-sm"
+                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
                                 >
                                     <item.icon

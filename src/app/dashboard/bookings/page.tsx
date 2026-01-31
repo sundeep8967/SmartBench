@@ -8,121 +8,203 @@ import {
     Filter,
     MoreHorizontal,
     MapPin,
-    Clock
+    Download,
+    Plus,
+    ChevronDown
 } from "lucide-react";
 
 // Mock booking data
 const bookings = [
-    { id: "#BK-9021", worker: "Mike Ross", role: "Electrician", project: "Lakeside Remodel", location: "Austin, TX", start: "Oct 24, 2023", end: "Oct 26, 2023", status: "Active", avatar: "MR" },
-    { id: "#BK-9022", worker: "Rachel Zane", role: "Project Manager", project: "Downtown Loft", location: "Dallas, TX", start: "Oct 28, 2023", end: "Nov 02, 2023", status: "Pending", avatar: "RZ" },
-    { id: "#BK-9023", worker: "Harvey Specter", role: "Site Foreman", project: "Pearson HQ", location: "New York, NY", start: "Nov 05, 2023", end: "Nov 12, 2023", status: "Active", avatar: "HS" },
-    { id: "#BK-9024", worker: "Donna Paulsen", role: "Interior Specialist", project: "Lakeside Remodel", location: "Austin, TX", start: "Nov 15, 2023", end: "Nov 20, 2023", status: "Pending", avatar: "DP" },
-    { id: "#BK-9020", worker: "Louis Litt", role: "HVAC Tech", project: "Pearson HQ", location: "New York, NY", start: "Oct 10, 2023", end: "Oct 15, 2023", status: "Completed", avatar: "LL" },
+    {
+        id: "#BK-9021",
+        worker: "Mike Ross",
+        role: "Electrician",
+        project: "Lakeside Remodel",
+        location: "Building A, Floor 2",
+        start: "Oct 24",
+        end: "Oct 26",
+        hours: "24 Hours",
+        rate: 45.00,
+        total: 1080.00,
+        status: "Active",
+        avatarUrl: "/avatars/mike_ross.png",
+        avatar: "MR"
+    },
+    {
+        id: "#BK-9022",
+        worker: "Rachel Zane",
+        role: "Plumber",
+        project: "City Center Reno",
+        location: "Main Lobby",
+        start: "Oct 28",
+        end: "Nov 02",
+        hours: "40 Hours",
+        rate: 38.00,
+        total: 1520.00,
+        status: "Pending",
+        avatarUrl: "/avatars/rachel_zane.png",
+        avatar: "RZ"
+    },
+    {
+        id: "#BK-9023",
+        worker: "Harvey Specter",
+        role: "Site Manager",
+        project: "West Wing Extension",
+        location: "Exterior",
+        start: "Nov 05",
+        end: "Nov 12",
+        hours: "56 Hours",
+        rate: 65.00,
+        total: 3640.00,
+        status: "Completed",
+        avatarUrl: "/avatars/harvey_specter.png",
+        avatar: "HS"
+    },
+    {
+        id: "#BK-9024",
+        worker: "Donna Paulsen",
+        role: "Interior Specialist",
+        project: "Lakeside Remodel",
+        location: "Building A, Floor 2",
+        start: "Nov 15",
+        end: "Nov 20",
+        hours: "32 Hours",
+        rate: 42.00,
+        total: 1344.00,
+        status: "Pending",
+        avatarUrl: "/avatars/donna_paulsen.png",
+        avatar: "DP"
+    }
 ];
 
 export default function BookingsPage() {
     return (
         <div className="space-y-6">
-            {/* Title */}
-            <div className="flex items-center justify-between">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Bookings</h1>
-                    <p className="text-gray-500">Manage your active, pending, and past worker bookings.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Bookings Management</h1>
+                    <p className="text-gray-500 mt-1">Manage your workforce, schedules, and lending contracts.</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                    <Button variant="outline" className="text-gray-600 border-gray-300">
+                        <Download size={16} className="mr-2" />
+                        Export Report
+                    </Button>
+                    <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+                        <Plus size={16} className="mr-2" />
+                        New Booking
+                    </Button>
                 </div>
             </div>
 
-            {/* Controls */}
-            <Card className="p-4 shadow-sm border-gray-200">
-                <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-                    {/* Search */}
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search bookings by ID, worker, or project..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        />
-                    </div>
+            {/* Tabs */}
+            <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                    <a href="#" className="border-blue-500 text-blue-600 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                        My Hires (Borrowing)
+                    </a>
+                    <a href="#" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                        My Lending (Lending)
+                    </a>
+                </nav>
+            </div>
 
-                    {/* Filters */}
-                    <div className="flex items-center space-x-3">
-                        <select className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:outline-none">
+            {/* Controls */}
+            <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search by worker..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                </div>
+                <div className="flex gap-4">
+                    <div className="relative">
+                        <select className="appearance-none w-40 pl-4 pr-10 py-2.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                             <option>All Statuses</option>
                             <option>Active</option>
                             <option>Pending</option>
                             <option>Completed</option>
                         </select>
-                        <select className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:outline-none">
+                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    </div>
+                    <div className="relative">
+                        <select className="appearance-none w-40 pl-4 pr-10 py-2.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                             <option>This Month</option>
                             <option>Last Month</option>
                         </select>
-                        <Button variant="outline" className="text-gray-700 border-gray-300">
-                            <Filter size={16} className="mr-2" />
-                            More Filters
-                        </Button>
+                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                     </div>
                 </div>
-            </Card>
+            </div>
 
             {/* Bookings Table */}
-            <Card className="shadow-sm border-gray-200 overflow-hidden">
+            <Card className="shadow-sm border border-gray-200 overflow-hidden rounded-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-semibold border-b border-gray-200">
+                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b border-gray-200">
                             <tr>
-                                <th className="px-6 py-4">Booking ID</th>
-                                <th className="px-6 py-4">Worker</th>
-                                <th className="px-6 py-4">Project</th>
-                                <th className="px-6 py-4">Dates</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Action</th>
+                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Booking ID</th>
+                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Worker</th>
+                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Project / Location</th>
+                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Schedule</th>
+                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Financials</th>
+                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Status</th>
+                                <th className="px-6 py-4 text-right font-bold tracking-wider text-gray-400">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 bg-white">
                             {bookings.map((booking) => (
                                 <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-blue-600">{booking.id}</td>
+                                    <td className="px-6 py-4 font-bold text-gray-900">{booking.id}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center space-x-3">
-                                            <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 border border-gray-200">
-                                                {booking.avatar}
+                                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden shrink-0">
+                                                {booking.avatarUrl ? (
+                                                    <img src={booking.avatarUrl} alt={booking.worker} className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-gray-600">{booking.avatar}</span>
+                                                )}
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-gray-900">{booking.worker}</p>
+                                                <p className="font-bold text-gray-900">{booking.worker}</p>
                                                 <p className="text-xs text-gray-500">{booking.role}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="font-medium text-gray-900">{booking.project}</span>
-                                            <span className="text-xs text-gray-500 flex items-center mt-0.5">
-                                                <MapPin size={10} className="mr-1" />
+                                            <span className="font-bold text-gray-900">{booking.project}</span>
+                                            <span className="text-xs text-gray-400 mt-0.5">
                                                 {booking.location}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-600">
-                                        <div className="flex items-center">
-                                            <Calendar size={14} className="mr-2 text-gray-400" />
-                                            {booking.start} <span className="mx-1 text-gray-400">-</span> {booking.end}
+                                    <td className="px-6 py-4 text-gray-900">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{booking.start} - {booking.end}</span>
+                                            <span className="text-xs text-blue-600 font-medium mt-0.5">{booking.hours}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${booking.status === "Active"
-                                                ? "bg-green-50 text-green-700 border-green-100"
-                                                : booking.status === "Pending"
-                                                    ? "bg-orange-50 text-orange-700 border-orange-100"
-                                                    : "bg-gray-50 text-gray-700 border-gray-100"
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-900">${booking.rate.toFixed(2)}/hr</span>
+                                            <span className="text-xs text-gray-400 mt-0.5">Total: ${booking.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${booking.status === "Active" ? "bg-green-50 text-green-600 border border-green-100" :
+                                                booking.status === "Pending" ? "bg-orange-50 text-orange-500 border border-orange-100" :
+                                                    "bg-gray-100 text-gray-600 border border-gray-200"
                                             }`}>
-                                            {booking.status === "Active" && <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>}
-                                            {booking.status === "Pending" && <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5"></span>}
                                             {booking.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                            <MoreHorizontal size={16} className="text-gray-400" />
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600">
+                                            <MoreHorizontal size={18} />
                                         </Button>
                                     </td>
                                 </tr>
@@ -130,13 +212,11 @@ export default function BookingsPage() {
                         </tbody>
                     </table>
                 </div>
-
-                {/* Pagination placeholder */}
-                <div className="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Showing 1-5 of 12 bookings</span>
+                <div className="bg-white px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                    <p className="text-sm text-gray-500">Showing 1 to 4 of 24 results</p>
                     <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" disabled>Previous</Button>
-                        <Button variant="outline" size="sm">Next</Button>
+                        <Button variant="outline" size="sm" className="text-xs" disabled>Previous</Button>
+                        <Button variant="outline" size="sm" className="text-xs" >Next</Button>
                     </div>
                 </div>
             </Card>
