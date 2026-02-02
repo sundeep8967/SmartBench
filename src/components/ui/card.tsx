@@ -9,7 +9,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         return (
             <div
                 ref={ref}
-                className={`rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950 ${className}`}
+                className={`rounded-xl border border-gray-200 bg-white shadow-sm ${className}`}
                 {...props}
             >
                 <div className={noPadding ? "" : "p-6"}>{children}</div>
