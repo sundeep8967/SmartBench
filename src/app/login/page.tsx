@@ -1,14 +1,24 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
 export default function LoginPage() {
-    const { signInWithGoogle, loading } = useAuth();
+    const { signInWithGoogle, loading, user } = useAuth();
+    const router = useRouter();
+
+    // Redirect authenticated users to dashboard
+    useEffect(() => {
+        if (user && !loading) {
+            router.push("/dashboard/marketplace");
+        }
+    }, [user, loading, router]);
 
     // Use the loading state from context or local state as fallback for the button interaction
     const handleLogin = async () => {
