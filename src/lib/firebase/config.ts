@@ -13,14 +13,7 @@ const firebaseConfig = {
 // Initialize Firebase (singleton pattern)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-if (typeof window !== "undefined") {
-    console.log("Firebase Config Debug:", {
-        apiKey: firebaseConfig.apiKey ? "Present (" + firebaseConfig.apiKey.length + " chars)" : "Missing",
-        authDomain: firebaseConfig.authDomain,
-        projectId: firebaseConfig.projectId,
-        fullConfig: firebaseConfig
-    });
-}
+
 
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
