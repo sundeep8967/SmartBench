@@ -5,20 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 export default function LoginPage() {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
+    const { signInWithGoogle, loading } = useAuth();
 
-    const handleLogin = () => {
-        setIsLoading(true);
-        // Simulate network delay
-        setTimeout(() => {
-            setIsLoading(false);
-            router.push("/dashboard/projects");
-        }, 1000);
+    // Use the loading state from context or local state as fallback for the button interaction
+    const handleLogin = async () => {
+        await signInWithGoogle();
     };
 
     const containerVariants: Variants = {
@@ -120,9 +114,9 @@ export default function LoginPage() {
                                 variant="ghost"
                                 className="w-full h-12 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-base shadow-lg transition-all flex items-center justify-center gap-3 relative border-0"
                                 onClick={handleLogin}
-                                disabled={isLoading}
+                                disabled={loading}
                             >
-                                {isLoading ? (
+                                {loading ? (
                                     <div className="h-5 w-5 border-2 border-gray-600 border-t-blue-600 rounded-full animate-spin" />
                                 ) : (
                                     <>
