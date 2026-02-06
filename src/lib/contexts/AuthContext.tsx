@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 
 interface AuthContextType {
     user: User | null;
@@ -19,10 +20,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const supabase = createClient();
+    const { showToast } = useToast();
+    const hasShownWelcome = useRef(false);
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
+            console.log("AuthContext: Initial session retrieved", session);
+            console.log("AuthContext: Visible Cookies:", document.cookie);
             setUser(session?.user ?? null);
             setLoading(false);
         });
@@ -31,11 +36,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
+            console.log(`AuthContext: Auth event ${_event}`, session);
             setUser(session?.user ?? null);
+
+            // Show welcome toast when user signs in
+            if (_event === "SIGNED_IN" && session?.user && !hasShownWelcome.current) {
+                const fullName = session.user.user_metadata?.full_name || session.user.email || "User";
+                hasShownWelcome.current = true;
+                // Use setTimeout to ensure toast shows after render
+                setTimeout(() => {
+                    showToast(`Welcome back, ${fullName}! 👋`, "success", true);
+                }, 100);
+            }
+
+            // Reset welcome flag on sign out
+            if (_event === "SIGNED_OUT") {
+                hasShownWelcome.current = false;
+            }
         });
 
         return () => subscription.unsubscribe();
-    }, [supabase]);
+    }, [supabase, showToast]);
 
     const signInWithGoogle = async () => {
         try {
