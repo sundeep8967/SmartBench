@@ -5,7 +5,8 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get("code");
-    const next = requestUrl.searchParams.get("next") ?? "/dashboard/marketplace";
+    // Redirect to dashboard - AuthContext will redirect to onboarding if needed
+    const next = requestUrl.searchParams.get("next") ?? "/dashboard";
 
     if (code) {
         console.log("Auth Callback: Code received, exchanging for session...");

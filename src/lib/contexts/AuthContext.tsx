@@ -3,31 +3,40 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/toast";
+import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
+    hasCompletedOnboarding: boolean;
     signInWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Key for localStorage
+const ONBOARDING_COMPLETE_KEY = "smartbench_onboarding_complete";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
     const router = useRouter();
+    const pathname = usePathname();
     const supabase = createClient();
-    const { showToast } = useToast();
-    const hasShownWelcome = useRef(false);
+    const hasRedirected = useRef(false);
+
+    // Check onboarding status from localStorage
+    useEffect(() => {
+        const completed = localStorage.getItem(ONBOARDING_COMPLETE_KEY);
+        setHasCompletedOnboarding(completed === "true");
+    }, []);
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             console.log("AuthContext: Initial session retrieved", session);
-            console.log("AuthContext: Visible Cookies:", document.cookie);
             setUser(session?.user ?? null);
             setLoading(false);
         });
@@ -39,24 +48,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log(`AuthContext: Auth event ${_event}`, session);
             setUser(session?.user ?? null);
 
-            // Show welcome toast when user signs in
-            if (_event === "SIGNED_IN" && session?.user && !hasShownWelcome.current) {
-                const fullName = session.user.user_metadata?.full_name || session.user.email || "User";
-                hasShownWelcome.current = true;
-                // Use setTimeout to ensure toast shows after render
-                setTimeout(() => {
-                    showToast(`Welcome back, ${fullName}! 👋`, "success", true);
-                }, 100);
-            }
-
-            // Reset welcome flag on sign out
+            // Reset on sign out
             if (_event === "SIGNED_OUT") {
-                hasShownWelcome.current = false;
+                hasRedirected.current = false;
             }
         });
 
         return () => subscription.unsubscribe();
-    }, [supabase, showToast]);
+    }, [supabase]);
+
+    // Redirect to onboarding if user is logged in but hasn't completed onboarding
+    useEffect(() => {
+        if (loading) return;
+
+        // Skip if already on onboarding or login pages
+        const isOnboardingPage = pathname?.startsWith("/onboarding");
+        const isLoginPage = pathname === "/login";
+        const isCallbackPage = pathname?.startsWith("/auth");
+
+        if (isOnboardingPage || isLoginPage || isCallbackPage) return;
+
+        // If user is logged in and hasn't completed onboarding, redirect
+        if (user && !hasCompletedOnboarding && !hasRedirected.current) {
+            hasRedirected.current = true;
+            console.log("AuthContext: User needs to complete onboarding, redirecting...");
+            router.push("/onboarding/step-1");
+        }
+    }, [user, loading, hasCompletedOnboarding, pathname, router]);
 
     const signInWithGoogle = async () => {
         try {
@@ -74,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
+            // Clear onboarding status on logout (for testing purposes)
+            // In production, you might want to keep this
             await supabase.auth.signOut();
             router.push("/login");
         } catch (error) {
@@ -82,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout }}>
+        <AuthContext.Provider value={{ user, loading, hasCompletedOnboarding, signInWithGoogle, logout }}>
             {children}
         </AuthContext.Provider>
     );
