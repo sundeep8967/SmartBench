@@ -15,38 +15,45 @@ export async function POST(req: Request) {
         const body = await req.json().catch(() => ({}));
 
         // 1. Get the user's record to find their company_id (or create if doesn't exist)
-        let { data: userRecord, error: userError } = await supabase
-            .from('users')
+        // 1. Get the user's company membership
+        let { data: memberRecord, error: memberError } = await supabase
+            .from('company_members')
             .select('company_id')
-            .eq('id', user.id)
+            .eq('user_id', user.id)
+            .eq('status', 'Active')
             .single();
 
         // If user record doesn't exist in public.users, create one
-        if (userError?.code === 'PGRST116') {
-            const { data: newUser, error: createUserError } = await supabase
+        // Note: checking users table to ensure record exists, but company association is now in company_members
+        const { data: userRecord, error: userFetchError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+
+        if (userFetchError?.code === 'PGRST116') {
+            const { error: createUserError } = await supabase
                 .from('users')
                 .insert({
                     id: user.id,
                     email: user.email || '',
+                    // full_name is kept in users table
                     full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-                })
-                .select('company_id')
-                .single();
+                });
 
             if (createUserError) {
                 console.error('Error creating user record:', createUserError);
                 return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
             }
-            userRecord = newUser;
-            userError = null;
+            // User created, memberRecord is still null which is correct for new user
         }
 
-        if (userError) {
-            console.error('Error fetching user record:', userError);
-            return NextResponse.json({ error: 'Failed to fetch user record' }, { status: 500 });
+        if (memberError && memberError.code !== 'PGRST116') {
+            console.error('Error fetching member record:', memberError);
+            return NextResponse.json({ error: 'Failed to fetch member record' }, { status: 500 });
         }
 
-        let companyId = userRecord?.company_id;
+        let companyId = memberRecord?.company_id;
 
         // 2. If user has no company, create one using step-1 data
         if (!companyId) {
@@ -69,11 +76,15 @@ export async function POST(req: Request) {
 
             companyId = newCompany.id;
 
-            // Link user to the new company and set as admin
+            // Link user to the new company and set as admin in company_members
             const { error: linkError } = await supabase
-                .from('users')
-                .update({ company_id: companyId, role: 'admin' })
-                .eq('id', user.id);
+                .from('company_members')
+                .insert({
+                    user_id: user.id,
+                    company_id: companyId,
+                    roles: ['Admin'],
+                    status: 'Active'
+                });
 
             if (linkError) {
                 console.error('Error linking user to company:', linkError);

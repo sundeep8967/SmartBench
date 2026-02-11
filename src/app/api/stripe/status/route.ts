@@ -11,14 +11,15 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 1. Get user's company_id
-        const { data: userRecord, error: userError } = await supabase
-            .from('users')
+        // 1. Get user's company_id from company_members
+        const { data: memberRecord, error: memberError } = await supabase
+            .from('company_members')
             .select('company_id')
-            .eq('id', user.id)
+            .eq('user_id', user.id)
+            .eq('status', 'Active')
             .single();
 
-        if (userError || !userRecord?.company_id) {
+        if (memberError || !memberRecord?.company_id) {
             return NextResponse.json({ is_fully_onboarded: false });
         }
 
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
         const { data: company, error: companyError } = await supabase
             .from('companies')
             .select('stripe_account_id')
-            .eq('id', userRecord.company_id)
+            .eq('id', memberRecord.company_id)
             .single();
 
         if (companyError || !company?.stripe_account_id) {

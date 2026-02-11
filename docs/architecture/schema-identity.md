@@ -191,6 +191,8 @@ CREATE INDEX idx_insurance_policies_type_active ON insurance_policies(company_id
 
 ### refresh_tokens
 
+> `[SUPABASE_HANDLED]` — Supabase Auth manages refresh tokens internally via `auth.refresh_tokens`. Do NOT create this table in the `public` schema.
+
 ```sql
 CREATE TABLE refresh_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -205,6 +207,8 @@ CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 ```
 
 ### password_reset_tokens
+
+> `[SUPABASE_HANDLED]` — Supabase Auth manages password reset flows internally via `auth.flow_state`. Do NOT create this table in the `public` schema.
 
 ```sql
 CREATE TABLE password_reset_tokens (
@@ -221,6 +225,8 @@ CREATE INDEX idx_password_reset_tokens_expires_at ON password_reset_tokens(expir
 ```
 
 ### magic_link_tokens
+
+> `[SUPABASE_HANDLED]` — Supabase Auth manages magic link/OTP tokens internally via `auth.flow_state` and `signInWithOtp()`. Do NOT create this table in the `public` schema.
 
 ```sql
 CREATE TABLE magic_link_tokens (
@@ -322,6 +328,8 @@ CREATE INDEX idx_user_agreements_type ON user_agreements(agreement_type);
 
 ### webauthn_credentials
 
+> `[SUPABASE_HANDLED]` — Supabase Auth manages WebAuthn/MFA credentials internally via `auth.mfa_factors`. Do NOT create this table in the `public` schema.
+
 ```sql
 CREATE TABLE webauthn_credentials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -342,6 +350,8 @@ CREATE INDEX idx_webauthn_credentials_credential_id ON webauthn_credentials(cred
 - `counter` must be incremented after each successful authentication to prevent replay attacks
 
 ### webauthn_challenges
+
+> `[SUPABASE_HANDLED]` — Supabase Auth manages WebAuthn/MFA challenges internally via `auth.mfa_challenges`. Do NOT create this table in the `public` schema.
 
 ```sql
 CREATE TABLE webauthn_challenges (

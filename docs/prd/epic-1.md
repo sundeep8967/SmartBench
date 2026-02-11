@@ -2,6 +2,11 @@
 
 **Epic Goal:** Establish the foundational infrastructure for SmartBench including project setup, authentication system, core database schema with Unified User Model, and direct Stripe payment processing. This epic delivers the technical foundation and basic company/user management capabilities required for all subsequent features.
 
+> [!NOTE]
+> **Implementation Tags:**
+> - `[SUPABASE_HANDLED]` — This criterion is already handled by Supabase Auth internally. No custom implementation needed.
+> - `[STRIPE_HANDLED]` — This criterion is already handled by Stripe Connect. No custom implementation needed.
+
 > **Note:** For the complete system architecture diagram showing the modular monolith structure, domain modules, data layer, and external services, see [System Architecture Overview](../architecture/repository-structure-development-standards.md#system-architecture-overview) in the Architecture document.
 
 ## Story 1.1: Project Setup and Infrastructure {#story-11-project-setup-and-infrastructure}
@@ -53,18 +58,18 @@ so that I can access the SmartBench platform.
 
 **Acceptance Criteria:**
 1. User registration creates Company and User records
-2. Password hashing implemented using secure hashing algorithm
-3. Secure token-based authentication implemented
-4. Login validates credentials and returns secure authentication token
+2. `[SUPABASE_HANDLED]` Password hashing implemented using secure hashing algorithm — *Supabase Auth hashes passwords internally via bcrypt*
+3. `[SUPABASE_HANDLED]` Secure token-based authentication implemented — *Supabase Auth issues JWTs automatically*
+4. `[SUPABASE_HANDLED]` Login validates credentials and returns secure authentication token — *Supabase Auth `signInWithPassword()` / `signInWithOAuth()`*
 5. Protected route middleware validates secure tokens
 6. Role-based access control (RBAC) middleware checks user roles
-7. Password reset flow implemented via email/SMS
-8. Session management handles token refresh
+7. `[SUPABASE_HANDLED]` Password reset flow implemented via email/SMS — *Supabase Auth `resetPasswordForEmail()`*
+8. `[SUPABASE_HANDLED]` Session management handles token refresh — *Supabase Auth auto-refreshes sessions via `auth.refresh_tokens`*
 9. **WebAuthn/Biometrics Fast Login:** After successful SMS Magic Link login, system prompts user "Enable TouchID/FaceID for faster login?"
-10. **WebAuthn Enrollment:** User can enroll biometric credentials (TouchID/FaceID) for future fast login
-11. **WebAuthn Authentication:** Returning users can log in using biometrics (WebAuthn) as fast login option
+10. `[SUPABASE_HANDLED]` **WebAuthn Enrollment:** User can enroll biometric credentials — *Supabase Auth MFA via `auth.mfa_factors`*
+11. `[SUPABASE_HANDLED]` **WebAuthn Authentication:** Returning users can log in using biometrics — *Supabase Auth MFA via `auth.mfa_challenges`*
 12. **SMS Fallback:** SMS Magic Links remain primary login method and required fallback recovery method
-13. **WebAuthn Credential Management:** Users can view and revoke registered biometric credentials from account settings
+13. `[SUPABASE_HANDLED]` **WebAuthn Credential Management:** Users can view and revoke registered biometric credentials — *Supabase Auth MFA management APIs*
 
 **Error Handling:**
 User-facing error messages for authentication scenarios are defined in the [Error Message Catalog](../architecture/error-message-catalog.md). Key error scenarios include:
@@ -84,18 +89,18 @@ I want to receive secure, one-time-use links via SMS for onboarding and verifica
 so that I can access specific features without remembering passwords.
 
 **Acceptance Criteria:**
-1. Magic link generation endpoint creates secure, time-limited tokens
-2. SMS integration for magic link delivery sends magic links to mobile numbers
+1. `[SUPABASE_HANDLED]` Magic link generation endpoint creates secure, time-limited tokens — *Supabase Auth `signInWithOtp()` generates magic links natively*
+2. SMS integration for magic link delivery sends magic links to mobile numbers — *Requires Twilio config in Supabase Auth*
 3. **SMS Delivery Failure Handling:** 
    - **Business Rule:** If SMS delivery fails, the system automatically attempts email delivery as fallback
    - **Critical Notifications:** For critical alerts (Magic Links and "Recall" notices), the system sends both SMS and Email simultaneously to maximize delivery reliability
    - **Non-Critical Notifications:** For non-critical notifications, SMS is attempted first, with email as fallback if SMS fails
    - **Technical Reference:** See [Notification Delivery Blueprint](../architecture/blueprints/notifications/notification-delivery.md) for complete technical implementation details including retry logic, error classification, and delivery failure handling
-4. Magic link validation verifies token and grants access
-5. Tokens expire after 24 hours or single use
+4. `[SUPABASE_HANDLED]` Magic link validation verifies token and grants access — *Supabase Auth `verifyOtp()` handles this*
+5. `[SUPABASE_HANDLED]` Tokens expire after 24 hours or single use — *Supabase Auth OTP expiry is configurable*
 6. Magic links work for onboarding (new user invitation) and verification (supervisor timesheet review)
 7. Deep link handling opens app directly to relevant screen
-8. Error handling for invalid/expired tokens
+8. `[SUPABASE_HANDLED]` Error handling for invalid/expired tokens — *Supabase Auth returns structured errors*
 9. **Rate Limiting:** The system implements rate limiting to prevent abuse of magic link validation. Rate limiting applies to expired or invalid token validation attempts. When rate limit is exceeded, users receive an appropriate error message. **Technical Reference:** See [API Contracts - Rate Limiting](../architecture/api-contracts.md#rate-limiting) for complete rate limiting specifications.
 
 **Magic Link Authentication Flow Diagram:**
