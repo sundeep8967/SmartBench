@@ -1,20 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 import { useOnboarding } from "@/lib/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 
-type VerificationStatus = "idle" | "verifying" | "success" | "error";
+type VerificationStatus = "idle" | "verifying" | "success" | "error" | "incomplete";
 
 export default function Step2Page() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { data, updateStepData, setCurrentStep, isStepComplete } = useOnboarding();
 
     const [status, setStatus] = useState<VerificationStatus>("idle");
-    const [progress, setProgress] = useState(0);
+    const [stripeDetails, setStripeDetails] = useState<{
+        details_submitted?: boolean;
+        charges_enabled?: boolean;
+    }>({});
 
     useEffect(() => {
         setCurrentStep(2);
@@ -29,29 +33,71 @@ export default function Step2Page() {
         }
     }, [isStepComplete, router]);
 
-    const handleStartVerification = () => {
-        setStatus("verifying");
-        setProgress(0);
+    // Handle return from Stripe onboarding
+    useEffect(() => {
+        const returnFromStripe = searchParams.get("return_from_stripe");
+        if (returnFromStripe === "true" && status !== "success") {
+            checkStripeStatus();
+        }
+    }, [searchParams]);
 
-        const progressInterval = setInterval(() => {
-            setProgress((prev) => {
-                if (prev >= 100) {
-                    clearInterval(progressInterval);
-                    return 100;
-                }
-                return prev + Math.random() * 15;
-            });
-        }, 300);
+    const checkStripeStatus = async () => {
+        try {
+            setStatus("verifying");
+            const response = await fetch("/api/stripe/status");
+            const result = await response.json();
 
-        setTimeout(() => {
-            clearInterval(progressInterval);
-            setProgress(100);
-            setStatus("success");
-            updateStepData("step2", {
-                verified: true,
-                verifiedAt: new Date().toISOString(),
+            setStripeDetails(result);
+
+            if (result.details_submitted) {
+                setStatus("success");
+                updateStepData("step2", {
+                    verified: true,
+                    verifiedAt: new Date().toISOString(),
+                });
+            } else {
+                // User returned from Stripe but didn't complete onboarding
+                setStatus("incomplete");
+            }
+        } catch (error) {
+            console.error("Error checking Stripe status:", error);
+            setStatus("error");
+        }
+    };
+
+    const handleStartVerification = async () => {
+        try {
+            setStatus("verifying");
+
+            // Send step-1 company data so the API can create the company record
+            const companyData = {
+                businessName: data.step1?.businessName || '',
+                ein: data.step1?.ein || '',
+                address: data.step1 ? {
+                    street: data.step1.street || '',
+                    city: data.step1.city || '',
+                    state: data.step1.state || '',
+                    zipCode: data.step1.zipCode || '',
+                } : null,
+            };
+
+            const response = await fetch("/api/stripe/connect", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(companyData),
             });
-        }, 3000);
+            const result = await response.json();
+
+            if (result.url) {
+                window.location.href = result.url;
+            } else {
+                console.error("No URL returned:", result.error);
+                setStatus("error");
+            }
+        } catch (error) {
+            console.error("Error starting verification:", error);
+            setStatus("error");
+        }
     };
 
     const handleContinue = () => {
@@ -65,19 +111,15 @@ export default function Step2Page() {
     return (
         <OnboardingCard
             title="Business Verification"
-            description="Verify your business identity"
-            badge={{
-                text: "🧪 DEMO MODE - This is a simulated verification",
-                variant: "demo",
-            }}
+            description="Verify your business identity through Stripe"
             footer={
                 <div className="space-y-3">
                     <Button
                         onClick={handleContinue}
                         disabled={status !== "success"}
                         className={`w-full h-12 font-semibold text-base transition-all ${status === "success"
-                                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
                             }`}
                     >
                         Continue
@@ -116,14 +158,15 @@ export default function Step2Page() {
                                 </h3>
                                 <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
                                     We need to verify your business identity to ensure platform security.
-                                    In production, this will redirect to Stripe Identity.
+                                    You&apos;ll be redirected to Stripe to complete the verification.
                                 </p>
                             </div>
 
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                <p className="text-amber-700 text-xs">
-                                    <strong>Demo Mode:</strong> Click below to simulate a successful verification.
-                                    No actual verification will occur.
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p className="text-blue-700 text-xs">
+                                    <strong>Secure Verification:</strong> You&apos;ll be redirected to Stripe&apos;s
+                                    secure platform to complete your business verification. Your data is handled
+                                    directly by Stripe.
                                 </p>
                             </div>
 
@@ -153,30 +196,109 @@ export default function Step2Page() {
                                     className="absolute inset-0 border-4 border-transparent border-t-blue-600 rounded-full animate-spin"
                                     style={{ animationDuration: "1s" }}
                                 />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-sm font-semibold text-blue-600">
-                                        {Math.min(Math.round(progress), 100)}%
-                                    </span>
-                                </div>
                             </div>
 
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                                    Verifying Business...
+                                    Checking Verification Status...
                                 </h3>
                                 <p className="text-gray-500 text-sm">
-                                    Simulating KYB verification process
+                                    Verifying your Stripe account details
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {status === "incomplete" && (
+                        <motion.div
+                            key="incomplete"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="text-center space-y-6"
+                        >
+                            <div className="w-20 h-20 mx-auto bg-amber-100 rounded-full flex items-center justify-center">
+                                <svg className="w-10 h-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                    Verification Incomplete
+                                </h3>
+                                <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
+                                    It looks like you didn&apos;t finish the Stripe onboarding.
+                                    Please try again to complete the verification.
                                 </p>
                             </div>
 
-                            <div className="w-full max-w-xs mx-auto h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <motion.div
-                                    className="h-full bg-blue-600"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${Math.min(progress, 100)}%` }}
-                                    transition={{ duration: 0.3 }}
-                                />
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
+                                <div className="space-y-1 text-xs text-gray-600">
+                                    <div className="flex items-center gap-2">
+                                        {stripeDetails.details_submitted ? (
+                                            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        ) : (
+                                            <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        )}
+                                        <span>Details submitted: {stripeDetails.details_submitted ? "Yes" : "No"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {stripeDetails.charges_enabled ? (
+                                            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        ) : (
+                                            <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        )}
+                                        <span>Charges enabled: {stripeDetails.charges_enabled ? "Yes" : "No"}</span>
+                                    </div>
+                                </div>
                             </div>
+
+                            <Button
+                                onClick={handleStartVerification}
+                                className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-500/25"
+                            >
+                                <svg className="mr-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Retry Verification
+                            </Button>
+                        </motion.div>
+                    )}
+
+                    {status === "error" && (
+                        <motion.div
+                            key="error"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="text-center space-y-6"
+                        >
+                            <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                                <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                    Something Went Wrong
+                                </h3>
+                                <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
+                                    We encountered an error while setting up your verification.
+                                    Please try again.
+                                </p>
+                            </div>
+
+                            <Button
+                                onClick={handleStartVerification}
+                                className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-500/25"
+                            >
+                                <svg className="mr-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Try Again
+                            </Button>
                         </motion.div>
                     )}
 
@@ -211,7 +333,7 @@ export default function Step2Page() {
                                     Verification Complete!
                                 </h3>
                                 <p className="text-gray-500 text-sm">
-                                    Your business has been verified successfully
+                                    Your business has been verified successfully through Stripe
                                 </p>
                             </div>
 
@@ -226,10 +348,6 @@ export default function Step2Page() {
                                     {data.step1?.businessName || "Your Business"} • EIN: {data.step1?.ein || "XX-XXXXXXX"}
                                 </p>
                             </div>
-
-                            <p className="text-xs text-gray-400">
-                                Demo verification - No actual data was submitted
-                            </p>
                         </motion.div>
                     )}
                 </AnimatePresence>
