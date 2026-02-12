@@ -11,16 +11,22 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 1. Get user's company_id from company_members
+        // 1. Get user's company membership
         const { data: memberRecord, error: memberError } = await supabase
             .from('company_members')
-            .select('company_id')
+            .select('company_id, roles')
             .eq('user_id', user.id)
             .eq('status', 'Active')
             .single();
 
         if (memberError || !memberRecord?.company_id) {
             return NextResponse.json({ is_fully_onboarded: false });
+        }
+
+        // 2. RBAC Check: Must be Admin to view Stripe Status
+        const roles = (memberRecord.roles as unknown as string[]) || [];
+        if (!roles.includes('Admin')) {
+            return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
         }
 
         // 2. Get company's stripe_account_id
