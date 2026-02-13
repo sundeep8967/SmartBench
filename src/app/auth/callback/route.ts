@@ -55,6 +55,36 @@ export async function GET(request: Request) {
             // Don't block login if invite processing fails
         }
 
+        // Context Resolution: Determine where to send the user
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user) {
+                const { data: memberships, error } = await supabase
+                    .from('company_members')
+                    .select('company_id')
+                    .eq('user_id', user.id)
+                    .eq('status', 'Active');
+
+                if (!error && memberships) {
+                    if (memberships.length === 0) {
+                        // Case: No active company -> Onboarding
+                        // (Unless they are already heading to onboarding)
+                        if (!next.startsWith('/onboarding')) {
+                            return NextResponse.redirect(new URL('/onboarding', requestUrl.origin));
+                        }
+                    } else if (memberships.length > 1) {
+                        // Case: Multiple active companies -> Select Company
+                        return NextResponse.redirect(new URL('/select-company', requestUrl.origin));
+                    }
+                    // Case: 1 active company -> Proceed to 'next' (default /dashboard)
+                    // We rely on the app to pick up the single company context
+                }
+            }
+        } catch (contextError) {
+            console.error('Auth Callback: Error resolving context:', contextError);
+        }
+
         console.log("Auth Callback: Session exchanged successfully!");
     } else {
         console.log("Auth Callback: No code found in URL");
