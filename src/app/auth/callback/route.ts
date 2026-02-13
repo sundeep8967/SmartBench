@@ -42,6 +42,19 @@ export async function GET(request: Request) {
             console.error('Auth Callback: Available cookies:', cookieStore.getAll().map(c => c.name));
             return NextResponse.redirect(new URL(`/login?error=auth_callback_error&message=${encodeURIComponent(error.message)}`, requestUrl.origin));
         }
+
+        // Check and accept any pending invites
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                const { acceptInvite } = await import('@/lib/services/invitations');
+                await acceptInvite(user.id, user.email);
+            }
+        } catch (inviteError) {
+            console.error('Auth Callback: Error processing invites:', inviteError);
+            // Don't block login if invite processing fails
+        }
+
         console.log("Auth Callback: Session exchanged successfully!");
     } else {
         console.log("Auth Callback: No code found in URL");

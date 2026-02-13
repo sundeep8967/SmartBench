@@ -14,6 +14,7 @@ import {
     ChevronDown,
     BadgeCheck
 } from "lucide-react";
+import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
 
 // Mock roster data matched to Roster.png columns
 const roster = [
@@ -142,9 +143,7 @@ export default function RosterPage() {
                         </button>
                     </div>
                 </div>
-                <Button className="bg-blue-900 hover:bg-blue-800 text-white">
-                    <UserPlus size={16} className="mr-2" /> Invite Worker
-                </Button>
+                <InviteWorkerDialog />
             </div>
 
             {/* Roster Table */}
@@ -181,8 +180,8 @@ export default function RosterPage() {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${worker.status === "Deployed" ? "bg-green-50 text-green-600 border border-green-100" :
-                                                worker.status === "Bench" ? "bg-orange-50 text-orange-500 border border-orange-100" :
-                                                    "bg-blue-50 text-blue-600 border border-blue-100"
+                                            worker.status === "Bench" ? "bg-orange-50 text-orange-500 border border-orange-100" :
+                                                "bg-blue-50 text-blue-600 border border-blue-100"
                                             }`}>
                                             {worker.status}
                                         </span>
