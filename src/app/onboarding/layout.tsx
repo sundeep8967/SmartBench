@@ -1,61 +1,50 @@
 "use client";
 
-import { OnboardingProvider } from "@/lib/contexts/OnboardingContext";
-import { ProgressIndicator } from "@/components/onboarding/ProgressIndicator";
-import { useOnboarding } from "@/lib/contexts/OnboardingContext";
+import { ReactNode } from "react";
+import { Progress } from "@/components/ui/progress";
+import { usePathname } from "next/navigation";
 
-function OnboardingLayoutContent({ children }: { children: React.ReactNode }) {
-    const { currentStep } = useOnboarding();
+// We can pass current step via props if we use a client component wrapper, 
+// or simpler: just hardcode the progress value in each page?
+// Actually, layout is shared, so it doesn't know the current page easily in server components without headers hack.
+// Best approach for MVP: Each page renders its own "WizardShell" or we accept that Layout is static.
+// BUT, if I put the Progress bar in the Layout, it needs to know the step.
+// Easier way: The layout provides the shell, but the progress value is controlled by the page?
+// Or we just use a Client Component in the layout that reads the pathname.
+
+export default function OnboardingLayout({ children }: { children: ReactNode }) {
+    const pathname = usePathname();
+
+    // Determine progress based on path
+    let progress = 0;
+    let step = 0;
+
+    if (pathname.includes("step-1")) { progress = 25; step = 1; }
+    else if (pathname.includes("step-2")) { progress = 50; step = 2; }
+    else if (pathname.includes("step-3")) { progress = 75; step = 3; }
+    else if (pathname.includes("step-4")) { progress = 100; step = 4; }
 
     return (
-        <div className="min-h-screen w-full flex flex-col relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-blue-100/40 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col flex-1">
-                {/* Header with Progress */}
-                <header className="w-full py-8">
-                    <div className="container mx-auto px-4">
-                        {/* Logo */}
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                                Smart<span className="text-blue-600">Bench</span>
-                            </h1>
-                            <p className="text-gray-500 text-sm mt-1">Complete your account setup</p>
-                        </div>
-
-                        {/* Progress Indicator */}
-                        <ProgressIndicator currentStep={currentStep} />
-                    </div>
-                </header>
-
-                {/* Main Content */}
-                <main className="flex-1 flex items-start justify-center py-8 px-4">
-                    {children}
-                </main>
-
-                {/* Footer */}
-                <footer className="py-4 text-center">
-                    <p className="text-gray-400 text-xs">
-                        © 2026 SmartBench. All rights reserved.
+        <div className="min-h-screen bg-neutral-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-md space-y-8">
+                {/* Header / Logo */}
+                <div className="text-center">
+                    <h2 className="mt-2 text-xl font-bold tracking-tight text-neutral-900">
+                        Setup your Company
+                    </h2>
+                    <p className="mt-1 text-sm text-neutral-500">
+                        Step {step} of 4
                     </p>
-                </footer>
+                </div>
+
+                {/* Progress Bar */}
+                <Progress value={progress} className="w-full h-2" />
+
+                {/* Content Card */}
+                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    {children}
+                </div>
             </div>
         </div>
-    );
-}
-
-export default function OnboardingLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    return (
-        <OnboardingProvider>
-            <OnboardingLayoutContent>{children}</OnboardingLayoutContent>
-        </OnboardingProvider>
     );
 }

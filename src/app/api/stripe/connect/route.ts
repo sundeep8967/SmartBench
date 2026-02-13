@@ -77,6 +77,13 @@ export async function POST(req: Request) {
                     card_payments: { requested: true },
                     transfers: { requested: true },
                 },
+                settings: {
+                    payouts: {
+                        schedule: {
+                            interval: 'manual',
+                        },
+                    },
+                },
             });
 
             accountId = account.id;
