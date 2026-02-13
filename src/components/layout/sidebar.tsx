@@ -15,7 +15,9 @@ import {
     Bell,
     Settings,
     ChevronLeft,
-    LogOut
+    LogOut,
+    Shield,
+    BookOpen
 } from "lucide-react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
@@ -31,6 +33,8 @@ const mainNav = [
 ];
 
 const systemNav = [
+    { name: "Insurance", href: "/dashboard/insurance", icon: Shield },
+    { name: "Policies", href: "/dashboard/settings/policies", icon: BookOpen },
     { name: "Saved Searches", href: "/dashboard/saved-searches", icon: Bookmark },
     { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
