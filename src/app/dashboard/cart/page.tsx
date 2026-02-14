@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Trash2, ArrowRight, BadgeCheck } from "lucide-react";
 import Link from "next/link";
-import { CartItem } from "@/types";
+// Update type definition if it's in a separate file, but here we can just update the usage or cast.
+// Ideally update src/types/index.ts or similar if CartItem is defined there.
+// For now, I'll update the component usage.
+import { CartItem } from "@/types"; // We will check this file next.
 
 export default function CartPage() {
     const router = useRouter();
@@ -92,10 +95,10 @@ export default function CartPage() {
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-4">
                                         <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg border border-white shadow-sm">
-                                            {item.worker_profile?.user?.full_name?.charAt(0) || 'W'}
+                                            {item.worker?.full_name?.charAt(0) || 'W'}
                                         </div>
                                         <div>
-                                            <CardTitle className="text-lg">{item.worker_profile?.user?.full_name || 'Worker'} </CardTitle>
+                                            <CardTitle className="text-lg">{item.worker?.full_name || 'Worker'} </CardTitle>
                                             <CardDescription className="flex items-center gap-2">
                                                 <BadgeCheck size={14} className="text-green-500" />
                                                 Verified Professional

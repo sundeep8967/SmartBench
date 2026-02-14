@@ -40,4 +40,8 @@ export interface CartItem {
     created_at: string;
     work_order?: WorkOrder; // Joined data
     worker_profile?: any; // Joined data (TODO: Define WorkerProfile type properly)
+    worker?: {
+        full_name: string;
+        email?: string;
+    };
 }

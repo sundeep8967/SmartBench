@@ -11,9 +11,6 @@ const workers = [
     { id: 1, uuid: "053105b4-8107-43ff-ae39-e633983ea1d5", name: "Mike Ross", role: "Master Electrician", rating: 4.9, rate: 55, skills: ["Industrial", "High Voltage", "Wiring"], avatar: "MR", avatarUrl: "/avatars/mike_ross.png", verified: true },
     { id: 2, uuid: "1b5ac736-ebf6-4549-abb3-ccdebf5b74cc", name: "Rachel Zane", role: "Project Manager", rating: 4.8, rate: 75, skills: ["Planning", "Budgeting", "Safety"], avatar: "RZ", avatarUrl: "/avatars/rachel_zane.png", verified: true },
     { id: 3, uuid: "11a66e33-263b-4a5b-87c7-8f50526da3b8", name: "Harvey Specter", role: "Site Foreman", rating: 5.0, rate: 95, skills: ["Leadership", "Commercial", "Zoning"], avatar: "HS", avatarUrl: "/avatars/harvey_specter.png", verified: true },
-    { id: 4, uuid: "053105b4-8107-43ff-ae39-e633983ea1d5", name: "Donna Paulsen", role: "Interior Specialist", rating: 4.9, rate: 65, skills: ["Finishing", "Design", "Detailing"], avatar: "DP", avatarUrl: "/avatars/donna_paulsen.png", verified: true },
-    { id: 5, uuid: "1b5ac736-ebf6-4549-abb3-ccdebf5b74cc", name: "Louis Litt", role: "HVAC Technician", rating: 4.7, rate: 60, skills: ["Ventilation", "Heating", "Repairs"], avatar: "LL", avatarUrl: "/avatars/louis_litt.png", verified: true },
-    { id: 6, uuid: "11a66e33-263b-4a5b-87c7-8f50526da3b8", name: "Jessica P.", role: "Senior Architect", rating: 5.0, rate: 120, skills: ["Blueprints", "Modeling", "Surveying"], avatar: "JP", avatarUrl: "/avatars/jessica_p.png", verified: true },
 ];
 
 export default function MarketplacePage() {
@@ -56,6 +53,7 @@ export default function MarketplacePage() {
             toast({
                 title: "Added to cart",
                 description: `${worker.name} has been added to your cart.`,
+                variant: "success",
             });
         } catch (f) {
             toast({

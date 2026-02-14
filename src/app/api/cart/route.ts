@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
         .select(`
             *,
             work_order:work_orders(*),
-            worker_profile:worker_profiles(*)
+            worker_profile:worker_profiles(*),
+            worker:users!cart_items_worker_id_fkey(full_name)
         `)
         .eq('borrower_company_id', member.company_id)
         .order('created_at', { ascending: false });
