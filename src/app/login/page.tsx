@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { createClient } from "@/lib/supabase/client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -156,6 +158,12 @@ export default function LoginPage() {
                             <p className="text-center text-xs text-gray-400 mt-6">
                                 By signing in, you agree to our <Link href="#" className="underline hover:text-gray-300 text-gray-400">Terms</Link> and <Link href="#" className="underline hover:text-gray-300 text-gray-400">Privacy Policy</Link>.
                             </p>
+
+                            {/* DEV LOGIN FORM */}
+                            <div className="mt-8 pt-8 border-t border-white/10">
+                                <p className="text-xs text-center text-gray-500 mb-4 font-mono">DEVELOPER ONLY MODE</p>
+                                <DevLoginForm />
+                            </div>
                         </div>
                     </div>
 
@@ -166,6 +174,71 @@ export default function LoginPage() {
                     </div>
                 </motion.div>
             </div>
+        </div>
+    );
+}
+
+function DevLoginForm() {
+    const [localLoading, setLocalLoading] = useState(false);
+    const [email, setEmail] = useState("verifier@test.com");
+    const [password, setPassword] = useState("password123");
+    const router = useRouter();
+    const supabase = createClient();
+
+    const handleDevLogin = async () => {
+        setLocalLoading(true);
+        // Try sign in
+        let { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error && error.message.includes("Invalid login credentials")) {
+            // Try sign up if login fails (lazy dev trick)
+            const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+            if (signUpError) {
+                alert("Dev Login Failed: " + signUpError.message);
+                setLocalLoading(false);
+                return;
+            }
+            // Auto login after signup? usually requires confirmation if confirm enabled.
+            // If confirm disabled, we are good.
+            // Retry login just in case
+            // If data.user is returned, we are signed in (if auto-confirm is on)
+            if (data.user) {
+                router.push("/dashboard/projects");
+                return;
+            }
+        }
+
+        if (error) {
+            alert("Login Failed: " + error.message);
+        } else {
+            router.push("/dashboard/projects");
+        }
+        setLocalLoading(false);
+    };
+
+    return (
+        <div className="space-y-3">
+            <Input
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="bg-white/5 border-white/10 text-white"
+            />
+            <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="bg-white/5 border-white/10 text-white"
+            />
+            <Button
+                variant="secondary"
+                onClick={handleDevLogin}
+                disabled={localLoading}
+                className="w-full"
+            >
+                {localLoading ? "Processing..." : "Dev: Login / Recruit"}
+            </Button>
         </div>
     );
 }

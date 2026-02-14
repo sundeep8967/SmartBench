@@ -23,6 +23,7 @@ import { useAuth } from "@/lib/contexts/AuthContext";
 
 const mainNav = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Projects", href: "/dashboard/projects", icon: Briefcase },
     { name: "Marketplace", href: "/dashboard/marketplace", icon: Store },
     { name: "Roster", href: "/dashboard/roster", icon: Users },
     { name: "Bookings", href: "/dashboard/bookings", icon: Calendar },
