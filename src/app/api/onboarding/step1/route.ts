@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
             .insert({
                 company_id: company.id,
                 user_id: user.id,
-                role: 'admin',
-                status: 'active'
+                roles: ['admin'],
+                status: 'Active'
             });
 
         if (memberError) {

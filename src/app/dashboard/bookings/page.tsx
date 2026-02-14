@@ -12,72 +12,32 @@ import {
     Plus,
     ChevronDown
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
-// Mock booking data
-const bookings = [
-    {
-        id: "#BK-9021",
-        worker: "Mike Ross",
-        role: "Electrician",
-        project: "Lakeside Remodel",
-        location: "Building A, Floor 2",
-        start: "Oct 24",
-        end: "Oct 26",
-        hours: "24 Hours",
-        rate: 45.00,
-        total: 1080.00,
-        status: "Active",
-        avatarUrl: "/avatars/mike_ross.png",
-        avatar: "MR"
-    },
-    {
-        id: "#BK-9022",
-        worker: "Rachel Zane",
-        role: "Plumber",
-        project: "City Center Reno",
-        location: "Main Lobby",
-        start: "Oct 28",
-        end: "Nov 02",
-        hours: "40 Hours",
-        rate: 38.00,
-        total: 1520.00,
-        status: "Pending",
-        avatarUrl: "/avatars/rachel_zane.png",
-        avatar: "RZ"
-    },
-    {
-        id: "#BK-9023",
-        worker: "Harvey Specter",
-        role: "Site Manager",
-        project: "West Wing Extension",
-        location: "Exterior",
-        start: "Nov 05",
-        end: "Nov 12",
-        hours: "56 Hours",
-        rate: 65.00,
-        total: 3640.00,
-        status: "Completed",
-        avatarUrl: "/avatars/harvey_specter.png",
-        avatar: "HS"
-    },
-    {
-        id: "#BK-9024",
-        worker: "Donna Paulsen",
-        role: "Interior Specialist",
-        project: "Lakeside Remodel",
-        location: "Building A, Floor 2",
-        start: "Nov 15",
-        end: "Nov 20",
-        hours: "32 Hours",
-        rate: 42.00,
-        total: 1344.00,
-        status: "Pending",
-        avatarUrl: "/avatars/donna_paulsen.png",
-        avatar: "DP"
-    }
-];
+
 
 export default function BookingsPage() {
+    const [bookings, setBookings] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchBookings();
+    }, []);
+
+    const fetchBookings = async () => {
+        try {
+            const res = await fetch("/api/bookings");
+            if (res.ok) {
+                const data = await res.json();
+                setBookings(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch bookings", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -130,13 +90,6 @@ export default function BookingsPage() {
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                     </div>
-                    <div className="relative">
-                        <select className="appearance-none w-40 pl-4 pr-10 py-2.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option>This Month</option>
-                            <option>Last Month</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                    </div>
                 </div>
             </div>
 
@@ -156,68 +109,69 @@ export default function BookingsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
-                            {bookings.map((booking) => (
-                                <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-bold text-gray-900">{booking.id}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden shrink-0">
-                                                {booking.avatarUrl ? (
-                                                    <img src={booking.avatarUrl} alt={booking.worker} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <span className="text-xs font-bold text-gray-600">{booking.avatar}</span>
-                                                )}
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">Loading bookings...</td>
+                                </tr>
+                            ) : bookings.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">No bookings found.</td>
+                                </tr>
+                            ) : (
+                                bookings.map((booking) => (
+                                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 font-bold text-gray-900">#{booking.id.slice(0, 8)}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center border border-white shadow-sm shrink-0 text-blue-700 font-bold">
+                                                    {booking.worker?.full_name?.charAt(0) || "W"}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{booking.worker?.full_name || "Unknown Worker"}</p>
+                                                    <p className="text-xs text-gray-500">{booking.work_order?.role || "General Labor"}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-gray-900">{booking.worker}</p>
-                                                <p className="text-xs text-gray-500">{booking.role}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-gray-900">{booking.project?.name || "Untitled Project"}</span>
+                                                <span className="text-xs text-gray-400 mt-0.5">
+                                                    {booking.project?.address || "No Address"}
+                                                </span>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-900">{booking.project}</span>
-                                            <span className="text-xs text-gray-400 mt-0.5">
-                                                {booking.location}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-900">
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">{booking.start} - {booking.end}</span>
-                                            <span className="text-xs text-blue-600 font-medium mt-0.5">{booking.hours}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-900">${booking.rate.toFixed(2)}/hr</span>
-                                            <span className="text-xs text-gray-400 mt-0.5">Total: ${booking.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${booking.status === "Active" ? "bg-green-50 text-green-600 border border-green-100" :
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-900">
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
+                                                <span className="text-xs text-blue-600 font-medium mt-0.5">
+                                                    Est. {Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24) + 1) * 8} Hours
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-gray-900">${(booking.total_amount / 100).toFixed(2)}</span>
+                                                <span className="text-xs text-gray-400 mt-0.5">Total Bill</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${booking.status === "Confirmed" ? "bg-green-50 text-green-600 border border-green-100" :
                                                 booking.status === "Pending" ? "bg-orange-50 text-orange-500 border border-orange-100" :
                                                     "bg-gray-100 text-gray-600 border border-gray-200"
-                                            }`}>
-                                            {booking.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600">
-                                            <MoreHorizontal size={18} />
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
+                                                }`}>
+                                                {booking.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600">
+                                                <MoreHorizontal size={18} />
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
-                </div>
-                <div className="bg-white px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-                    <p className="text-sm text-gray-500">Showing 1 to 4 of 24 results</p>
-                    <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="text-xs" disabled>Previous</Button>
-                        <Button variant="outline" size="sm" className="text-xs" >Next</Button>
-                    </div>
                 </div>
             </Card>
         </div>

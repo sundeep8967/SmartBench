@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -158,12 +156,6 @@ export default function LoginPage() {
                             <p className="text-center text-xs text-gray-400 mt-6">
                                 By signing in, you agree to our <Link href="#" className="underline hover:text-gray-300 text-gray-400">Terms</Link> and <Link href="#" className="underline hover:text-gray-300 text-gray-400">Privacy Policy</Link>.
                             </p>
-
-                            {/* DEV LOGIN FORM */}
-                            <div className="mt-8 pt-8 border-t border-white/10">
-                                <p className="text-xs text-center text-gray-500 mb-4 font-mono">DEVELOPER ONLY MODE</p>
-                                <DevLoginForm />
-                            </div>
                         </div>
                     </div>
 
@@ -174,87 +166,6 @@ export default function LoginPage() {
                     </div>
                 </motion.div>
             </div>
-        </div>
-    );
-}
-
-function DevLoginForm() {
-    const [localLoading, setLocalLoading] = useState(false);
-    const [email, setEmail] = useState("verifier@test.com");
-    const [password, setPassword] = useState("password123");
-    const router = useRouter();
-    const supabase = createClient();
-
-    const handleLogin = async (loginEmail: string, loginPass: string) => {
-        setLocalLoading(true);
-
-        const { error } = await supabase.auth.signInWithPassword({
-            email: loginEmail,
-            password: loginPass
-        });
-
-        if (error) {
-            console.error("Dev login error:", error);
-            alert(`Login Failed: ${error.message}`);
-            setLocalLoading(false);
-            return;
-        }
-
-        // Success - AuthContext or useEffect will handle redirect, but we can force it too
-        console.log("Dev login successful");
-        router.push("/dashboard/marketplace");
-        setLocalLoading(false);
-    };
-
-    return (
-        <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 mb-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLogin("hello.smartbench@gmail.com", "password123")}
-                    disabled={localLoading}
-                    className="text-xs bg-blue-900/20 border-blue-500/30 text-blue-200 hover:bg-blue-900/40"
-                >
-                    Owner (Hello)
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLogin("sundeep8967@gmail.com", "password123")}
-                    disabled={localLoading}
-                    className="text-xs bg-green-900/20 border-green-500/30 text-green-200 hover:bg-green-900/40"
-                >
-                    Worker (Sundeep)
-                </Button>
-            </div>
-            <div className="relative flex py-1 items-center">
-                <div className="flex-grow border-t border-white/10"></div>
-                <span className="flex-shrink-0 mx-2 text-gray-500 text-[10px]">OR MANUAL</span>
-                <div className="flex-grow border-t border-white/10"></div>
-            </div>
-
-            <Input
-                placeholder="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="bg-white/5 border-white/10 text-white"
-            />
-            <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="bg-white/5 border-white/10 text-white"
-            />
-            <Button
-                variant="secondary"
-                onClick={() => handleLogin(email, password)}
-                disabled={localLoading}
-                className="w-full"
-            >
-                {localLoading ? "Processing..." : "Dev: Login"}
-            </Button>
         </div>
     );
 }

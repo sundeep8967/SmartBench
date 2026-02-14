@@ -158,22 +158,22 @@ function CheckoutContent() {
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="project">Select Project</Label>
-                                <select id="project" className="w-full h-10 px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option>Downtown Office Complex</option>
-                                    <option>Riverside Apartments</option>
-                                    <option>+ Create New Project</option>
-                                </select>
+                                <Label>Project</Label>
+                                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
+                                    {cartItems[0]?.work_order?.project?.name || "Untitled Project"}
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="dates">Duration</Label>
-                                <div className="text-sm font-medium py-2 text-gray-700">
+                                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
                                     {cartItems[0]?.start_date ? `${new Date(cartItems[0].start_date).toLocaleDateString()} - ${new Date(cartItems[0].end_date).toLocaleDateString()}` : 'Custom Dates'}
                                 </div>
                             </div>
                             <div className="col-span-1 md:col-span-2 space-y-2">
-                                <Label htmlFor="address">Site Address</Label>
-                                <Input id="address" placeholder="123 Construction Way, Minneapolis, MN 55401" defaultValue="100 S Washington Ave, Minneapolis, MN" />
+                                <Label>Site Address</Label>
+                                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
+                                    {cartItems[0]?.work_order?.project?.address || "No address provided"}
+                                </div>
                             </div>
                         </div>
                     </Card>

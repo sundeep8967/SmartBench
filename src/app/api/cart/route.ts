@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         .from('cart_items')
         .select(`
             *,
-            work_order:work_orders(*),
+            work_order:work_orders(*, project:projects(*)),
             worker_profile:worker_profiles(*),
             worker:users!cart_items_worker_id_fkey(full_name)
         `)
