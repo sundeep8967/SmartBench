@@ -1,13 +1,21 @@
 import { stripe } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         // Create Identity Verification Session
         const verificationSession = await stripe.identity.verificationSessions.create({
             type: 'document',
             metadata: {
-                user_id: 'test_user_id', // In real app, fetch from auth
+                user_id: user.id,
             },
             options: {
                 document: {
