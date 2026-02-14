@@ -30,7 +30,6 @@ const mainNav = [
     { name: "Time Clock", href: "/dashboard/time-clock", icon: Clock },
     { name: "Verification", href: "/dashboard/timesheets", icon: ShieldCheck },
     { name: "Financials", href: "/dashboard/financials", icon: DollarSign },
-    { name: "Projects", href: "/dashboard/projects", icon: Briefcase },
 ];
 
 const systemNav = [

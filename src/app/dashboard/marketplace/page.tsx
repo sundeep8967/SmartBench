@@ -3,18 +3,66 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, BadgeCheck, Star } from "lucide-react";
+import { Search, MapPin, BadgeCheck, Star, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const workers = [
-    { id: 1, name: "Mike Ross", role: "Master Electrician", rating: 4.9, rate: 55, skills: ["Industrial", "High Voltage", "Wiring"], avatar: "MR", avatarUrl: "/avatars/mike_ross.png", verified: true },
-    { id: 2, name: "Rachel Zane", role: "Project Manager", rating: 4.8, rate: 75, skills: ["Planning", "Budgeting", "Safety"], avatar: "RZ", avatarUrl: "/avatars/rachel_zane.png", verified: true },
-    { id: 3, name: "Harvey Specter", role: "Site Foreman", rating: 5.0, rate: 95, skills: ["Leadership", "Commercial", "Zoning"], avatar: "HS", avatarUrl: "/avatars/harvey_specter.png", verified: true },
-    { id: 4, name: "Donna Paulsen", role: "Interior Specialist", rating: 4.9, rate: 65, skills: ["Finishing", "Design", "Detailing"], avatar: "DP", avatarUrl: "/avatars/donna_paulsen.png", verified: true },
-    { id: 5, name: "Louis Litt", role: "HVAC Technician", rating: 4.7, rate: 60, skills: ["Ventilation", "Heating", "Repairs"], avatar: "LL", avatarUrl: "/avatars/louis_litt.png", verified: true },
-    { id: 6, name: "Jessica P.", role: "Senior Architect", rating: 5.0, rate: 120, skills: ["Blueprints", "Modeling", "Surveying"], avatar: "JP", avatarUrl: "/avatars/jessica_p.png", verified: true },
+    { id: 1, uuid: "053105b4-8107-43ff-ae39-e633983ea1d5", name: "Mike Ross", role: "Master Electrician", rating: 4.9, rate: 55, skills: ["Industrial", "High Voltage", "Wiring"], avatar: "MR", avatarUrl: "/avatars/mike_ross.png", verified: true },
+    { id: 2, uuid: "1b5ac736-ebf6-4549-abb3-ccdebf5b74cc", name: "Rachel Zane", role: "Project Manager", rating: 4.8, rate: 75, skills: ["Planning", "Budgeting", "Safety"], avatar: "RZ", avatarUrl: "/avatars/rachel_zane.png", verified: true },
+    { id: 3, uuid: "11a66e33-263b-4a5b-87c7-8f50526da3b8", name: "Harvey Specter", role: "Site Foreman", rating: 5.0, rate: 95, skills: ["Leadership", "Commercial", "Zoning"], avatar: "HS", avatarUrl: "/avatars/harvey_specter.png", verified: true },
+    { id: 4, uuid: "053105b4-8107-43ff-ae39-e633983ea1d5", name: "Donna Paulsen", role: "Interior Specialist", rating: 4.9, rate: 65, skills: ["Finishing", "Design", "Detailing"], avatar: "DP", avatarUrl: "/avatars/donna_paulsen.png", verified: true },
+    { id: 5, uuid: "1b5ac736-ebf6-4549-abb3-ccdebf5b74cc", name: "Louis Litt", role: "HVAC Technician", rating: 4.7, rate: 60, skills: ["Ventilation", "Heating", "Repairs"], avatar: "LL", avatarUrl: "/avatars/louis_litt.png", verified: true },
+    { id: 6, uuid: "11a66e33-263b-4a5b-87c7-8f50526da3b8", name: "Jessica P.", role: "Senior Architect", rating: 5.0, rate: 120, skills: ["Blueprints", "Modeling", "Surveying"], avatar: "JP", avatarUrl: "/avatars/jessica_p.png", verified: true },
 ];
 
 export default function MarketplacePage() {
+    const { toast } = useToast();
+    const [addingToCart, setAddingToCart] = useState<number | null>(null);
+
+    const handleAddToCart = async (worker: any) => {
+        setAddingToCart(worker.id);
+        try {
+            // TODO: Get actual Work Order ID and Dates from user selection
+            // For MVP, we are using a specific Work Order created for testing:
+            // Project: Test Project 1, Work Order: General Labor (ID: f33bc9fc-0ced-440b-afc9-3983ed32907f)
+            const mockPayload = {
+                work_order_id: "f33bc9fc-0ced-440b-afc9-3983ed32907f", // Valid Work Order ID from DB
+                worker_id: worker.uuid, // Use real UUID from DB
+                hourly_rate: worker.rate,
+                start_date: new Date().toISOString(),
+                end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            };
+
+            // Real implementation:
+            const res = await fetch("/api/cart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(mockPayload)
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to add to cart");
+            }
+
+            // Simulate network delay for UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            toast({
+                title: "Added to cart",
+                description: `${worker.name} has been added to your cart.`,
+            });
+        } catch (f) {
+            toast({
+                title: "Error",
+                description: f instanceof Error ? f.message : "Could not add to cart",
+                variant: "destructive"
+            });
+        } finally {
+            setAddingToCart(null);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Title Section */}
@@ -114,11 +162,17 @@ export default function MarketplacePage() {
                                 variant="outline"
                                 size="sm"
                                 className="text-blue-900 border-blue-200 hover:bg-blue-50 relative z-10 cursor-pointer"
-                                asChild
+                                onClick={() => handleAddToCart(worker)}
+                                disabled={addingToCart === worker.id}
                             >
-                                <a href={`/dashboard/checkout?workerId=${worker.id}`}>
-                                    Add to Cart
-                                </a>
+                                {addingToCart === worker.id ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Adding...
+                                    </>
+                                ) : (
+                                    "Add to Cart"
+                                )}
                             </Button>
                         </div>
                     </Card>

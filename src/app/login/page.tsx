@@ -185,39 +185,55 @@ function DevLoginForm() {
     const router = useRouter();
     const supabase = createClient();
 
-    const handleDevLogin = async () => {
+    const handleLogin = async (loginEmail: string, loginPass: string) => {
         setLocalLoading(true);
-        // Try sign in
-        let { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (error && error.message.includes("Invalid login credentials")) {
-            // Try sign up if login fails (lazy dev trick)
-            const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
-            if (signUpError) {
-                alert("Dev Login Failed: " + signUpError.message);
-                setLocalLoading(false);
-                return;
-            }
-            // Auto login after signup? usually requires confirmation if confirm enabled.
-            // If confirm disabled, we are good.
-            // Retry login just in case
-            // If data.user is returned, we are signed in (if auto-confirm is on)
-            if (data.user) {
-                router.push("/dashboard/projects");
-                return;
-            }
-        }
+        const { error } = await supabase.auth.signInWithPassword({
+            email: loginEmail,
+            password: loginPass
+        });
 
         if (error) {
-            alert("Login Failed: " + error.message);
-        } else {
-            router.push("/dashboard/projects");
+            console.error("Dev login error:", error);
+            alert(`Login Failed: ${error.message}`);
+            setLocalLoading(false);
+            return;
         }
+
+        // Success - AuthContext or useEffect will handle redirect, but we can force it too
+        console.log("Dev login successful");
+        router.push("/dashboard/marketplace");
         setLocalLoading(false);
     };
 
     return (
         <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 mb-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLogin("hello.smartbench@gmail.com", "password123")}
+                    disabled={localLoading}
+                    className="text-xs bg-blue-900/20 border-blue-500/30 text-blue-200 hover:bg-blue-900/40"
+                >
+                    Owner (Hello)
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLogin("sundeep8967@gmail.com", "password123")}
+                    disabled={localLoading}
+                    className="text-xs bg-green-900/20 border-green-500/30 text-green-200 hover:bg-green-900/40"
+                >
+                    Worker (Sundeep)
+                </Button>
+            </div>
+            <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="flex-shrink-0 mx-2 text-gray-500 text-[10px]">OR MANUAL</span>
+                <div className="flex-grow border-t border-white/10"></div>
+            </div>
+
             <Input
                 placeholder="Email"
                 value={email}
@@ -233,11 +249,11 @@ function DevLoginForm() {
             />
             <Button
                 variant="secondary"
-                onClick={handleDevLogin}
+                onClick={() => handleLogin(email, password)}
                 disabled={localLoading}
                 className="w-full"
             >
-                {localLoading ? "Processing..." : "Dev: Login / Recruit"}
+                {localLoading ? "Processing..." : "Dev: Login"}
             </Button>
         </div>
     );
