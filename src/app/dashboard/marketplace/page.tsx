@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, BadgeCheck, Star, Loader2 } from "lucide-react";
+import { useCart } from "@/lib/contexts/CartContext";
 import { useToast } from "@/components/ui/use-toast";
 
 const workers = [
@@ -17,7 +18,10 @@ const workers = [
 
 export default function MarketplacePage() {
     const { toast } = useToast();
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedRole, setSelectedRole] = useState("All Roles");
     const [addingToCart, setAddingToCart] = useState<number | null>(null);
+    const { refreshCart, cartItems } = useCart();
 
     const handleAddToCart = async (worker: any) => {
         setAddingToCart(worker.id);
@@ -45,8 +49,9 @@ export default function MarketplacePage() {
                 throw new Error(errorData.error || "Failed to add to cart");
             }
 
-            // Simulate network delay for UX
             await new Promise(resolve => setTimeout(resolve, 500));
+
+            await refreshCart(); // Update global cart count
 
             toast({
                 title: "Added to cart",
@@ -163,12 +168,17 @@ export default function MarketplacePage() {
                                 size="sm"
                                 className="text-blue-900 border-blue-200 hover:bg-blue-50 relative z-10 cursor-pointer"
                                 onClick={() => handleAddToCart(worker)}
-                                disabled={addingToCart === worker.id}
+                                disabled={addingToCart === worker.id || cartItems.some(item => item.worker_id === worker.uuid)}
                             >
                                 {addingToCart === worker.id ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Adding...
+                                    </>
+                                ) : cartItems.some(item => item.worker_id === worker.uuid) ? (
+                                    <>
+                                        <BadgeCheck className="mr-2 h-4 w-4" />
+                                        Added
                                     </>
                                 ) : (
                                     "Add to Cart"

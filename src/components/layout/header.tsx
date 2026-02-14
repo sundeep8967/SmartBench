@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, Upload, ShoppingCart, Bookmark, Download, Filter, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/lib/contexts/CartContext";
 
 const routeConfig: Record<string, { section: string; page: string }> = {
   "/dashboard": { section: "Dashboard", page: "Overview" },
@@ -23,6 +25,7 @@ export function Header() {
   const config = routeConfig[pathname] || { section: "Dashboard", page: "Overview" };
   const isMarketplace = pathname.includes("/marketplace");
   const isRoster = pathname.includes("/roster");
+  const { cartCount } = useCart();
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
@@ -45,11 +48,17 @@ export function Header() {
               <Bookmark size={16} className="mr-2" />
               Saved
             </Button>
-            <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm relative h-9 px-4">
-              <ShoppingCart size={16} className="mr-2" />
-              Cart
-              <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold border-2 border-white">2</span>
-            </Button>
+            <Link href="/dashboard/cart">
+              <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm relative h-9 px-4">
+                <ShoppingCart size={16} className="mr-2" />
+                Cart
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold border-2 border-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
           </>
         ) : isRoster ? (
           <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-4">
@@ -69,6 +78,6 @@ export function Header() {
           </>
         )}
       </div>
-    </header>
+    </header >
   );
 }
