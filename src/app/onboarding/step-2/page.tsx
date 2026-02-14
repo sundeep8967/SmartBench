@@ -4,26 +4,47 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
 
 export default function Step2KYB() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
-    const handleMockVerify = async () => {
+    // Load Stripe with Sandbox Key
+    // Note: We use the sandbox key specifically as requested
+    const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_SANDBOX!);
+
+    const handleVerify = async () => {
         setLoading(true);
         try {
-            // For MVP/Dev, we mock the verification success
-            const res = await fetch("/api/onboarding/step2", {
+            // 1. Create Verification Session
+            const res = await fetch("/api/stripe/identity/create-session", {
                 method: "POST",
             });
 
-            if (!res.ok) throw new Error("Verification failed");
+            if (!res.ok) throw new Error("Failed to create verification session");
 
-            // Proceed to Step 3
-            router.push("/onboarding/step-3");
-        } catch (error) {
+            const { clientSecret } = await res.json();
+
+            // 2. Redirect to Stripe Identity Modal
+            const stripe = await stripePromise;
+            if (!stripe) throw new Error("Stripe failed to load");
+
+            const { error } = await stripe.verifyIdentity(clientSecret);
+
+            if (error) {
+                console.error("Stripe Identity Error:", error);
+                alert(`Verification failed: ${error.message}`);
+            } else {
+                // Success - Proceed to Step 3
+                // Ideally, we should also call backend to confirm status using webhook
+                // But for now, we assume frontend success means we can proceed.
+                router.push("/onboarding/step-3");
+            }
+
+        } catch (error: any) {
             console.error(error);
-            alert("Verification failed.");
+            alert("Verification failed. See console.");
         } finally {
             setLoading(false);
         }
@@ -38,27 +59,19 @@ export default function Step2KYB() {
             </p>
 
             <div className="flex flex-col gap-4 items-center py-6">
-                {/* Placeholder for Stripe Button */}
-                <Button
-                    variant="outline"
-                    className="w-full max-w-xs bg-[#635BFF] text-white hover:bg-[#635BFF]/90 hover:text-white border-0"
-                    onClick={() => alert("Stripe Identity Flow would open here. Click 'Continue' to simulate success.")}
-                    type="button"
-                >
-                    Verify with Stripe Identity
-                </Button>
-
-                <p className="text-xs text-muted-foreground">
-                    For development, click "Continue" to simulate a successful check.
-                </p>
+                <div className="text-center pb-4">
+                    <p className="text-sm text-muted-foreground">
+                        Click below to verify your identity using Stripe's secure Sandbox environment.
+                    </p>
+                </div>
             </div>
 
             <div className="flex gap-4">
                 <Button variant="ghost" onClick={() => router.back()} disabled={loading}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                 </Button>
-                <Button onClick={handleMockVerify} className="flex-1" disabled={loading}>
-                    {loading ? "Verifying..." : "Continue (Simulate Success)"}
+                <Button onClick={handleVerify} className="flex-1" disabled={loading}>
+                    {loading ? "Verifying..." : "Verify with Stripe (Sandbox)"}
                 </Button>
             </div>
         </div>

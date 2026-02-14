@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Users } from "lucide-react";
+import { User, Users, CheckCircle2 } from "lucide-react";
 
 export default function Step3Type() {
     const router = useRouter();
@@ -48,31 +48,41 @@ export default function Step3Type() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 {/* Solopreneur Option */}
                 <Card
-                    className={`cursor-pointer transition-all border-2 ${selection === "solopreneur" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-200"}`}
+                    className={`cursor-pointer transition-all border-2 relative ${selection === "solopreneur" ? "border-blue-500 bg-blue-50/50" : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"}`}
                     onClick={() => setSelection("solopreneur")}
                 >
+                    {selection === "solopreneur" && (
+                        <div className="absolute top-3 right-3 text-blue-500">
+                            <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                    )}
                     <CardHeader>
-                        <User className={`w-8 h-8 ${selection === "solopreneur" ? "text-blue-500" : "text-gray-400"}`} />
+                        <User className={`w-8 h-8 mb-2 ${selection === "solopreneur" ? "text-blue-500" : "text-gray-400"}`} />
                         <CardTitle className="text-base">Solopreneur</CardTitle>
                         <CardDescription>
-                            I work alone. I manage my own bookings and do the work myself.
+                            I work alone. I manage my own bookings and perform the work myself.
                         </CardDescription>
                     </CardHeader>
                 </Card>
 
                 {/* Company Option */}
                 <Card
-                    className={`cursor-pointer transition-all border-2 ${selection === "company" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-200"}`}
+                    className={`cursor-pointer transition-all border-2 relative ${selection === "company" ? "border-blue-500 bg-blue-50/50" : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"}`}
                     onClick={() => setSelection("company")}
                 >
+                    {selection === "company" && (
+                        <div className="absolute top-3 right-3 text-blue-500">
+                            <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                    )}
                     <CardHeader>
-                        <Users className={`w-8 h-8 ${selection === "company" ? "text-blue-500" : "text-gray-400"}`} />
+                        <Users className={`w-8 h-8 mb-2 ${selection === "company" ? "text-blue-500" : "text-gray-400"}`} />
                         <CardTitle className="text-base">Company with Crew</CardTitle>
                         <CardDescription>
-                            I have employees or subcontractors. I manage a team.
+                            I manage a team of employees or subcontractors. I dispatch work to others.
                         </CardDescription>
                     </CardHeader>
                 </Card>
