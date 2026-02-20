@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
@@ -51,10 +52,8 @@ export function Sidebar() {
         <aside className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col z-50">
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-gray-100 justify-between">
-                <div className="flex items-center space-x-2">
-                    <div className="bg-orange-500 rounded-md p-1.5 shadow-sm">
-                        <div className="w-4 h-4 border-2 border-white rounded-sm" />
-                    </div>
+                <div className="flex items-center space-x-2.5">
+                    <img src="/Logo.png" alt="SmartBench" className="h-8 w-8" />
                     <span className="text-xl font-bold text-gray-900 tracking-tight">SmartBench</span>
                 </div>
                 <button className="text-gray-400 hover:text-gray-600 transition-colors">

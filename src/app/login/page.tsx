@@ -112,7 +112,7 @@ export default function LoginPage() {
                 >
                     <div className="bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl p-8 rounded-2xl ring-1 ring-white/5">
                         <div className="mb-8 text-center">
-
+                            <img src="/Logo-wide.png" alt="SmartBench" className="h-12 mx-auto mb-6" />
                             <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
                             <p className="mt-2 text-sm text-gray-300">
                                 Sign in to access your dashboard
