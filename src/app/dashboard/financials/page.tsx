@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,31 +24,15 @@ interface Transaction {
 }
 
 export default function FinancialsPage() {
-    const [balance, setBalance] = useState(0);
-    const [moneyIn, setMoneyIn] = useState(0);
-    const [moneyOut, setMoneyOut] = useState(0);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading: loading } = useSWR('/api/financials', fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 60000, // cache for 60s
+    });
 
-    useEffect(() => {
-        const fetchFinancials = async () => {
-            try {
-                const res = await fetch("/api/financials");
-                if (res.ok) {
-                    const data = await res.json();
-                    setBalance(data.balance || 0);
-                    setMoneyIn(data.moneyIn || 0);
-                    setMoneyOut(data.moneyOut || 0);
-                    setTransactions(data.transactions || []);
-                }
-            } catch (error) {
-                console.error("Failed to fetch financials", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchFinancials();
-    }, []);
+    const balance: number = data?.balance || 0;
+    const moneyIn: number = data?.moneyIn || 0;
+    const moneyOut: number = data?.moneyOut || 0;
+    const transactions: Transaction[] = data?.transactions || [];
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
@@ -191,8 +176,8 @@ export default function FinancialsPage() {
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex items-center justify-center space-x-2">
                                                     <div className={`h-2 w-2 rounded-full ${tx.status === "Completed" ? "bg-green-500" :
-                                                            tx.status === "Active" || tx.status === "Confirmed" ? "bg-blue-500" :
-                                                                "bg-yellow-400"
+                                                        tx.status === "Active" || tx.status === "Confirmed" ? "bg-blue-500" :
+                                                            "bg-yellow-400"
                                                         }`}></div>
                                                     <span className="font-medium text-gray-700">{tx.status}</span>
                                                 </div>

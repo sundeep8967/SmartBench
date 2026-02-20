@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Coffee, LogOut, History, Clock, Play, Loader2 } from "lucide-react";
@@ -23,36 +25,25 @@ interface Project {
 
 export default function TimeClockPage() {
     const { toast } = useToast();
-    const [activeShift, setActiveShift] = useState<TimeEntry | null>(null);
-    const [recentShifts, setRecentShifts] = useState<TimeEntry[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [companyId, setCompanyId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<string>("");
     const [elapsed, setElapsed] = useState(0);
 
-    const fetchData = useCallback(async () => {
-        try {
-            const res = await fetch("/api/time-clock");
-            if (res.ok) {
-                const data = await res.json();
-                setActiveShift(data.activeShift);
-                setRecentShifts(data.recentShifts || []);
-                setProjects(data.projects || []);
-                setCompanyId(data.companyId);
-                if (data.projects?.length > 0 && !selectedProject) {
-                    setSelectedProject(data.projects[0].id);
-                }
-            }
-        } catch (error) {
-            console.error("Failed to fetch time clock data", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const { data, isLoading: loading, mutate } = useSWR('/api/time-clock', fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 10000,
+    });
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    const activeShift: TimeEntry | null = data?.activeShift || null;
+    const recentShifts: TimeEntry[] = data?.recentShifts || [];
+    const projects: Project[] = data?.projects || [];
+
+    // Set default project on first load
+    useEffect(() => {
+        if (projects.length > 0 && !selectedProject) {
+            setSelectedProject(projects[0].id);
+        }
+    }, [projects, selectedProject]);
 
     // Live timer
     useEffect(() => {
@@ -100,7 +91,7 @@ export default function TimeClockPage() {
             }
 
             toast({ title: "Success", description: action === "clock_in" ? "Clocked in!" : action === "clock_out" ? "Clocked out!" : action === "start_break" ? "Break started." : "Break ended." });
-            await fetchData();
+            await mutate();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {

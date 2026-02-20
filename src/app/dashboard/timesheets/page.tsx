@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, AlertTriangle, ShieldCheck, Loader2, Clock, CheckCircle2 } from "lucide-react";
@@ -19,29 +21,16 @@ interface TimeEntry {
 
 export default function TimesheetsPage() {
     const { toast } = useToast();
-    const [entries, setEntries] = useState<TimeEntry[]>([]);
-    const [counts, setCounts] = useState<Record<string, number>>({ Pending: 0, Disputed: 0, Verified: 0 });
     const [activeTab, setActiveTab] = useState<"Pending" | "Disputed" | "Verified">("Pending");
-    const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    const fetchEntries = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/timesheets?status=${activeTab}`);
-            if (res.ok) {
-                const data = await res.json();
-                setEntries(data.entries || []);
-                setCounts(data.counts || { Pending: 0, Disputed: 0, Verified: 0 });
-            }
-        } catch (error) {
-            console.error("Failed to fetch timesheets", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [activeTab]);
+    const { data, isLoading: loading, mutate } = useSWR(`/api/timesheets?status=${activeTab}`, fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 30000,
+    });
 
-    useEffect(() => { fetchEntries(); }, [fetchEntries]);
+    const entries: TimeEntry[] = data?.entries || [];
+    const counts: Record<string, number> = data?.counts || { Pending: 0, Disputed: 0, Verified: 0 };
 
     const handleAction = async (entryId: string, action: "approve" | "dispute") => {
         setActionLoading(entryId);
@@ -61,7 +50,7 @@ export default function TimesheetsPage() {
                 title: action === "approve" ? "Approved" : "Disputed",
                 description: action === "approve" ? "Timesheet verified!" : "Timesheet marked as disputed.",
             });
-            await fetchEntries();
+            await mutate();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {
@@ -101,8 +90,8 @@ export default function TimesheetsPage() {
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${activeTab === tab.key
-                                ? "bg-blue-900 text-white shadow-sm"
-                                : "text-gray-600 hover:text-gray-900"
+                            ? "bg-blue-900 text-white shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
                             }`}
                     >
                         {tab.label}

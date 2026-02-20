@@ -12,31 +12,18 @@ import {
     Plus,
     ChevronDown
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 
 
 
 export default function BookingsPage() {
-    const [bookings, setBookings] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading: loading } = useSWR('/api/bookings', fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 30000,
+    });
 
-    useEffect(() => {
-        fetchBookings();
-    }, []);
-
-    const fetchBookings = async () => {
-        try {
-            const res = await fetch("/api/bookings");
-            if (res.ok) {
-                const data = await res.json();
-                setBookings(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch bookings", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const bookings: any[] = data || [];
 
     return (
         <div className="space-y-6">

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,32 +47,17 @@ interface Metrics {
 }
 
 export default function RosterPage() {
-    const [roster, setRoster] = useState<RosterMember[]>([]);
-    const [invitations, setInvitations] = useState<Invitation[]>([]);
-    const [metrics, setMetrics] = useState<Metrics>({ totalWorkers: 0, deployed: 0, bench: 0 });
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
 
-    const fetchRoster = useCallback(async () => {
-        try {
-            const res = await fetch("/api/workers/roster");
-            if (res.ok) {
-                const data = await res.json();
-                setRoster(data.roster || []);
-                setInvitations(data.invitations || []);
-                setMetrics(data.metrics || { totalWorkers: 0, deployed: 0, bench: 0 });
-            }
-        } catch (error) {
-            console.error("Failed to fetch roster", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const { data, isLoading: loading } = useSWR('/api/workers/roster', fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 30000,
+    });
 
-    useEffect(() => {
-        fetchRoster();
-    }, [fetchRoster]);
+    const roster: RosterMember[] = data?.roster || [];
+    const invitations: Invitation[] = data?.invitations || [];
+    const metrics: Metrics = data?.metrics || { totalWorkers: 0, deployed: 0, bench: 0 };
 
     const getInitials = (name: string) => {
         return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -205,8 +192,8 @@ export default function RosterPage() {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
-                                                ? "bg-green-50 text-green-600 border border-green-100"
-                                                : "bg-orange-50 text-orange-500 border border-orange-100"
+                                            ? "bg-green-50 text-green-600 border border-green-100"
+                                            : "bg-orange-50 text-orange-500 border border-orange-100"
                                             }`}>
                                             {worker.deployment_status}
                                         </span>

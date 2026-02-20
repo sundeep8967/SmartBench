@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, BadgeCheck, Star, Loader2, Users } from "lucide-react";
@@ -25,41 +27,28 @@ interface WorkOrder {
 
 export default function MarketplacePage() {
     const { toast } = useToast();
-    const [workers, setWorkers] = useState<WorkerData[]>([]);
-    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedTrade, setSelectedTrade] = useState("All");
     const [addingToCart, setAddingToCart] = useState<string | null>(null);
     const { refreshCart, cartItems } = useCart();
 
-    const fetchWorkers = useCallback(async () => {
-        setLoading(true);
-        try {
-            const params = new URLSearchParams();
-            if (searchTerm) params.set("q", searchTerm);
-            if (selectedTrade !== "All") params.set("trade", selectedTrade);
+    // Build SWR key from search params
+    const params = new URLSearchParams();
+    if (searchTerm) params.set("q", searchTerm);
+    if (selectedTrade !== "All") params.set("trade", selectedTrade);
+    const swrKey = `/api/workers/available?${params.toString()}`;
 
-            const res = await fetch(`/api/workers/available?${params.toString()}`);
-            if (res.ok) {
-                const data = await res.json();
-                setWorkers(data.workers || []);
-                setWorkOrders(data.work_orders || []);
-            }
-        } catch (error) {
-            console.error("Failed to fetch workers", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [searchTerm, selectedTrade]);
+    const { data, isLoading: loading } = useSWR(swrKey, fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 30000, // cache for 30s
+    });
 
-    useEffect(() => {
-        fetchWorkers();
-    }, [fetchWorkers]);
+    const workers: WorkerData[] = data?.workers || [];
+    const workOrders: WorkOrder[] = data?.work_orders || [];
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        fetchWorkers();
+        // SWR auto-refetches when searchTerm/selectedTrade change the key
     };
 
     const handleAddToCart = async (worker: WorkerData) => {
