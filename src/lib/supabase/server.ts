@@ -16,7 +16,7 @@ export async function createClient() {
                     try {
                         console.log("Supabase Server Client: Setting cookies", cookiesToSet.map(c => ({ name: c.name, options: c.options })));
                         cookiesToSet.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, { ...options, httpOnly: false, secure: process.env.NODE_ENV === 'production' })
+                            cookieStore.set(name, value, options)
                         )
                     } catch {
                         // The `setAll` method was called from a Server Component.

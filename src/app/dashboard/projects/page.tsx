@@ -41,7 +41,7 @@ export default function ProjectsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
                     <p className="text-muted-foreground">Manage your job sites and work orders.</p>
                 </div>
-                <CreateProjectDialog />
+                <CreateProjectDialog onProjectCreated={fetchProjects} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -91,7 +91,7 @@ export default function ProjectsPage() {
                 {projects.length === 0 && (
                     <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
                         <p className="text-muted-foreground mb-4">No projects found. Create your first project to get started.</p>
-                        <CreateProjectDialog />
+                        <CreateProjectDialog onProjectCreated={fetchProjects} />
                     </div>
                 )}
             </div>

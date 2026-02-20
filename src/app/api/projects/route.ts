@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
         if (!member) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         // Check Role (Optional: Only Admins/Managers can create projects?)
-        const roles = member.roles as string[];
-        if (!roles.includes('Admin') && !roles.includes('Manager')) {
+        const roles = (member.roles as string[]).map(r => r.toLowerCase());
+        if (!roles.includes('admin') && !roles.includes('manager')) {
             return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
         }
 

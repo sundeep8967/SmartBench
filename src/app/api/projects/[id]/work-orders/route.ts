@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id: projectId } = params;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id: projectId } = await params;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json(workOrders);
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id: projectId } = params;
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id: projectId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

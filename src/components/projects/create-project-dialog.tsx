@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { CalendarIcon, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
-export function CreateProjectDialog() {
+export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: () => void } = {}) {
     const router = useRouter();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
@@ -44,8 +44,8 @@ export function CreateProjectDialog() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
-                    start_date: formData.start_date?.toISOString(),
-                    end_date: formData.end_date?.toISOString()
+                    start_date: formData.start_date ? formData.start_date.toISOString() : undefined,
+                    end_date: formData.end_date ? formData.end_date.toISOString() : undefined
                 }),
             });
 
@@ -65,6 +65,7 @@ export function CreateProjectDialog() {
                 end_date: undefined
             });
             router.refresh();
+            onProjectCreated?.();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {
@@ -97,32 +98,20 @@ export function CreateProjectDialog() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Start Date</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.start_date && "text-muted-foreground")}>
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {formData.start_date ? format(formData.start_date, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar mode="single" selected={formData.start_date} onSelect={(d) => handleChange('start_date', d)} initialFocus />
-                                </PopoverContent>
-                            </Popover>
+                            <Label htmlFor="start_date">Start Date</Label>
+                            <DatePicker
+                                value={formData.start_date}
+                                onChange={(date) => handleChange('start_date', date)}
+                                placeholder="Select start date"
+                            />
                         </div>
                         <div className="space-y-2">
-                            <Label>End Date</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.end_date && "text-muted-foreground")}>
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {formData.end_date ? format(formData.end_date, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar mode="single" selected={formData.end_date} onSelect={(d) => handleChange('end_date', d)} initialFocus />
-                                </PopoverContent>
-                            </Popover>
+                            <Label htmlFor="end_date">End Date</Label>
+                            <DatePicker
+                                value={formData.end_date}
+                                onChange={(date) => handleChange('end_date', date)}
+                                placeholder="Select end date"
+                            />
                         </div>
                     </div>
 
