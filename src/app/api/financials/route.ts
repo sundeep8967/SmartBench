@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
             description: `Lending Revenue — ${(b.worker as any)?.full_name || 'Worker'}`,
             subtext: (b.project as any)?.name || 'Project',
             type: 'Incoming' as const,
-            amount: Number(b.worker_payout_amount) || 0,
+            amount: (Number(b.worker_payout_amount) || 0) / 100,
             status: b.status,
         })),
         ...(borrowerBookings || []).map(b => ({
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
             description: `Labor Cost — ${(b.worker as any)?.full_name || 'Worker'}`,
             subtext: (b.project as any)?.name || 'Project',
             type: 'Outgoing' as const,
-            amount: Number(b.total_amount) || 0,
+            amount: (Number(b.total_amount) || 0) / 100,
             status: b.status,
         })),
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

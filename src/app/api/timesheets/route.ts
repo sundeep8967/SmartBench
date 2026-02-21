@@ -69,6 +69,16 @@ export async function PATCH(request: NextRequest) {
 
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Verify company membership — prevents cross-tenant time entry manipulation
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
+
+    if (!member) return NextResponse.json({ error: "No active company" }, { status: 403 });
+
     const body = await request.json();
     const { time_entry_id, action } = body;
 
@@ -81,6 +91,7 @@ export async function PATCH(request: NextRequest) {
         .from('time_entries')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', time_entry_id)
+        .eq('company_id', member.company_id) // Security: scope to user's company
         .select()
         .single();
 

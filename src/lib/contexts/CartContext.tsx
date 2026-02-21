@@ -26,14 +26,14 @@ const CartContext = createContext<CartContextType>({
 export const useCart = () => useContext(CartContext);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
+    const { user, hasCompletedOnboarding } = useAuth();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
 
     const cartCount = cartItems.length;
 
     const refreshCart = useCallback(async () => {
-        if (!user) {
+        if (!user || !hasCompletedOnboarding) {
             setCartItems([]);
             return;
         }
@@ -50,7 +50,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, hasCompletedOnboarding]);
 
     useEffect(() => {
         refreshCart();
