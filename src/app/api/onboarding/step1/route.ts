@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
             .insert({
                 name: companyName,
                 address: address,
-                ein: ein
+                ein: ein,
+                contact_phone: contactPhone
             })
             .select()
             .single();

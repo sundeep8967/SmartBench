@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
                 .from('company_members')
                 .select('id, roles, company_id')
                 .eq('user_id', user.id)
-                .eq('status', 'active')
+                .eq('status', 'Active')
                 .single();
 
             if (member) {

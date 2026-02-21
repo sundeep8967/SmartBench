@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
             .from('company_members')
             .select('company_id, companies(name)')
             .eq('user_id', user.id)
-            .eq('status', 'active') // Ensure active
+            .eq('status', 'Active')
             .single();
 
         if (!adminMember) {
