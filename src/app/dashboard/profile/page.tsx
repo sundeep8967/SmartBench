@@ -45,7 +45,7 @@ export default function WorkerProfilePage() {
         if (userData) setMobile(userData.mobile_number || "");
 
         // Fetch profile
-        const { data: profileData } = await supabase.from('worker_profiles').select('*').eq('user_id', user.id).single();
+        const { data: profileData } = await supabase.from('worker_profiles').select('*').eq('user_id', user.id).maybeSingle();
         if (profileData) {
             setProfile({
                 trade: profileData.trade || "",
