@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { createWorkOrderAction } from "@/app/dashboard/projects/actions";
 
 interface WorkOrderDialogProps {
     projectId: string;
@@ -46,22 +47,13 @@ export function WorkOrderDialog({ projectId }: WorkOrderDialogProps) {
         setLoading(true);
 
         try {
-            const res = await fetch(`/api/projects/${projectId}/work-orders`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...formData,
-                    start_date: formData.start_date?.toISOString(),
-                    end_date: formData.end_date?.toISOString(),
-                    hourly_rate_min: formData.hourly_rate_min ? parseFloat(formData.hourly_rate_min) : null,
-                    hourly_rate_max: formData.hourly_rate_max ? parseFloat(formData.hourly_rate_max) : null
-                }),
+            await createWorkOrderAction(projectId, {
+                ...formData,
+                start_date: formData.start_date?.toISOString(),
+                end_date: formData.end_date?.toISOString(),
+                hourly_rate_min: formData.hourly_rate_min ? parseFloat(formData.hourly_rate_min) : null,
+                hourly_rate_max: formData.hourly_rate_max ? parseFloat(formData.hourly_rate_max) : null
             });
-
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error || "Failed to create work order");
-            }
 
             toast({ title: "Success", description: "Work Order created successfully." });
             setOpen(false);

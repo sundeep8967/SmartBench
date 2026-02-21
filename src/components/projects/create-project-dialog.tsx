@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { createProjectAction } from "@/app/dashboard/projects/actions";
 
 export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: () => void } = {}) {
     const router = useRouter();
@@ -39,20 +40,11 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
         setLoading(true);
 
         try {
-            const res = await fetch("/api/projects", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...formData,
-                    start_date: formData.start_date ? formData.start_date.toISOString() : undefined,
-                    end_date: formData.end_date ? formData.end_date.toISOString() : undefined
-                }),
+            await createProjectAction({
+                ...formData,
+                start_date: formData.start_date ? formData.start_date.toISOString() : undefined,
+                end_date: formData.end_date ? formData.end_date.toISOString() : undefined
             });
-
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error || "Failed to create project");
-            }
 
             toast({ title: "Success", description: "Project created successfully." });
             setOpen(false);
@@ -64,8 +56,7 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                 start_date: undefined,
                 end_date: undefined
             });
-            router.refresh();
-            onProjectCreated?.();
+            // router.refresh() is handled automatically by revalidatePath in the server action
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {

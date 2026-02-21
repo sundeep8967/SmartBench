@@ -1,7 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,29 +9,41 @@ import { MapPin, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import type { Project } from "@/types";
 
-export default function ProjectsPage() {
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
+export default async function ProjectsPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    useEffect(() => {
-        fetchProjects();
-    }, []);
+    if (!user) {
+        redirect("/login");
+    }
 
-    const fetchProjects = async () => {
-        try {
-            const res = await fetch("/api/projects");
-            if (res.ok) {
-                const data = await res.json();
-                setProjects(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch projects", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Get user's company
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
 
-    if (loading) return <div className="p-8">Loading projects...</div>;
+    if (!member) {
+        return (
+            <div className="p-8 text-center bg-gray-50 rounded-lg border border-dashed mt-6 max-w-6xl mx-auto">
+                <p className="text-muted-foreground">You must be affiliated with an active company to view projects.</p>
+            </div>
+        );
+    }
+
+    const { data: projects, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('company_id', member.company_id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching projects:", error);
+    }
+
+    const projectList: Project[] = projects || [];
 
     return (
         <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -41,11 +52,11 @@ export default function ProjectsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
                     <p className="text-muted-foreground">Manage your job sites and work orders.</p>
                 </div>
-                <CreateProjectDialog onProjectCreated={fetchProjects} />
+                <CreateProjectDialog />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map((project) => (
+                {projectList.map((project) => (
                     <Card key={project.id} className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-3">
                             <div className="flex justify-between items-start">
@@ -88,10 +99,10 @@ export default function ProjectsPage() {
                     </Card>
                 ))}
 
-                {projects.length === 0 && (
+                {projectList.length === 0 && (
                     <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
                         <p className="text-muted-foreground mb-4">No projects found. Create your first project to get started.</p>
-                        <CreateProjectDialog onProjectCreated={fetchProjects} />
+                        <CreateProjectDialog />
                     </div>
                 )}
             </div>

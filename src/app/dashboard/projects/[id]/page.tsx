@@ -1,7 +1,5 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { WorkOrderDialog } from "@/components/projects/work-order-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,54 +10,56 @@ import { MapPin, Calendar as CalendarIcon, Clock, ArrowLeft, Users, DollarSign }
 import { format } from "date-fns";
 import type { Project, WorkOrder } from "@/types";
 
-export default function ProjectDetailPage() {
-    const params = useParams();
-    const router = useRouter();
-    const projectId = params.id as string;
+export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
+    const projectId = params.id;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const [project, setProject] = useState<Project | null>(null);
-    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-    const [loading, setLoading] = useState(true);
+    if (!user) {
+        redirect("/login");
+    }
 
-    useEffect(() => {
-        if (projectId) {
-            fetchProjectData();
-        }
-    }, [projectId]);
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
 
-    const fetchProjectData = async () => {
-        try {
-            // Fetch Project Details (reusing list API for now or specific endpoint if needed. List endpoint filters by ID isn't implemented, so we need to add GET by ID to route or just fetch all and find.
-            // Actually, we need a specific GET /api/projects/[id] endpoint.
-            // Let's implement that or mock it for now.
-            // Wait, I implemented /api/projects for LIST, but not [id].
-            // I should have implemented [id].
-            // I'll fetch list and filter client side for MVP speed if list is small, OR implement the endpoint.
-            // Better to implement endpoint properly. But for now let's try to fetch list and find.
+    if (!member) {
+        return <div className="p-8">Unauthorized. No active company.</div>;
+    }
 
-            const resProject = await fetch("/api/projects");
-            if (resProject.ok) {
-                const projects: Project[] = await resProject.json();
-                const found = projects.find(p => p.id === projectId);
-                if (found) setProject(found);
-            }
+    // Parallel Fetching
+    const [projectRes, workOrdersRes] = await Promise.all([
+        supabase
+            .from('projects')
+            .select('*')
+            .eq('id', projectId)
+            .eq('company_id', member.company_id)
+            .single(),
+        supabase
+            .from('work_orders')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: false })
+    ]);
 
-            // Fetch Work Orders
-            const resWO = await fetch(`/api/projects/${projectId}/work-orders`);
-            if (resWO.ok) {
-                const data = await resWO.json();
-                setWorkOrders(data);
-            }
+    const project = projectRes.data as Project | null;
+    const workOrders = workOrdersRes.data as WorkOrder[] || [];
 
-        } catch (error) {
-            console.error("Failed to fetch data", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) return <div className="p-8">Loading project details...</div>;
-    if (!project) return <div className="p-8">Project not found.</div>;
+    if (!project) {
+        return (
+            <div className="max-w-6xl mx-auto p-6 space-y-8">
+                <Button variant="ghost" size="sm" asChild className="-ml-2 mb-4">
+                    <Link href="/dashboard/projects"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects</Link>
+                </Button>
+                <div className="p-8 text-center bg-gray-50 rounded-lg border border-dashed">
+                    Project not found or you do not have permission to view it.
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -72,8 +72,8 @@ export default function ProjectDetailPage() {
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2">{project.name}</h1>
-                        <div className="flex items-center text-muted-foreground spacy-x-4">
-                            <div className="flex items-center mr-6">
+                        <div className="flex items-center text-muted-foreground space-x-4">
+                            <div className="flex items-center">
                                 <MapPin className="h-4 w-4 mr-2" />
                                 {project.address}
                             </div>
@@ -130,7 +130,7 @@ export default function ProjectDetailPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-2">
                                         <div className="flex items-center">
                                             <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                                             <span>

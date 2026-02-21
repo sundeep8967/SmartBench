@@ -1,8 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import useSWR from "swr";
-import { fetcher } from "@/lib/swr-fetcher";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +11,6 @@ import {
     Plus,
     UserPlus,
     Lightbulb,
-    Loader2,
 } from "lucide-react";
 
 interface Booking {
@@ -26,16 +23,105 @@ interface Booking {
     project: string | null;
 }
 
-export default function DashboardPage() {
-    const { data, isLoading } = useSWR("/api/dashboard", fetcher, {
-        revalidateOnFocus: false,
-        dedupingInterval: 30000,
-    });
+export default async function DashboardPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const activeBookings: number = data?.activeBookings || 0;
-    const pendingVerifications: number = data?.pendingVerifications || 0;
-    const balance: number = data?.balance || 0;
-    const recentBookings: Booking[] = data?.recentBookings || [];
+    if (!user) {
+        redirect("/login");
+    }
+
+    // Get user's company
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
+
+    let activeBookings = 0;
+    let pendingVerifications = 0;
+    let balance = 0;
+    let recentBookings: Booking[] = [];
+
+    if (member) {
+        const companyId = member.company_id;
+
+        // Parallel queries for dashboard stats
+        const [bookingsRes, verificationsRes, financialsRes, recentBookingsRes] = await Promise.all([
+            // 1. Active bookings count
+            supabase
+                .from('bookings')
+                .select('id', { count: 'exact', head: true })
+                .eq('borrower_company_id', companyId)
+                .in('status', ['Confirmed', 'Active']),
+
+            // 2. Pending verifications count (time entries waiting for review)
+            supabase
+                .from('time_entries')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_id', companyId)
+                .eq('status', 'Pending'),
+
+            // 3. Financial balance from bookings (money in - money out)
+            Promise.all([
+                // Money in (as lender)
+                supabase
+                    .from('bookings')
+                    .select('total_cost')
+                    .eq('lender_company_id', companyId)
+                    .in('status', ['Confirmed', 'Active', 'Completed']),
+                // Money out (as borrower)
+                supabase
+                    .from('bookings')
+                    .select('total_cost')
+                    .eq('borrower_company_id', companyId)
+                    .in('status', ['Confirmed', 'Active', 'Completed']),
+            ]),
+
+            // 4. Recent bookings (last 5)
+            supabase
+                .from('bookings')
+                .select(`
+                    id,
+                    status,
+                    start_date,
+                    end_date,
+                    created_at,
+                    worker:users!bookings_worker_id_fkey(full_name),
+                    project:projects(name)
+                `)
+                .eq('borrower_company_id', companyId)
+                .order('created_at', { ascending: false })
+                .limit(5),
+        ]);
+
+        // Calculate financials
+        const [lenderRes, borrowerRes] = financialsRes;
+        const moneyIn = (lenderRes.data || []).reduce((sum, b) => sum + (b.total_cost || 0), 0);
+        const moneyOut = (borrowerRes.data || []).reduce((sum, b) => sum + (b.total_cost || 0), 0);
+        balance = moneyIn - moneyOut;
+
+        activeBookings = bookingsRes.count || 0;
+        pendingVerifications = verificationsRes.count || 0;
+
+        // Format recent bookings
+        recentBookings = (recentBookingsRes.data || []).map((b: any, i: number) => {
+            const workerName = b.worker?.full_name || 'Unknown Worker';
+            const initials = workerName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+            const startDate = b.start_date ? new Date(b.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+            const endDate = b.end_date ? new Date(b.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+            return {
+                id: `#BK-${String(i + 1).padStart(4, '0')}`,
+                realId: b.id,
+                worker: workerName,
+                avatar: initials,
+                dates: startDate && endDate ? `${startDate} - ${endDate}` : 'No dates set',
+                status: b.status || 'Pending',
+                project: b.project?.name || null,
+            };
+        });
+    }
 
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
@@ -76,11 +162,7 @@ export default function DashboardPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Active Bookings</p>
-                                        {isLoading ? (
-                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
-                                        ) : (
-                                            <p className="text-3xl font-bold text-gray-900 mt-1">{activeBookings}</p>
-                                        )}
+                                        <p className="text-3xl font-bold text-gray-900 mt-1">{activeBookings}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -95,11 +177,7 @@ export default function DashboardPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Pending Verifications</p>
-                                        {isLoading ? (
-                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
-                                        ) : (
-                                            <p className="text-3xl font-bold text-gray-900 mt-1">{pendingVerifications}</p>
-                                        )}
+                                        <p className="text-3xl font-bold text-gray-900 mt-1">{pendingVerifications}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -126,13 +204,7 @@ export default function DashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {isLoading ? (
-                                        <tr>
-                                            <td colSpan={5} className="px-6 py-10 text-center">
-                                                <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
-                                            </td>
-                                        </tr>
-                                    ) : recentBookings.length === 0 ? (
+                                    {recentBookings.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
                                                 No bookings yet. Create a project and book workers from the Marketplace.
@@ -180,11 +252,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-gray-500">Balance</p>
-                                {isLoading ? (
-                                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
-                                ) : (
-                                    <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(balance)}</p>
-                                )}
+                                <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(balance)}</p>
                             </div>
                         </CardContent>
                     </Card>
