@@ -105,8 +105,8 @@ export async function POST(req: Request) {
         try {
             const accountLink = await stripe.accountLinks.create({
                 account: accountId,
-                refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2`,
-                return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2?return_from_stripe=true`,
+                refresh_url: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding/step-2`,
+                return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding/step-2?return_from_stripe=true`,
                 type: 'account_onboarding',
             });
 
@@ -139,8 +139,8 @@ export async function POST(req: Request) {
 
             const accountLink = await stripe.accountLinks.create({
                 account: newAccount.id,
-                refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2`,
-                return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2?return_from_stripe=true`,
+                refresh_url: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding/step-2`,
+                return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding/step-2?return_from_stripe=true`,
                 type: 'account_onboarding',
             });
 
