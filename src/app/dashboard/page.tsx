@@ -1,28 +1,59 @@
 "use client";
 
+import Link from "next/link";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr-fetcher";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Calendar,
-    MapPin,
     Wallet,
     ClipboardCheck,
     Search,
     Plus,
     UserPlus,
     Lightbulb,
-    MoreHorizontal
+    Loader2,
 } from "lucide-react";
 
-// Mock bookings
-const bookings = [
-    { id: "#BK-9021", worker: "Mike Ross", dates: "Oct 24 - Oct 26", status: "Active", avatar: "MR" },
-    { id: "#BK-9022", worker: "Rachel Zane", dates: "Oct 28 - Nov 02", status: "Pending", avatar: "RZ" },
-    { id: "#BK-9023", worker: "Harvey Specter", dates: "Nov 05 - Nov 12", status: "Active", avatar: "HS" },
-    { id: "#BK-9024", worker: "Donna Paulsen", dates: "Nov 15 - Nov 20", status: "Pending", avatar: "DP" },
-];
+interface Booking {
+    id: string;
+    realId: string;
+    worker: string;
+    avatar: string;
+    dates: string;
+    status: string;
+    project: string | null;
+}
 
 export default function DashboardPage() {
+    const { data, isLoading } = useSWR("/api/dashboard", fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 30000,
+    });
+
+    const activeBookings: number = data?.activeBookings || 0;
+    const pendingVerifications: number = data?.pendingVerifications || 0;
+    const balance: number = data?.balance || 0;
+    const recentBookings: Booking[] = data?.recentBookings || [];
+
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+
+    const statusColor = (status: string) => {
+        switch (status) {
+            case "Active":
+            case "Confirmed":
+                return "bg-green-50 text-green-700 border border-green-100";
+            case "Pending":
+                return "bg-orange-50 text-orange-700 border border-orange-100";
+            case "Completed":
+                return "bg-blue-50 text-blue-700 border border-blue-100";
+            default:
+                return "bg-gray-50 text-gray-700 border border-gray-100";
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Welcome Section */}
@@ -45,7 +76,11 @@ export default function DashboardPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Active Bookings</p>
-                                        <p className="text-3xl font-bold text-gray-900 mt-1">5</p>
+                                        {isLoading ? (
+                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                                        ) : (
+                                            <p className="text-3xl font-bold text-gray-900 mt-1">{activeBookings}</p>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -60,7 +95,11 @@ export default function DashboardPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Pending Verifications</p>
-                                        <p className="text-3xl font-bold text-gray-900 mt-1">3</p>
+                                        {isLoading ? (
+                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                                        ) : (
+                                            <p className="text-3xl font-bold text-gray-900 mt-1">{pendingVerifications}</p>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -71,7 +110,9 @@ export default function DashboardPage() {
                     <Card className="shadow-sm border-gray-200">
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                             <h3 className="font-semibold text-gray-900">Recent Bookings</h3>
-                            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">View All</button>
+                            <Link href="/dashboard/bookings" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                View All
+                            </Link>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
@@ -85,33 +126,44 @@ export default function DashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {bookings.map((booking) => (
-                                        <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-gray-900">{booking.id}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-                                                        {booking.avatar}
-                                                    </div>
-                                                    <span className="text-gray-900 font-medium">{booking.worker}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-500">{booking.dates}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${booking.status === "Active"
-                                                        ? "bg-green-50 text-green-700 border border-green-100"
-                                                        : "bg-orange-50 text-orange-700 border border-orange-100"
-                                                    }`}>
-                                                    {booking.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button className="text-gray-400 hover:text-gray-600">
-                                                    View
-                                                </button>
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-10 text-center">
+                                                <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
                                             </td>
                                         </tr>
-                                    ))}
+                                    ) : recentBookings.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
+                                                No bookings yet. Create a project and book workers from the Marketplace.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        recentBookings.map((booking) => (
+                                            <tr key={booking.realId} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-gray-900">{booking.id}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                                            {booking.avatar}
+                                                        </div>
+                                                        <span className="text-gray-900 font-medium">{booking.worker}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500">{booking.dates}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor(booking.status)}`}>
+                                                        {booking.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <Link href="/dashboard/bookings" className="text-gray-400 hover:text-gray-600">
+                                                        View
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -120,15 +172,19 @@ export default function DashboardPage() {
 
                 {/* Right Sidebar (1/3) */}
                 <div className="space-y-6">
-                    {/* Stripe Balance */}
+                    {/* Financial Balance */}
                     <Card className="shadow-sm border-gray-200 bg-white">
                         <CardContent className="pt-6">
                             <div className="h-10 w-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-4">
                                 <Wallet size={20} />
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-gray-500">Stripe Balance</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-1">$2,450.00</p>
+                                <p className="text-sm font-medium text-gray-500">Balance</p>
+                                {isLoading ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                                ) : (
+                                    <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(balance)}</p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -137,18 +193,24 @@ export default function DashboardPage() {
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                         <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
-                            <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white justify-start h-12 text-base font-medium shadow-sm">
-                                <Search size={18} className="mr-3" />
-                                Search Workers
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start h-12 text-base font-medium text-gray-700 border-gray-300 hover:bg-gray-50">
-                                <Plus size={18} className="mr-3" />
-                                Create Project
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start h-12 text-base font-medium text-gray-700 border-gray-300 hover:bg-gray-50">
-                                <UserPlus size={18} className="mr-3" />
-                                Add to Roster
-                            </Button>
+                            <Link href="/dashboard/marketplace">
+                                <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white justify-start h-12 text-base font-medium shadow-sm">
+                                    <Search size={18} className="mr-3" />
+                                    Search Workers
+                                </Button>
+                            </Link>
+                            <Link href="/dashboard/projects">
+                                <Button variant="outline" className="w-full justify-start h-12 text-base font-medium text-gray-700 border-gray-300 hover:bg-gray-50">
+                                    <Plus size={18} className="mr-3" />
+                                    Create Project
+                                </Button>
+                            </Link>
+                            <Link href="/dashboard/roster">
+                                <Button variant="outline" className="w-full justify-start h-12 text-base font-medium text-gray-700 border-gray-300 hover:bg-gray-50">
+                                    <UserPlus size={18} className="mr-3" />
+                                    Add to Roster
+                                </Button>
+                            </Link>
                         </div>
                     </div>
 
