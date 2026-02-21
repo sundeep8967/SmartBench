@@ -34,7 +34,7 @@ describe('CartContext', () => {
 
     it('should fetch cart items and update state when user is present', async () => {
         // Arrange
-        (AuthContext.useAuth as any).mockReturnValue({ user: { id: 'user_1' } });
+        (AuthContext.useAuth as any).mockReturnValue({ user: { id: 'user_1' }, hasCompletedOnboarding: true });
         const mockCartItems = [{ id: 'item_1', worker_id: 'worker_1' }];
 
         (global.fetch as any).mockResolvedValue({
@@ -60,7 +60,7 @@ describe('CartContext', () => {
     it('should handle fetch errors gracefully', async () => {
         // Arrange
         const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-        (AuthContext.useAuth as any).mockReturnValue({ user: { id: 'user_1' } });
+        (AuthContext.useAuth as any).mockReturnValue({ user: { id: 'user_1' }, hasCompletedOnboarding: true });
 
         (global.fetch as any).mockResolvedValue({
             ok: false,

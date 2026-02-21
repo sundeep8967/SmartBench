@@ -23,6 +23,7 @@ describe('/api/cart', () => {
             eq: vi.fn().mockReturnThis(),
             order: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({ data: { company_id: 'comp_1' } }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { company_id: 'comp_1' } }),
         };
 
         (createClient as any).mockResolvedValue(mockSupabase);
@@ -38,7 +39,7 @@ describe('/api/cart', () => {
         });
 
         it('should return 403 if no active company', async () => {
-            mockSupabase.single.mockResolvedValueOnce({ data: null });
+            mockSupabase.maybeSingle.mockResolvedValueOnce({ data: null });
             const req = new NextRequest('http://localhost/api/cart');
             const res = await GET(req);
 
@@ -82,7 +83,7 @@ describe('/api/cart', () => {
             });
 
             const mockInsertedData = { id: 'new_item_1' };
-            mockSupabase.single.mockResolvedValueOnce({ data: { company_id: 'comp_1' } }) // For company query
+            mockSupabase.maybeSingle.mockResolvedValueOnce({ data: { company_id: 'comp_1' } }) // For company query
                 .mockResolvedValueOnce({ data: mockInsertedData, error: null }); // For insert query
 
             const res = await POST(req);
@@ -104,7 +105,7 @@ describe('/api/cart', () => {
                 }),
             });
 
-            mockSupabase.single.mockResolvedValueOnce({ data: { company_id: 'comp_1' } }) // For company query
+            mockSupabase.maybeSingle.mockResolvedValueOnce({ data: { company_id: 'comp_1' } }) // For company query
                 .mockResolvedValueOnce({ data: null, error: { code: '23505' } }); // For insert query
 
             const res = await POST(req);

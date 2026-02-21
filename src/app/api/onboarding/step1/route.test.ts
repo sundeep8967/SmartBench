@@ -20,7 +20,9 @@ describe('/api/onboarding/step1', () => {
             from: vi.fn().mockReturnThis(),
             insert: vi.fn().mockReturnThis(),
             select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({ data: { id: 'comp_1' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         };
 
         (createClient as any).mockResolvedValue(mockSupabase);
@@ -36,6 +38,9 @@ describe('/api/onboarding/step1', () => {
 
     it('should handle company creation failure', async () => {
         const errorMsg = 'DB constraint failed';
+        // First check: user has no company
+        mockSupabase.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+        // Second check: insertion fails
         mockSupabase.single.mockResolvedValueOnce({ data: null, error: { message: errorMsg } });
 
         const req = new NextRequest('http://localhost/api/onboarding/step1', {
@@ -56,9 +61,11 @@ describe('/api/onboarding/step1', () => {
             body: JSON.stringify({ companyName: 'Acme Corp', address: '456 Ave', ein: '987-654', contactPhone: '0987654321' }),
         });
 
-        // We need insert to resolve successfully twice: 1 for companies, 1 for company_members
-        // 1st insert handles chains: .insert().select().single()
-        // 2nd insert doesn't chain select/single, just returns { error: null }
+        // 1st insert handles chains: .maybeSingle() for company check
+        // 2nd insert handles chains: .insert().select().single() for company creation
+        // 3rd insert doesn't chain select/single, just returns { error: null }
+        mockSupabase.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+
         mockSupabase.insert.mockImplementationOnce(() => ({
             select: () => ({ single: async () => ({ data: { id: 'comp_new_1' }, error: null }) })
         }));
