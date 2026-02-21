@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useOptimistic, useEffect } from "react";
+import { useState, useOptimistic, useEffect, startTransition } from "react";
 import { timeClockAction } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,8 +78,10 @@ export default function TimeClockClient({
     }, [optimisticActiveShift]);
 
     const handleAction = async (action: "clock_in" | "clock_out" | "start_break" | "end_break") => {
-        // 1. Instantly update UI without waiting for server response
-        addOptimisticAction({ action, projectId: selectedProject });
+        // 1. Instantly update UI without waiting for server response manually wrapped in startTransition for React 19 safety
+        startTransition(() => {
+            addOptimisticAction({ action, projectId: selectedProject });
+        });
 
         try {
             // 2. Perform the server action in the background
