@@ -76,18 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (loading) return;
 
-        // Skip if already on onboarding or login pages
-        const isOnboardingPage = pathname?.startsWith("/onboarding");
+        // Skip if already on login or callback pages
         const isLoginPage = pathname === "/login";
         const isCallbackPage = pathname?.startsWith("/auth");
 
-        if (isOnboardingPage || isLoginPage || isCallbackPage) return;
+        if (isLoginPage || isCallbackPage) return;
 
-        // If user is logged in and hasn't completed onboarding, redirect
-        if (user && !hasCompletedOnboarding && !hasRedirected.current) {
-            hasRedirected.current = true;
-            console.log("AuthContext: User needs to complete onboarding, redirecting...");
-            router.push("/onboarding/step-1");
+        const isOnboardingPage = pathname?.startsWith("/onboarding");
+
+        if (user) {
+            if (hasCompletedOnboarding && isOnboardingPage) {
+                // If they completed onboarding but are trying to access the onboarding page, redirect to dashboard
+                console.log("AuthContext: User is already onboarded, redirecting to dashboard...");
+                router.push("/dashboard");
+            } else if (!hasCompletedOnboarding && !isOnboardingPage && !hasRedirected.current) {
+                // If they haven't completed onboarding and aren't on it, redirect to onboarding
+                hasRedirected.current = true;
+                console.log("AuthContext: User needs to complete onboarding, redirecting...");
+                router.push("/onboarding/step-1");
+            }
         }
     }, [user, loading, hasCompletedOnboarding, pathname, router]);
 
