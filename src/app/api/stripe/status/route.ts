@@ -17,7 +17,7 @@ export async function GET(req: Request) {
             .select('company_id, roles')
             .eq('user_id', user.id)
             .eq('status', 'Active')
-            .single();
+            .maybeSingle();
 
         if (memberError || !memberRecord?.company_id) {
             return NextResponse.json({ is_fully_onboarded: false });
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 
         // 2. RBAC Check: Must be Admin to view Stripe Status
         const roles = (memberRecord.roles as unknown as string[]) || [];
-        if (!roles.includes('Admin')) {
+        if (!roles.some(r => r.toLowerCase() === 'admin')) {
             return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
         }
 
