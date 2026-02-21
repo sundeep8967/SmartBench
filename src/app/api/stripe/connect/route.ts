@@ -101,14 +101,51 @@ export async function POST(req: Request) {
         }
 
         // 5. Create an Account Link for onboarding
-        const accountLink = await stripe.accountLinks.create({
-            account: accountId,
-            refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2`,
-            return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2?return_from_stripe=true`,
-            type: 'account_onboarding',
-        });
+        // Wrap in try-catch to handle stale/disconnected Stripe accounts gracefully
+        try {
+            const accountLink = await stripe.accountLinks.create({
+                account: accountId,
+                refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2`,
+                return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2?return_from_stripe=true`,
+                type: 'account_onboarding',
+            });
 
-        return NextResponse.json({ url: accountLink.url });
+            return NextResponse.json({ url: accountLink.url });
+        } catch (linkError: any) {
+            // Stale or disconnected account — clear it and create a fresh one
+            console.warn('Stripe account stale, recreating:', linkError.message);
+
+            const newAccount = await stripe.accounts.create({
+                email: user.email,
+                country: 'US',
+                controller: {
+                    fees: { payer: 'application' },
+                    losses: { payments: 'application' },
+                    stripe_dashboard: { type: 'express' },
+                },
+                capabilities: {
+                    card_payments: { requested: true },
+                    transfers: { requested: true },
+                },
+                settings: {
+                    payouts: { schedule: { interval: 'manual' } },
+                },
+            });
+
+            await supabase
+                .from('companies')
+                .update({ stripe_account_id: newAccount.id })
+                .eq('id', companyId);
+
+            const accountLink = await stripe.accountLinks.create({
+                account: newAccount.id,
+                refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2`,
+                return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/step-2?return_from_stripe=true`,
+                type: 'account_onboarding',
+            });
+
+            return NextResponse.json({ url: accountLink.url });
+        }
     } catch (error: any) {
         console.error('Stripe Connect error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
