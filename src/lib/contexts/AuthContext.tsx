@@ -15,8 +15,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Key for localStorage (per-user to prevent cross-account leaks)
-const getOnboardingKey = (userId: string) => `smartbench_onboarding_complete_${userId}`;
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -27,15 +26,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
     const hasRedirected = useRef(false);
 
-    // Check onboarding status from localStorage (per-user)
+    // Check onboarding status from database
     useEffect(() => {
         if (user) {
-            const completed = localStorage.getItem(getOnboardingKey(user.id));
-            setHasCompletedOnboarding(completed === "true");
+            const fetchStatus = async () => {
+                const { data, error } = await supabase
+                    .from("users")
+                    .select("is_onboarded")
+                    .eq("id", user.id)
+                    .single();
+
+                if (data && data.is_onboarded) {
+                    setHasCompletedOnboarding(true);
+                } else {
+                    setHasCompletedOnboarding(false);
+                }
+            };
+            fetchStatus();
         } else {
             setHasCompletedOnboarding(false);
         }
-    }, [user]);
+    }, [user, supabase]);
 
     useEffect(() => {
         // Get initial session

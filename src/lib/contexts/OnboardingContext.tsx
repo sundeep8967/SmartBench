@@ -62,7 +62,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const [isLoaded, setIsLoaded] = useState(false);
 
     const STORAGE_KEY = user ? `${BASE_STORAGE_KEY}_${user.id}` : BASE_STORAGE_KEY;
-    const COMPLETE_KEY = user ? `smartbench_onboarding_complete_${user.id}` : "smartbench_onboarding_complete";
 
     // Load from localStorage on mount (per-user)
     useEffect(() => {
@@ -126,7 +125,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     };
 
     const completeOnboarding = () => {
-        localStorage.setItem(COMPLETE_KEY, "true");
         localStorage.removeItem(STORAGE_KEY);
     };
 
@@ -134,7 +132,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         setData(defaultData);
         setCurrentStep(1);
         localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(COMPLETE_KEY);
     };
 
     if (!isLoaded) {

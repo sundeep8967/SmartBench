@@ -11,7 +11,12 @@ export default function Step4Users() {
     const router = useRouter();
     const mode = searchParams.get("mode") || "invite"; // 'invite' or 'profile'
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
+        try {
+            await fetch("/api/onboarding/complete", { method: "POST" });
+        } catch (error) {
+            console.error("Failed to complete onboarding", error);
+        }
         router.push("/dashboard");
     };
 
