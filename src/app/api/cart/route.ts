@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         .select('company_id')
         .eq('user_id', user.id)
         .eq('status', 'Active')
-        .single();
+        .maybeSingle();
 
     if (!member) return NextResponse.json({ error: "No active company" }, { status: 403 });
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         .select('company_id')
         .eq('user_id', user.id)
         .eq('status', 'Active')
-        .single();
+        .maybeSingle();
 
     if (!member) return NextResponse.json({ error: "No active company" }, { status: 403 });
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
             end_date
         })
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         if (error.code === '23505') { // Unique violation

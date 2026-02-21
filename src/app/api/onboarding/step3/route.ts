@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
                 .select('id, roles, company_id')
                 .eq('user_id', user.id)
                 .eq('status', 'Active')
-                .single();
+                .maybeSingle();
 
             if (member) {
                 // Auto-assign roles for Solopreneur: ['admin', 'supervisor', 'worker']

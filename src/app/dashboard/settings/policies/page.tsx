@@ -39,7 +39,7 @@ export default function PolicyConfigPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: member } = await supabase.from('company_members').select('company_id').eq('user_id', user.id).single();
+        const { data: member } = await supabase.from('company_members').select('company_id').eq('user_id', user.id).maybeSingle();
         if (member) {
             const { data: company } = await supabase.from('companies').select('*').eq('id', member.company_id).single();
             if (company) {

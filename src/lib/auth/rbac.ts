@@ -11,7 +11,7 @@ export async function getCurrentUserRole(userId: string, companyId: string): Pro
         .eq('user_id', userId)
         .eq('company_id', companyId)
         .eq('status', 'Active')
-        .single();
+        .maybeSingle();
 
     if (error || !member) {
         return [];

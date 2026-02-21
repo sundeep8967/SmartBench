@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
             .select('company_id')
             .eq('user_id', user.id)
             .eq('status', 'Active')
-            .single();
+            .maybeSingle();
 
         if (!member) {
             return NextResponse.json({ error: 'Company not found' }, { status: 404 });

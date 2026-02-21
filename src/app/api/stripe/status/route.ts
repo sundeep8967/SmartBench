@@ -34,7 +34,7 @@ export async function GET(req: Request) {
             .from('companies')
             .select('stripe_account_id')
             .eq('id', memberRecord.company_id)
-            .single();
+            .maybeSingle();
 
         if (companyError || !company?.stripe_account_id) {
             return NextResponse.json({ is_fully_onboarded: false });

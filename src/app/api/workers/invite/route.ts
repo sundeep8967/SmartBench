@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
             .select('company_id, companies(name)')
             .eq('user_id', user.id)
             .eq('status', 'Active')
-            .single();
+            .maybeSingle();
 
         if (!adminMember) {
             return NextResponse.json({ error: 'Admin is not part of an active company' }, { status: 400 });

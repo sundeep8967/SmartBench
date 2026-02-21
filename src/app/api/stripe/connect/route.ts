@@ -22,7 +22,7 @@ export async function POST(req: Request) {
             .select('company_id')
             .eq('user_id', user.id)
             .eq('status', 'Active')
-            .single();
+            .maybeSingle();
 
         let companyId = memberRecord?.company_id;
 
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
             .from('companies')
             .select('stripe_account_id')
             .eq('id', companyId)
-            .single();
+            .maybeSingle();
 
         if (companyFetchError) {
             console.error('Error fetching company:', companyFetchError);

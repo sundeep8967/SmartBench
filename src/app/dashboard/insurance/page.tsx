@@ -50,7 +50,7 @@ export default function InsurancePage() {
 
         // Get company_id (assuming context is resolved or we store it in session/localstorage)
         // For MVP, fetch generic 'company_members' to get ID.
-        const { data: member } = await supabase.from('company_members').select('company_id').eq('user_id', user.id).eq('status', 'Active').single();
+        const { data: member } = await supabase.from('company_members').select('company_id').eq('user_id', user.id).eq('status', 'Active').maybeSingle();
 
         if (member) {
             const { data } = await supabase
@@ -76,7 +76,7 @@ export default function InsurancePage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Unauthorized");
 
-            const { data: member } = await supabase.from('company_members').select('company_id').eq('user_id', user.id).single();
+            const { data: member } = await supabase.from('company_members').select('company_id').eq('user_id', user.id).maybeSingle();
             if (!member) throw new Error("No active company found");
 
             // 1. Upload File
