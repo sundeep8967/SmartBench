@@ -35,21 +35,37 @@ export async function proxy(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protect /dashboard routes
-    if (
-        !user &&
-        request.nextUrl.pathname.startsWith('/dashboard')
-    ) {
+    const isLoginPage = request.nextUrl.pathname.startsWith('/login')
+    const isOnboardingPage = request.nextUrl.pathname.startsWith('/onboarding')
+    const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
+    const isRootPage = request.nextUrl.pathname === '/'
+
+    // Unauthenticated users trying to access protected routes
+    if (!user && (isDashboardPage || isOnboardingPage)) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    // Redirect logged-in users away from auth pages
-    if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname === '/')) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
+    // Authenticated users
+    if (user) {
+        const isOnboarded = user.user_metadata?.is_onboarded === true;
+
+        if (!isOnboarded) {
+            // Not onboarded: must go to onboarding. Block from dashboard, login, and root.
+            if (!isOnboardingPage && !request.nextUrl.pathname.startsWith('/auth')) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/onboarding/step-1'
+                return NextResponse.redirect(url)
+            }
+        } else {
+            // Onboarded: must go to dashboard if they try to access login, onboarding, or root.
+            if (isOnboardingPage || isLoginPage || isRootPage) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/dashboard'
+                return NextResponse.redirect(url)
+            }
+        }
     }
 
     return supabaseResponse

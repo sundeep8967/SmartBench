@@ -20,33 +20,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+    const hasCompletedOnboarding = user?.user_metadata?.is_onboarded === true;
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createClient();
-    const hasRedirected = useRef(false);
 
-    // Check onboarding status from database
-    useEffect(() => {
-        if (user) {
-            const fetchStatus = async () => {
-                const { data, error } = await supabase
-                    .from("users")
-                    .select("is_onboarded")
-                    .eq("id", user.id)
-                    .single();
 
-                if (data && data.is_onboarded) {
-                    setHasCompletedOnboarding(true);
-                } else {
-                    setHasCompletedOnboarding(false);
-                }
-            };
-            fetchStatus();
-        } else {
-            setHasCompletedOnboarding(false);
-        }
-    }, [user, supabase]);
 
     useEffect(() => {
         // Get initial session
@@ -63,40 +42,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log(`AuthContext: Auth event ${_event}`, session);
             setUser(session?.user ?? null);
 
-            // Reset on sign out
+            // Session is handled generically
             if (_event === "SIGNED_OUT") {
-                hasRedirected.current = false;
+                // Keep minimal cleanups if needed
             }
         });
 
         return () => subscription.unsubscribe();
     }, [supabase]);
 
-    // Redirect to onboarding if user is logged in but hasn't completed onboarding
-    useEffect(() => {
-        if (loading) return;
 
-        // Skip if already on login or callback pages
-        const isLoginPage = pathname === "/login";
-        const isCallbackPage = pathname?.startsWith("/auth");
-
-        if (isLoginPage || isCallbackPage) return;
-
-        const isOnboardingPage = pathname?.startsWith("/onboarding");
-
-        if (user) {
-            if (hasCompletedOnboarding && isOnboardingPage) {
-                // If they completed onboarding but are trying to access the onboarding page, redirect to dashboard
-                console.log("AuthContext: User is already onboarded, redirecting to dashboard...");
-                router.push("/dashboard");
-            } else if (!hasCompletedOnboarding && !isOnboardingPage && !hasRedirected.current) {
-                // If they haven't completed onboarding and aren't on it, redirect to onboarding
-                hasRedirected.current = true;
-                console.log("AuthContext: User needs to complete onboarding, redirecting...");
-                router.push("/onboarding/step-1");
-            }
-        }
-    }, [user, loading, hasCompletedOnboarding, pathname, router]);
 
     const signInWithGoogle = async () => {
         try {
