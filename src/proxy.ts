@@ -53,7 +53,7 @@ export async function proxy(request: NextRequest) {
 
         if (!isOnboarded) {
             // Not onboarded: must go to onboarding. Block from dashboard, login, and root.
-            if (!isOnboardingPage && !request.nextUrl.pathname.startsWith('/auth')) {
+            if (!isOnboardingPage && !request.nextUrl.pathname.startsWith('/auth') && !request.nextUrl.pathname.startsWith('/api')) {
                 const url = request.nextUrl.clone()
                 url.pathname = '/onboarding/step-1'
                 return NextResponse.redirect(url)

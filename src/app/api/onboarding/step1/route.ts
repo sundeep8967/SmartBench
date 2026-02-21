@@ -30,12 +30,7 @@ export async function POST(req: NextRequest) {
             .insert({
                 name: companyName,
                 address: address,
-                ein: ein,
-                contact_phone: contactPhone, // Assuming this column exists or we map it?
-                // Wait, checking schema-identity.md for 'contact_phone' column on 'companies' table.
-                // If not there, we might need to add it or store in metadata.
-                // Let's assume it's NOT there and check schema first.
-                // If not, I'll omit it for now or assume it's stored on the User profile as the creator?
+                ein: ein
             })
             .select()
             .single();
