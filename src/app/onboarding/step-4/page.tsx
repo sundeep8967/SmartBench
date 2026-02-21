@@ -32,7 +32,14 @@ export default function Step4Users() {
                     Your company is set up. Now let's complete your personal profile so you can accept bookings.
                 </p>
                 <div className="pt-4">
-                    <Button onClick={() => router.push("/dashboard/profile")} size="lg" className="w-full">
+                    <Button onClick={async () => {
+                        try {
+                            await fetch("/api/onboarding/complete", { method: "POST" });
+                        } catch (error) {
+                            console.error("Failed to complete onboarding", error);
+                        }
+                        router.push("/dashboard/profile");
+                    }} size="lg" className="w-full">
                         Complete My Profile
                     </Button>
                 </div>
