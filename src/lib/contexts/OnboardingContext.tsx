@@ -18,18 +18,7 @@ export interface OnboardingData {
         verified: boolean;
         verifiedAt: string | null;
     };
-    step3: {
-        userType: "solopreneur" | "company" | null;
-    };
-    step4: {
-        // Solopreneur fields
-        trade?: string;
-        skills?: string[];
-        experienceLevel?: string;
-        // Company fields
-        companyDescription?: string;
-        website?: string;
-    };
+    step3?: any; // Terminal step, form doesn't save to this context
 }
 
 interface OnboardingContextType {
@@ -47,8 +36,6 @@ interface OnboardingContextType {
 const defaultData: OnboardingData = {
     step1: null,
     step2: { verified: false, verifiedAt: null },
-    step3: { userType: null },
-    step4: {},
 };
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -98,7 +85,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     };
 
     const nextStep = () => {
-        if (currentStep < 4) {
+        if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -116,9 +103,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             case 2:
                 return data.step2.verified;
             case 3:
-                return data.step3.userType !== null;
-            case 4:
-                return Object.keys(data.step4).length > 0;
+                return true;
             default:
                 return false;
         }

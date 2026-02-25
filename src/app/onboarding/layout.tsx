@@ -23,10 +23,9 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
     let progress = 0;
     let step = 0;
 
-    if (pathname.includes("step-1")) { progress = 25; step = 1; }
-    else if (pathname.includes("step-2")) { progress = 50; step = 2; }
-    else if (pathname.includes("step-3")) { progress = 75; step = 3; }
-    else if (pathname.includes("step-4")) { progress = 100; step = 4; }
+    if (pathname.includes("step-1")) { progress = 33; step = 1; }
+    else if (pathname.includes("step-2")) { progress = 66; step = 2; }
+    else if (pathname.includes("step-3")) { progress = 100; step = 3; }
 
     return (
         <div className="min-h-screen bg-neutral-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -37,7 +36,7 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
                         Setup your Company
                     </h2>
                     <p className="mt-1 text-sm text-neutral-500">
-                        Step {step} of 4
+                        Step {step} of 3
                     </p>
                 </div>
 

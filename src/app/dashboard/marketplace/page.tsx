@@ -5,9 +5,45 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, BadgeCheck, Star, Loader2, Users } from "lucide-react";
+import { Search, BadgeCheck, Star, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2 } from "lucide-react";
 import { useCart } from "@/lib/contexts/CartContext";
 import { useToast } from "@/components/ui/use-toast";
+
+// Mock Saved Searches Data
+const savedSearches = [
+    {
+        id: 1,
+        name: "Available Electricians (Austin)",
+        criteria: "Role: Electrician • Location: Austin, TX • Status: Bench",
+        lastRun: "2 hours ago",
+        resultsCount: 12,
+        type: "Roster"
+    },
+    {
+        id: 2,
+        name: "High Value Projects (> $100k)",
+        criteria: "Budget: > $100,000 • Status: Active",
+        lastRun: "Yesterday",
+        resultsCount: 3,
+        type: "Projects"
+    },
+    {
+        id: 3,
+        name: "Pending Compliance Reviews",
+        criteria: "Compliance: Pendant • Role: All",
+        lastRun: "3 days ago",
+        resultsCount: 5,
+        type: "Roster"
+    },
+    {
+        id: 4,
+        name: "San Francisco HVAC Crew",
+        criteria: "Role: HVAC • Location: San Francisco, CA • Status: Deployed",
+        lastRun: "1 week ago",
+        resultsCount: 8,
+        type: "Roster"
+    }
+];
 
 interface WorkerData {
     id: string;
@@ -31,6 +67,7 @@ export default function MarketplacePage() {
     const [selectedTrade, setSelectedTrade] = useState("All");
     const [addingToCart, setAddingToCart] = useState<string | null>(null);
     const { refreshCart, cartItems } = useCart();
+    const [activeTab, setActiveTab] = useState<"search" | "saved">("search");
 
     // Build SWR key from search params
     const params = new URLSearchParams();
@@ -116,141 +153,216 @@ export default function MarketplacePage() {
             {/* Title */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Marketplace</h1>
-                <p className="text-gray-500">Find and hire top-rated construction professionals.</p>
+                <p className="text-gray-500">Find and hire top-rated construction professionals, or run your saved queries.</p>
             </div>
 
-            {/* Search & Filters */}
-            <Card className="p-4 shadow-sm border-gray-200">
-                <form onSubmit={handleSearch} className="space-y-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search by name, trade, or skill..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        />
-                    </div>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 gap-6">
+                <button
+                    onClick={() => setActiveTab("search")}
+                    className={`pb-4 text-sm font-medium transition-colors border-b-2 ${activeTab === "search" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+                >
+                    Find Professionals
+                </button>
+                <button
+                    onClick={() => setActiveTab("saved")}
+                    className={`pb-4 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === "saved" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+                >
+                    <Bookmark size={16} />
+                    Saved Searches
+                </button>
+            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <select
-                            value={selectedTrade}
-                            onChange={(e) => setSelectedTrade(e.target.value)}
-                            className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        >
-                            {trades.map((t) => (
-                                <option key={t} value={t}>{t === "All" ? "All Trades" : t}</option>
-                            ))}
-                        </select>
+            {activeTab === "search" ? (
+                <>
+                    {/* Search & Filters */}
+                    <Card className="p-4 shadow-sm border-gray-200">
+                        <form onSubmit={handleSearch} className="space-y-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, trade, or skill..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
 
-                        <select className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option>Availability</option>
-                            <option>Available Now</option>
-                        </select>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <select
+                                    value={selectedTrade}
+                                    onChange={(e) => setSelectedTrade(e.target.value)}
+                                    className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                >
+                                    {trades.map((t) => (
+                                        <option key={t} value={t}>{t === "All" ? "All Trades" : t}</option>
+                                    ))}
+                                </select>
 
-                        <Button type="submit" className="bg-blue-900 hover:bg-blue-800 text-white w-full h-auto">
-                            Search
-                        </Button>
-                    </div>
-                </form>
-            </Card>
+                                <select className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option>Availability</option>
+                                    <option>Available Now</option>
+                                </select>
 
-            {/* Loading State */}
-            {loading && (
-                <div className="flex items-center justify-center py-16">
-                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                    <span className="ml-3 text-gray-500">Loading workers...</span>
-                </div>
-            )}
+                                <Button type="submit" className="bg-blue-900 hover:bg-blue-800 text-white w-full h-auto">
+                                    Search
+                                </Button>
+                            </div>
+                        </form>
+                    </Card>
 
-            {/* Empty State */}
-            {!loading && workers.length === 0 && (
-                <div className="text-center py-16 bg-gray-50 rounded-lg border border-dashed">
-                    <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <p className="text-gray-500 mb-2">No workers found matching your criteria.</p>
-                    <p className="text-gray-400 text-sm">Try adjusting your search or filters.</p>
-                </div>
-            )}
+                    {/* Loading State */}
+                    {loading && (
+                        <div className="flex items-center justify-center py-16">
+                            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                            <span className="ml-3 text-gray-500">Loading workers...</span>
+                        </div>
+                    )}
 
-            {/* Worker Grid */}
-            {!loading && workers.length > 0 && (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {workers.map((worker) => {
-                        const name = worker.user?.full_name || "Unknown Worker";
-                        const initials = getInitials(name);
-                        const skills = Array.isArray(worker.skills) ? worker.skills : [];
-                        const isInCart = cartItems.some((item) => item.worker_id === worker.user_id);
+                    {/* Empty State */}
+                    {!loading && workers.length === 0 && (
+                        <div className="text-center py-16 bg-gray-50 rounded-lg border border-dashed">
+                            <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                            <p className="text-gray-500 mb-2">No workers found matching your criteria.</p>
+                            <p className="text-gray-400 text-sm">Try adjusting your search or filters.</p>
+                        </div>
+                    )}
 
-                        return (
-                            <Card key={worker.id} className="p-5 shadow-sm border-gray-200 hover:shadow-md transition-shadow relative group">
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-2">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="h-12 w-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm border border-gray-100 overflow-hidden shrink-0">
-                                            {worker.photo_url ? (
-                                                <img src={worker.photo_url} alt={name} className="h-full w-full object-cover" />
-                                            ) : (
-                                                initials
+                    {/* Worker Grid */}
+                    {!loading && workers.length > 0 && (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {workers.map((worker) => {
+                                const name = worker.user?.full_name || "Unknown Worker";
+                                const initials = getInitials(name);
+                                const skills = Array.isArray(worker.skills) ? worker.skills : [];
+                                const isInCart = cartItems.some((item) => item.worker_id === worker.user_id);
+
+                                return (
+                                    <Card key={worker.id} className="p-5 shadow-sm border-gray-200 hover:shadow-md transition-shadow relative group">
+                                        {/* Header */}
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="h-12 w-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm border border-gray-100 overflow-hidden shrink-0">
+                                                    {worker.photo_url ? (
+                                                        <img src={worker.photo_url} alt={name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        initials
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center">
+                                                        <h3 className="font-bold text-gray-900 mr-1 group-hover:text-blue-900 transition-colors">{name}</h3>
+                                                        <BadgeCheck size={16} className="text-green-500 fill-green-100" />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500">{worker.trade || "General"}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center bg-orange-50 px-2 py-0.5 rounded text-orange-600 font-bold text-xs">
+                                                <Star size={12} className="fill-current mr-1" />
+                                                4.8
+                                            </div>
+                                        </div>
+
+                                        {/* Skills */}
+                                        <div className="flex flex-wrap gap-2 mt-4 mb-6">
+                                            {skills.slice(0, 4).map((skill) => (
+                                                <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium border border-gray-200">
+                                                    {skill}
+                                                </span>
+                                            ))}
+                                            {skills.length > 4 && (
+                                                <span className="px-2 py-1 text-gray-400 text-xs">+{skills.length - 4} more</span>
                                             )}
                                         </div>
-                                        <div>
-                                            <div className="flex items-center">
-                                                <h3 className="font-bold text-gray-900 mr-1 group-hover:text-blue-900 transition-colors">{name}</h3>
-                                                <BadgeCheck size={16} className="text-green-500 fill-green-100" />
+
+                                        {/* Footer */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                            <div>
+                                                <span className="text-xl font-bold text-gray-900">${worker.hourly_rate}</span>
+                                                <span className="text-xs text-gray-500">/hr</span>
                                             </div>
-                                            <p className="text-xs text-gray-500">{worker.trade || "General"}</p>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-blue-900 border-blue-200 hover:bg-blue-50 cursor-pointer"
+                                                onClick={() => handleAddToCart(worker)}
+                                                disabled={addingToCart === worker.user_id || isInCart}
+                                            >
+                                                {addingToCart === worker.user_id ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Adding...
+                                                    </>
+                                                ) : isInCart ? (
+                                                    <>
+                                                        <BadgeCheck className="mr-2 h-4 w-4" />
+                                                        Added
+                                                    </>
+                                                ) : (
+                                                    "Add to Cart"
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    )}
+                </>
+            ) : (
+                /* Saved Searches Tab Content */
+                <div className="space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">Your Saved Searches</h2>
+                            <p className="text-sm text-gray-500 mt-1">Quickly access your frequently used filters and queries.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                        {savedSearches.map((search) => (
+                            <Card key={search.id} className="shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div className="flex items-start space-x-4 flex-1">
+                                        <div className={`p-3 rounded-lg ${search.type === "Roster" ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
+                                            }`}>
+                                            <Bookmark size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                                {search.name}
+                                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500">
+                                                    {search.type}
+                                                </span>
+                                            </h3>
+                                            <p className="text-sm text-gray-500 mt-1">{search.criteria}</p>
+                                            <div className="flex items-center text-xs text-gray-400 mt-2 space-x-4">
+                                                <span className="flex items-center">
+                                                    <Clock size={12} className="mr-1" /> Last run: {search.lastRun}
+                                                </span>
+                                                <span className="font-medium text-gray-500">
+                                                    {search.resultsCount} matches found
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center bg-orange-50 px-2 py-0.5 rounded text-orange-600 font-bold text-xs">
-                                        <Star size={12} className="fill-current mr-1" />
-                                        4.8
-                                    </div>
-                                </div>
 
-                                {/* Skills */}
-                                <div className="flex flex-wrap gap-2 mt-4 mb-6">
-                                    {skills.slice(0, 4).map((skill) => (
-                                        <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium border border-gray-200">
-                                            {skill}
-                                        </span>
-                                    ))}
-                                    {skills.length > 4 && (
-                                        <span className="px-2 py-1 text-gray-400 text-xs">+{skills.length - 4} more</span>
-                                    )}
-                                </div>
-
-                                {/* Footer */}
-                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                    <div>
-                                        <span className="text-xl font-bold text-gray-900">${worker.hourly_rate}</span>
-                                        <span className="text-xs text-gray-500">/hr</span>
+                                    <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
+                                        <Button size="sm" className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm">
+                                            <Play size={14} className="mr-2 text-green-600" /> Run Search
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-blue-600">
+                                            <Edit2 size={16} />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-red-600">
+                                            <Trash2 size={16} />
+                                        </Button>
                                     </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-blue-900 border-blue-200 hover:bg-blue-50 cursor-pointer"
-                                        onClick={() => handleAddToCart(worker)}
-                                        disabled={addingToCart === worker.user_id || isInCart}
-                                    >
-                                        {addingToCart === worker.user_id ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Adding...
-                                            </>
-                                        ) : isInCart ? (
-                                            <>
-                                                <BadgeCheck className="mr-2 h-4 w-4" />
-                                                Added
-                                            </>
-                                        ) : (
-                                            "Add to Cart"
-                                        )}
-                                    </Button>
                                 </div>
                             </Card>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
