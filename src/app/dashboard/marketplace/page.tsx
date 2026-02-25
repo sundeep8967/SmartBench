@@ -5,12 +5,24 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, BadgeCheck, Star, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2 } from "lucide-react";
+import { Search, BadgeCheck, Star, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2, Save } from "lucide-react";
 import { useCart } from "@/lib/contexts/CartContext";
 import { useToast } from "@/components/ui/use-toast";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Mock Saved Searches Data
-const savedSearches = [
+const initialSavedSearches = [
     {
         id: 1,
         name: "Available Electricians (Austin)",
@@ -45,6 +57,8 @@ const savedSearches = [
     }
 ];
 
+type SavedSearch = typeof initialSavedSearches[0];
+
 interface WorkerData {
     id: string;
     user_id: string;
@@ -68,6 +82,13 @@ export default function MarketplacePage() {
     const [addingToCart, setAddingToCart] = useState<string | null>(null);
     const { refreshCart, cartItems } = useCart();
     const [activeTab, setActiveTab] = useState<"search" | "saved">("search");
+
+    // Save Search Modal State
+    const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(initialSavedSearches);
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [newSearchName, setNewSearchName] = useState("");
+    const [searchContext, setSearchContext] = useState("general");
+    const [alertPref, setAlertPref] = useState("daily");
 
     // Build SWR key from search params
     const params = new URLSearchParams();
@@ -146,6 +167,32 @@ export default function MarketplacePage() {
             .slice(0, 2);
     };
 
+    const handleSaveSearch = () => {
+        if (!newSearchName.trim()) {
+            toast({ title: "Name required", description: "Please enter a name for your saved search.", variant: "destructive" });
+            return;
+        }
+
+        const newSearch: SavedSearch = {
+            id: Date.now(),
+            name: newSearchName,
+            criteria: `Role: ${selectedTrade} • Query: ${searchTerm || "Any"}`,
+            lastRun: "Just now",
+            resultsCount: workers.length,
+            type: searchContext === "general" ? "General" : "Project",
+        };
+
+        setSavedSearches([newSearch, ...savedSearches]);
+        setIsSaveModalOpen(false);
+        setNewSearchName("");
+
+        toast({
+            title: "Search Saved",
+            description: "Your search criteria has been saved. You will receive alerts based on your preferences.",
+            variant: "success",
+        });
+    };
+
     const trades = ["All", "Electrician", "Plumber", "HVAC Technician", "General Contractor", "Project Manager", "Carpenter"];
 
     return (
@@ -205,9 +252,77 @@ export default function MarketplacePage() {
                                     <option>Available Now</option>
                                 </select>
 
-                                <Button type="submit" className="bg-blue-900 hover:bg-blue-800 text-white w-full h-auto">
-                                    Search
-                                </Button>
+                                <div className="flex space-x-2">
+                                    <Button type="submit" className="bg-blue-900 hover:bg-blue-800 text-white flex-1 h-auto py-2.5">
+                                        Search
+                                    </Button>
+
+                                    <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button type="button" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 h-auto py-2.5 px-3 flex items-center gap-2">
+                                                <Save size={18} />
+                                                <span>Save Search</span>
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                            <DialogHeader>
+                                                <DialogTitle>Save Search Criteria</DialogTitle>
+                                                <DialogDescription>
+                                                    Save these filters to quickly run the search later and receive automated alerts for new matching workers.
+                                                </DialogDescription>
+                                            </DialogHeader>
+
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="search-name">Search Name *</Label>
+                                                    <Input
+                                                        id="search-name"
+                                                        placeholder="e.g., Austin Electricians"
+                                                        value={newSearchName}
+                                                        onChange={(e) => setNewSearchName(e.target.value)}
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-2 pt-2">
+                                                    <Label className="text-sm font-semibold text-gray-900 border-b pb-1">Context</Label>
+                                                    <RadioGroup value={searchContext} onValueChange={setSearchContext} className="gap-0">
+                                                        <div className="flex items-center space-x-2 py-2">
+                                                            <RadioGroupItem value="general" id="context-general" />
+                                                            <Label htmlFor="context-general" className="font-normal cursor-pointer text-gray-700">General Search</Label>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 py-2">
+                                                            <RadioGroupItem value="project" id="context-project" />
+                                                            <Label htmlFor="context-project" className="font-normal cursor-pointer text-gray-700">Project Specific (Timezone aware)</Label>
+                                                        </div>
+                                                    </RadioGroup>
+                                                </div>
+
+                                                <div className="grid gap-2 pt-2">
+                                                    <Label className="text-sm font-semibold text-gray-900 border-b pb-1">Alert Preferences</Label>
+                                                    <RadioGroup value={alertPref} onValueChange={setAlertPref} className="gap-0">
+                                                        <div className="flex items-center space-x-2 py-2">
+                                                            <RadioGroupItem value="instant" id="alert-instant" />
+                                                            <Label htmlFor="alert-instant" className="font-normal cursor-pointer text-gray-700">Instant Alerts (Immediately on match)</Label>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 py-2">
+                                                            <RadioGroupItem value="daily" id="alert-daily" />
+                                                            <Label htmlFor="alert-daily" className="font-normal cursor-pointer text-gray-700">Daily Digest (Once daily at 5:00 AM)</Label>
+                                                        </div>
+                                                    </RadioGroup>
+                                                </div>
+                                            </div>
+
+                                            <DialogFooter>
+                                                <Button type="button" variant="outline" onClick={() => setIsSaveModalOpen(false)}>
+                                                    Cancel
+                                                </Button>
+                                                <Button type="button" onClick={handleSaveSearch} className="bg-blue-600 hover:bg-blue-700">
+                                                    Save Search
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
                             </div>
                         </form>
                     </Card>
@@ -349,7 +464,17 @@ export default function MarketplacePage() {
                                     </div>
 
                                     <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
-                                        <Button size="sm" className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm">
+                                        <Button
+                                            size="sm"
+                                            className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
+                                            onClick={() => {
+                                                // Extract the role from criteria (e.g., "Role: Electrician • ...")
+                                                const match = search.criteria.match(/Role:\s*([^•]+)/);
+                                                const role = match && match[1].trim() !== "All" ? match[1].trim() : "";
+                                                setSearchTerm(role);
+                                                setActiveTab("search");
+                                            }}
+                                        >
                                             <Play size={14} className="mr-2 text-green-600" /> Run Search
                                         </Button>
                                         <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-blue-600">
