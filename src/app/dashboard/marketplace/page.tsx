@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, BadgeCheck, Star, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2, Save } from "lucide-react";
 import { useCart } from "@/lib/contexts/CartContext";
+import { useAuth } from "@/lib/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import {
     Dialog,
@@ -21,43 +22,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Mock Saved Searches Data
-const initialSavedSearches = [
-    {
-        id: 1,
-        name: "Available Electricians (Austin)",
-        criteria: "Role: Electrician • Location: Austin, TX • Status: Bench",
-        lastRun: "2 hours ago",
-        resultsCount: 12,
-        type: "Roster"
-    },
-    {
-        id: 2,
-        name: "High Value Projects (> $100k)",
-        criteria: "Budget: > $100,000 • Status: Active",
-        lastRun: "Yesterday",
-        resultsCount: 3,
-        type: "Projects"
-    },
-    {
-        id: 3,
-        name: "Pending Compliance Reviews",
-        criteria: "Compliance: Pendant • Role: All",
-        lastRun: "3 days ago",
-        resultsCount: 5,
-        type: "Roster"
-    },
-    {
-        id: 4,
-        name: "San Francisco HVAC Crew",
-        criteria: "Role: HVAC • Location: San Francisco, CA • Status: Deployed",
-        lastRun: "1 week ago",
-        resultsCount: 8,
-        type: "Roster"
-    }
-];
-
-type SavedSearch = typeof initialSavedSearches[0];
+type SavedSearch = {
+    id: string;
+    name: string;
+    search_criteria: any;
+    alert_preference: string;
+    timezone: string;
+    is_active: boolean;
+    last_checked_at: string | null;
+    created_at: string;
+};
 
 interface WorkerData {
     id: string;
@@ -81,14 +55,13 @@ export default function MarketplacePage() {
     const [selectedTrade, setSelectedTrade] = useState("All");
     const [addingToCart, setAddingToCart] = useState<string | null>(null);
     const { refreshCart, cartItems } = useCart();
+    const { user, companyId } = useAuth();
     const [activeTab, setActiveTab] = useState<"search" | "saved">("search");
 
-    // Save Search Modal State
-    const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(initialSavedSearches);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [newSearchName, setNewSearchName] = useState("");
-    const [searchContext, setSearchContext] = useState("general");
     const [alertPref, setAlertPref] = useState("daily");
+    const [isSaving, setIsSaving] = useState(false);
 
     // Build SWR key from search params
     const params = new URLSearchParams();
@@ -96,13 +69,20 @@ export default function MarketplacePage() {
     if (selectedTrade !== "All") params.set("trade", selectedTrade);
     const swrKey = `/api/workers/available?${params.toString()}`;
 
-    const { data, isLoading: loading } = useSWR(swrKey, fetcher, {
+    const { data: searchData, isLoading: loading } = useSWR(swrKey, fetcher, {
         revalidateOnFocus: false,
         dedupingInterval: 30000, // cache for 30s
     });
 
-    const workers: WorkerData[] = data?.workers || [];
-    const workOrders: WorkOrder[] = data?.work_orders || [];
+    // Fetch Saved Searches
+    const { data: savedSearchesData, mutate: mutateSavedSearches } = useSWR(
+        companyId ? `/api/marketplace/saved-searches?companyId=${companyId}` : null,
+        fetcher
+    );
+    const savedSearches: SavedSearch[] = savedSearchesData || [];
+
+    const workers: WorkerData[] = searchData?.workers || [];
+    const workOrders: WorkOrder[] = searchData?.work_orders || [];
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -167,30 +147,61 @@ export default function MarketplacePage() {
             .slice(0, 2);
     };
 
-    const handleSaveSearch = () => {
+    const handleSaveSearch = async () => {
         if (!newSearchName.trim()) {
             toast({ title: "Name required", description: "Please enter a name for your saved search.", variant: "destructive" });
             return;
         }
 
-        const newSearch: SavedSearch = {
-            id: Date.now(),
-            name: newSearchName,
-            criteria: `Role: ${selectedTrade} • Query: ${searchTerm || "Any"}`,
-            lastRun: "Just now",
-            resultsCount: workers.length,
-            type: searchContext === "general" ? "General" : "Project",
-        };
+        if (!companyId) {
+            toast({ title: "Error", description: "Company context not loaded.", variant: "destructive" });
+            return;
+        }
 
-        setSavedSearches([newSearch, ...savedSearches]);
-        setIsSaveModalOpen(false);
-        setNewSearchName("");
+        setIsSaving(true);
 
-        toast({
-            title: "Search Saved",
-            description: "Your search criteria has been saved. You will receive alerts based on your preferences.",
-            variant: "success",
-        });
+        try {
+            const criteria = {
+                trade: selectedTrade !== "All" ? selectedTrade : null,
+                searchTerm: searchTerm || null
+            };
+
+            const payload = {
+                borrower_company_id: companyId,
+                name: newSearchName,
+                search_criteria: criteria,
+                alert_preference: alertPref === "daily" ? "Daily_Digest" : "Instant"
+            };
+
+            const response = await fetch('/api/marketplace/saved-searches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save search');
+            }
+
+            await mutateSavedSearches();
+            setIsSaveModalOpen(false);
+            setNewSearchName("");
+
+            toast({
+                title: "Search Saved",
+                description: "Your search criteria has been saved. You will receive alerts based on your preferences.",
+                variant: "success",
+            });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "Could not save search",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const trades = ["All", "Electrician", "Plumber", "HVAC Technician", "General Contractor", "Project Manager", "Carpenter"];
@@ -284,20 +295,6 @@ export default function MarketplacePage() {
                                                 </div>
 
                                                 <div className="grid gap-2 pt-2">
-                                                    <Label className="text-sm font-semibold text-gray-900 border-b pb-1">Context</Label>
-                                                    <RadioGroup value={searchContext} onValueChange={setSearchContext} className="gap-0">
-                                                        <div className="flex items-center space-x-2 py-2">
-                                                            <RadioGroupItem value="general" id="context-general" />
-                                                            <Label htmlFor="context-general" className="font-normal cursor-pointer text-gray-700">General Search</Label>
-                                                        </div>
-                                                        <div className="flex items-center space-x-2 py-2">
-                                                            <RadioGroupItem value="project" id="context-project" />
-                                                            <Label htmlFor="context-project" className="font-normal cursor-pointer text-gray-700">Project Specific (Timezone aware)</Label>
-                                                        </div>
-                                                    </RadioGroup>
-                                                </div>
-
-                                                <div className="grid gap-2 pt-2">
                                                     <Label className="text-sm font-semibold text-gray-900 border-b pb-1">Alert Preferences</Label>
                                                     <RadioGroup value={alertPref} onValueChange={setAlertPref} className="gap-0">
                                                         <div className="flex items-center space-x-2 py-2">
@@ -316,8 +313,15 @@ export default function MarketplacePage() {
                                                 <Button type="button" variant="outline" onClick={() => setIsSaveModalOpen(false)}>
                                                     Cancel
                                                 </Button>
-                                                <Button type="button" onClick={handleSaveSearch} className="bg-blue-600 hover:bg-blue-700">
-                                                    Save Search
+                                                <Button type="button" onClick={handleSaveSearch} className="bg-blue-600 hover:bg-blue-700" disabled={isSaving}>
+                                                    {isSaving ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        "Save Search"
+                                                    )}
                                                 </Button>
                                             </DialogFooter>
                                         </DialogContent>
@@ -440,7 +444,7 @@ export default function MarketplacePage() {
                             <Card key={search.id} className="shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
                                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                                     <div className="flex items-start space-x-4 flex-1">
-                                        <div className={`p-3 rounded-lg ${search.type === "Roster" ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
+                                        <div className={`p-3 rounded-lg ${search.search_criteria?.trade ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
                                             }`}>
                                             <Bookmark size={20} />
                                         </div>
@@ -448,16 +452,19 @@ export default function MarketplacePage() {
                                             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                                                 {search.name}
                                                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500">
-                                                    {search.type}
+                                                    {search.search_criteria?.trade ? "Roster" : "General"}
                                                 </span>
                                             </h3>
-                                            <p className="text-sm text-gray-500 mt-1">{search.criteria}</p>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                {search.search_criteria?.trade ? `Role: ${search.search_criteria.trade}` : "All Trades"}
+                                                {search.search_criteria?.searchTerm ? ` • Query: ${search.search_criteria.searchTerm}` : ""}
+                                            </p>
                                             <div className="flex items-center text-xs text-gray-400 mt-2 space-x-4">
                                                 <span className="flex items-center">
-                                                    <Clock size={12} className="mr-1" /> Last run: {search.lastRun}
+                                                    <Clock size={12} className="mr-1" /> Created: {new Date(search.created_at).toLocaleDateString()}
                                                 </span>
                                                 <span className="font-medium text-gray-500">
-                                                    {search.resultsCount} matches found
+                                                    {search.alert_preference === 'Daily_Digest' ? 'Daily Alerts' : 'Instant Alerts'}
                                                 </span>
                                             </div>
                                         </div>
@@ -468,9 +475,7 @@ export default function MarketplacePage() {
                                             size="sm"
                                             className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
                                             onClick={() => {
-                                                // Extract the role from criteria (e.g., "Role: Electrician • ...")
-                                                const match = search.criteria.match(/Role:\s*([^•]+)/);
-                                                const role = match && match[1].trim() !== "All" ? match[1].trim() : "";
+                                                const role = search.search_criteria?.trade || "";
                                                 setSearchTerm(role);
                                                 setActiveTab("search");
                                             }}
