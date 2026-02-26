@@ -9,6 +9,8 @@ const containerStyle = {
     borderRadius: "0.5rem"
 };
 
+const libraries: ("places")[] = ["places"];
+
 interface LocationPickerMapProps {
     lat: number;
     lng: number;
@@ -18,8 +20,7 @@ interface LocationPickerMapProps {
 export function LocationPickerMap({ lat, lng, onChange }: LocationPickerMapProps) {
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        // It's important to not define libraries here if AddressInput defines "places" and is rendered simultaneously.
-        // Google Maps JS API warns if multiple concurrent loads happen with different configurations.
+        libraries,
     });
 
     const [isDragging, setIsDragging] = useState(false);
