@@ -43,6 +43,8 @@ export interface WorkerProfile {
     tools_equipment?: string;
     photo_url?: string;
     home_zip_code?: string;
+    lat?: number;
+    lng?: number;
     travel_radius_miles?: number;
     earliest_start_time?: string;
     latest_start_time?: string;

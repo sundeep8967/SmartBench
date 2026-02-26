@@ -8,6 +8,8 @@ export async function updateWorkerProfileAction(formData: {
     earliest_start_time: string;
     latest_start_time: string;
     home_zip_code: string;
+    lat?: number;
+    lng?: number;
 }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -22,6 +24,8 @@ export async function updateWorkerProfileAction(formData: {
             earliest_start_time: formData.earliest_start_time,
             latest_start_time: formData.latest_start_time,
             home_zip_code: formData.home_zip_code,
+            lat: formData.lat || null,
+            lng: formData.lng || null,
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id'

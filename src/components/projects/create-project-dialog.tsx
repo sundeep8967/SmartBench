@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { AddressInput } from "@/components/ui/address-input";
+import { LocationPickerMap } from "@/components/ui/location-picker-map";
 import { createProjectAction } from "@/app/dashboard/projects/actions";
 
 export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: () => void } = {}) {
@@ -81,7 +82,15 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
             <DialogTrigger asChild>
                 <Button><Plus className="mr-2 h-4 w-4" /> New Project</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
+            <DialogContent
+                className="sm:max-w-[525px]"
+                onInteractOutside={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest('.pac-container')) {
+                        e.preventDefault();
+                    }
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle>Create New Project</DialogTitle>
                     <DialogDescription>
@@ -104,6 +113,24 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                             required
                         />
                     </div>
+
+                    {formData.lat !== undefined && formData.lng !== undefined && (
+                        <div className="space-y-2">
+                            <Label>Confirm Pin Location</Label>
+                            <LocationPickerMap
+                                lat={formData.lat}
+                                lng={formData.lng}
+                                onChange={(lat, lng, address) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        lat,
+                                        lng,
+                                        ...(address ? { address } : {})
+                                    }))
+                                }}
+                            />
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { updateWorkerProfileAction } from "./actions";
 import { MapPin, Clock } from "lucide-react";
+import { AddressInput } from "@/components/ui/address-input";
+import { LocationPickerMap } from "@/components/ui/location-picker-map";
 
 import { WorkerProfile } from "@/types";
 
@@ -18,7 +20,9 @@ export function WorkerProfileForm({ initialData }: { initialData?: WorkerProfile
         travel_radius_miles: initialData?.travel_radius_miles || 50,
         earliest_start_time: initialData?.earliest_start_time || "06:00",
         latest_start_time: initialData?.latest_start_time || "09:00",
-        home_zip_code: initialData?.home_zip_code || ""
+        home_zip_code: initialData?.home_zip_code || "",
+        lat: initialData?.lat,
+        lng: initialData?.lng
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -43,18 +47,36 @@ export function WorkerProfileForm({ initialData }: { initialData?: WorkerProfile
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="home_zip_code" className="flex items-center">
-                                <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                                Home Zip Code
-                            </Label>
-                            <Input
-                                id="home_zip_code"
-                                placeholder="e.g. 90210"
-                                value={formData.home_zip_code}
-                                onChange={(e) => setFormData({ ...formData, home_zip_code: e.target.value })}
-                                required
-                            />
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="home_zip_code" className="flex items-center">
+                                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                                    Home Address
+                                </Label>
+                                <AddressInput
+                                    value={formData.home_zip_code}
+                                    onChange={(address, lat, lng) => setFormData({ ...formData, home_zip_code: address, lat, lng })}
+                                    required
+                                />
+                            </div>
+
+                            {formData.lat !== undefined && formData.lng !== undefined && (
+                                <div className="space-y-2">
+                                    <Label>Confirm Pin Location</Label>
+                                    <LocationPickerMap
+                                        lat={formData.lat}
+                                        lng={formData.lng}
+                                        onChange={(lat, lng, address) => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                lat,
+                                                lng,
+                                                ...(address ? { home_zip_code: address } : {})
+                                            }))
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2">
