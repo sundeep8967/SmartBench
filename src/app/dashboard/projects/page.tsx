@@ -56,35 +56,39 @@ export default async function ProjectsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projectList.map((project) => (
-                    <Card key={project.id} className="hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-3">
-                            <div className="flex justify-between items-start">
-                                <CardTitle className="text-lg font-semibold truncate pr-2">{project.name}</CardTitle>
-                            </div>
-                            <CardDescription className="flex items-center mt-1">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                <span className="truncate">{project.address}</span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-                                {project.project_description || "No description provided."}
-                            </div>
-
-                            {project.daily_start_time && (
-                                <div className="flex items-center text-sm">
-                                    <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                                    <span>Starts at {project.daily_start_time.slice(0, 5)}</span>
+                    <Link href={`/dashboard/projects/${project.id}`} key={project.id} className="flex h-full w-full group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+                        <Card className="flex flex-col h-full w-full hover:shadow-md transition-all group-hover:border-primary/50 cursor-pointer">
+                            <CardHeader className="pb-3 flex-none">
+                                <div className="flex justify-between items-start">
+                                    <CardTitle className="text-lg font-semibold truncate pr-2">{project.name}</CardTitle>
                                 </div>
-                            )}
+                                <CardDescription className="flex items-center mt-1">
+                                    <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                                    <span className="truncate">{project.address}</span>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col flex-grow h-full">
+                                <div className="space-y-4 flex flex-col flex-grow">
+                                    <div className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
+                                        {project.project_description || "No description provided."}
+                                    </div>
 
-                            <Button variant="outline" className="w-full" asChild>
-                                <Link href={`/dashboard/projects/${project.id}`}>
-                                    View Details <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
+                                    {project.daily_start_time && (
+                                        <div className="flex items-center text-sm">
+                                            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                                            <span>Starts at {project.daily_start_time.slice(0, 5)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-4 pt-2 border-t border-transparent">
+                                    <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium transition-colors group-hover:bg-gray-50 text-gray-900 shadow-sm">
+                                        View Details <ArrowRight className="ml-2 h-4 w-4" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
                 ))}
 
                 {projectList.length === 0 && (

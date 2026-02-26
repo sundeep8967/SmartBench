@@ -12,7 +12,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
                 className={`rounded-xl border border-gray-200 bg-white shadow-sm ${className}`}
                 {...props}
             >
-                <div className={noPadding ? "" : "p-6"}>{children}</div>
+                <div className={`${noPadding ? "" : "p-6"} flex flex-col h-full`}>{children}</div>
             </div>
         );
     }

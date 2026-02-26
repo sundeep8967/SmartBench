@@ -1,10 +1,10 @@
 # Epic List
 
-1. **Epic 1: Foundation & Core Infrastructure** - Establish project setup, authentication, company/user management, and basic database schema with direct Stripe payment processing.
+1. ~~**Epic 1: Foundation & Core Infrastructure**~~ - Establish project setup, authentication, company/user management, and basic database schema with direct Stripe payment processing. **(COMPLETED)**
 
-1.1. **Epic 1.1: Project Management** - Enable borrowers to create, edit, and manage projects. Projects are persistent entities that exist independent of bookings and serve as the parent entity for all bookings.
+1.1. ~~**Epic 1.1: Project Management**~~ - Enable borrowers to create, edit, and manage projects. Projects are persistent entities that exist independent of bookings and serve as the parent entity for all bookings. **(COMPLETED)**
 
-2. **Epic 2: Worker Onboarding & Profile Management** - Enable workers to create profiles, admins to manage rosters, and system to handle insurance verification and worker listing.
+2. ~~**Epic 2: Worker Onboarding & Profile Management**~~ - Enable workers to create profiles, admins to manage rosters, and system to handle insurance verification and worker listing. **(COMPLETED)**
 
 3. **Epic 3: Marketplace & Search** - Build worker search engine with filters and availability management to enable borrowers to find and evaluate workers.
 
