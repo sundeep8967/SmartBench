@@ -29,12 +29,14 @@ export async function createProjectAction(formData: any) {
         .insert({
             company_id: member.company_id,
             name: formData.name,
-            description: formData.description,
+            project_description: formData.project_description,
             address: formData.address,
+            lat: formData.lat,
+            lng: formData.lng,
             timezone: formData.timezone,
-            start_date: formData.start_date,
-            end_date: formData.end_date,
-            status: 'Active'
+            daily_start_time: formData.daily_start_time,
+            meeting_location_type: formData.meeting_location_type,
+            meeting_instructions: formData.meeting_instructions,
         })
         .select()
         .single();
@@ -85,4 +87,38 @@ export async function createWorkOrderAction(projectId: string, formData: any) {
 
     revalidatePath(`/dashboard/projects/${projectId}`);
     return data;
+}
+
+export async function deleteProjectAction(projectId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Unauthorized");
+
+    // Verify company relation
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id, roles')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
+
+    if (!member) throw new Error("Forbidden");
+
+    // Check Role
+    const roles = (member.roles as string[]).map(r => r.toLowerCase());
+    if (!roles.includes('admin')) {
+        throw new Error("Only admins can delete projects");
+    }
+
+    const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId)
+        .eq('company_id', member.company_id);
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/dashboard/projects");
+    return { success: true };
 }

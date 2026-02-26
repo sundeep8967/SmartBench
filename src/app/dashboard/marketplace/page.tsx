@@ -57,6 +57,7 @@ export default function MarketplacePage() {
     const { refreshCart, cartItems } = useCart();
     const { user, companyId } = useAuth();
     const [activeTab, setActiveTab] = useState<"search" | "saved">("search");
+    const [selectedProjectId, setSelectedProjectId] = useState<string>("All");
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [newSearchName, setNewSearchName] = useState("");
@@ -67,6 +68,7 @@ export default function MarketplacePage() {
     const params = new URLSearchParams();
     if (searchTerm) params.set("q", searchTerm);
     if (selectedTrade !== "All") params.set("trade", selectedTrade);
+    if (selectedProjectId !== "All") params.set("projectId", selectedProjectId);
     const swrKey = `/api/workers/available?${params.toString()}`;
 
     const { data: searchData, isLoading: loading } = useSWR(swrKey, fetcher, {
@@ -80,6 +82,12 @@ export default function MarketplacePage() {
         fetcher
     );
     const savedSearches: SavedSearch[] = savedSearchesData || [];
+
+    const { data: projectsData } = useSWR(
+        companyId ? `/api/projects/list?companyId=${companyId}` : null,
+        fetcher
+    );
+    const companyProjects = projectsData || [];
 
     const workers: WorkerData[] = searchData?.workers || [];
     const workOrders: WorkOrder[] = searchData?.work_orders || [];
@@ -247,7 +255,7 @@ export default function MarketplacePage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <select
                                     value={selectedTrade}
                                     onChange={(e) => setSelectedTrade(e.target.value)}
@@ -255,6 +263,17 @@ export default function MarketplacePage() {
                                 >
                                     {trades.map((t) => (
                                         <option key={t} value={t}>{t === "All" ? "All Trades" : t}</option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    value={selectedProjectId}
+                                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                                    className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                >
+                                    <option value="All">Filter by Project constraints...</option>
+                                    {companyProjects.map((p: any) => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
                                 </select>
 

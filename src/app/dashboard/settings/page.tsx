@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,30 +11,51 @@ import {
     Bell,
     Check,
     CreditCard,
-    AlertTriangle
+    AlertTriangle,
+    Clock
 } from "lucide-react";
+import Link from "next/link";
+import { WorkerProfileForm } from "./worker-profile-form";
+import { createClient } from "@/lib/supabase/client";
+import type { WorkerProfile } from "@/types";
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("Company Profile");
+    const [profile, setProfile] = useState<WorkerProfile | null>(null);
 
     const tabs = [
         { name: "Company Profile", icon: Building2 },
+        { name: "Work Preferences", icon: Clock },
         { name: "Insurance Vault", icon: Shield },
         { name: "Banking & Payouts", icon: Wallet },
         { name: "Team Members", icon: Users },
         { name: "Notifications", icon: Bell },
     ];
 
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase
+                    .from('worker_profiles')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .single();
+                if (data) setProfile(data);
+            }
+        };
+        fetchProfile();
+    }, []);
+
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div>
                 <div className="text-sm text-gray-500 mb-1">System → Settings</div>
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h1>
                 <p className="text-gray-500">Manage company profile, insurance requirements, and billing details.</p>
             </div>
 
-            {/* Tabs */}
             <div className="border-b border-gray-200">
                 <nav className="flex space-x-6">
                     {tabs.map((tab) => (
@@ -42,8 +63,8 @@ export default function SettingsPage() {
                             key={tab.name}
                             onClick={() => setActiveTab(tab.name)}
                             className={`pb-3 flex items-center text-sm font-medium border-b-2 transition-all ${activeTab === tab.name
-                                    ? "border-blue-900 text-blue-900"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                ? "border-blue-900 text-blue-900"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                                 }`}
                         >
                             <tab.icon size={16} className={`mr-2 ${activeTab === tab.name ? "text-blue-900" : "text-gray-400"}`} />
@@ -53,97 +74,112 @@ export default function SettingsPage() {
                 </nav>
             </div>
 
-            {/* Content */}
             <div className="grid gap-6 lg:grid-cols-3">
-                {/* Main Form Area (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Company Identity */}
-                    <Card className="shadow-sm border-gray-200">
-                        <CardHeader className="border-b border-gray-100 bg-gray-50/50 pb-4">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle className="text-base font-bold text-gray-900">Company Identity</CardTitle>
-                                    <p className="text-sm text-gray-500">Update your company details and public information.</p>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-6 space-y-6">
-                            <div className="flex items-center space-x-4">
-                                <div className="h-16 w-16 rounded-lg bg-orange-100 flex items-center justify-center text-2xl border border-orange-200 text-orange-600">
-                                    <Building2 />
-                                </div>
-                                <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                                    Upload New Logo
-                                </Button>
-                            </div>
+                    {activeTab === "Work Preferences" && (
+                        <WorkerProfileForm initialData={profile || undefined} />
+                    )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                    <input type="text" defaultValue="SmartBench Construction LLC" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">EIN / Tax ID</label>
-                                    <div className="relative">
-                                        <input type="text" defaultValue="83-1234567" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:pr-24" />
-                                        <span className="hidden md:flex absolute right-2 top-1/2 transform -translate-y-1/2 items-center text-xs text-green-600 font-medium">
-                                            <Check size={12} className="mr-1" /> Verified
-                                        </span>
+                    {activeTab === "Company Profile" && (
+                        <>
+                            <Card className="shadow-sm border-gray-200">
+                                <CardHeader className="border-b border-gray-100 bg-gray-50/50 pb-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <CardTitle className="text-base font-bold text-gray-900">Company Identity</CardTitle>
+                                            <p className="text-sm text-gray-500">Update your company details and public information.</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                                    <input type="text" defaultValue="https://smartbench.app" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                    <input type="text" defaultValue="+1 (555) 987-6543" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                                </div>
-                            </div>
+                                </CardHeader>
+                                <CardContent className="p-6 space-y-6">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="h-16 w-16 rounded-lg bg-orange-100 flex items-center justify-center text-2xl border border-orange-200 text-orange-600">
+                                            <Building2 />
+                                        </div>
+                                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            Upload New Logo
+                                        </Button>
+                                    </div>
 
-                            <div className="pt-2 flex justify-end">
-                                <Button className="bg-blue-900 hover:bg-blue-800 text-white">Save Changes</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                                        <div>
+                                            <p className="font-bold text-blue-900 flex items-center">
+                                                Identity Verification <AlertTriangle size={14} className="ml-2 text-yellow-600" />
+                                            </p>
+                                            <p className="text-sm text-blue-700">You must verify your business with our payment processor (Stripe) to transact on the marketplace.</p>
+                                        </div>
+                                        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                                            <Link href="/onboarding/step-2">Verify KYC</Link>
+                                        </Button>
+                                    </div>
 
-                    {/* Banking */}
-                    <Card className="shadow-sm border-gray-200">
-                        <CardHeader className="border-b border-gray-100 bg-gray-50/50 pb-4">
-                            <CardTitle className="text-base font-bold text-gray-900">Payout Method</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="flex items-center p-4 bg-purple-50 rounded-lg border border-purple-100 mb-6">
-                                <div className="h-10 w-10 rounded bg-purple-100 flex items-center justify-center mr-4">
-                                    <span className="text-purple-600 font-bold">S</span>
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-bold text-gray-900 flex items-center">Stripe Connected Account <Check size={14} className="ml-1 text-green-600" /></p>
-                                    <p className="text-sm text-gray-500">Payouts are automatically transferred weekly.</p>
-                                </div>
-                                <Button variant="ghost" size="sm" className="text-purple-700 hover:bg-purple-100">Manage</Button>
-                            </div>
-
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-900 mb-3">Linked Bank Accounts</h4>
-                                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer bg-white">
-                                    <div className="flex items-center">
-                                        <div className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-gray-500">
-                                            <CreditCard size={16} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                            <input type="text" defaultValue="SmartBench Construction LLC" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">Chase Bank **** 4242</p>
-                                            <p className="text-xs text-gray-500">Checking Account</p>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">EIN / Tax ID</label>
+                                            <div className="relative">
+                                                <input type="text" defaultValue="83-1234567" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:pr-24" />
+                                                <span className="hidden md:flex absolute right-2 top-1/2 transform -translate-y-1/2 items-center text-xs text-green-600 font-medium">
+                                                    <Check size={12} className="mr-1" /> Verified
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                                            <input type="text" defaultValue="https://smartbench.app" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                            <input type="text" defaultValue="+1 (555) 987-6543" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">PRIMARY</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+
+                                    <div className="pt-2 flex justify-end">
+                                        <Button className="bg-blue-900 hover:bg-blue-800 text-white">Save Changes</Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="shadow-sm border-gray-200">
+                                <CardHeader className="border-b border-gray-100 bg-gray-50/50 pb-4">
+                                    <CardTitle className="text-base font-bold text-gray-900">Payout Method</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center p-4 bg-purple-50 rounded-lg border border-purple-100 mb-6">
+                                        <div className="h-10 w-10 rounded bg-purple-100 flex items-center justify-center mr-4">
+                                            <span className="text-purple-600 font-bold">S</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-gray-900 flex items-center">Stripe Connected Account <Check size={14} className="ml-1 text-green-600" /></p>
+                                            <p className="text-sm text-gray-500">Payouts are automatically transferred weekly.</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="text-purple-700 hover:bg-purple-100">Manage</Button>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-900 mb-3">Linked Bank Accounts</h4>
+                                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer bg-white">
+                                            <div className="flex items-center">
+                                                <div className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-gray-500">
+                                                    <CreditCard size={16} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">Chase Bank **** 4242</p>
+                                                    <p className="text-xs text-gray-500">Checking Account</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">PRIMARY</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </>
+                    )}
                 </div>
 
-                {/* Sidebar (1/3) */}
                 <div className="space-y-6">
                     <Card className="shadow-sm border-gray-200 border-l-4 border-l-green-500">
                         <CardContent className="p-6">

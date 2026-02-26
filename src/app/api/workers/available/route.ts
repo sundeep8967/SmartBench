@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q")?.toLowerCase() || "";
     const trade = searchParams.get("trade") || "";
+    const projectId = searchParams.get("projectId") || "";
 
     // Get user's company
     const { data: member } = await supabase
@@ -70,6 +71,35 @@ export async function GET(request: NextRequest) {
 
     // Exclude the current user from marketplace results
     filteredWorkers = filteredWorkers.filter(w => w.user_id !== user.id);
+
+    // Apply Project constraints if a project is selected
+    if (projectId && projectId !== "All") {
+        const { data: project } = await supabase
+            .from('projects')
+            .select('daily_start_time, lat, lng')
+            .eq('id', projectId)
+            .single();
+
+        if (project) {
+            filteredWorkers = filteredWorkers.filter(w => {
+                // Time constraint
+                if (project.daily_start_time) {
+                    const projectTime = project.daily_start_time.slice(0, 5); // "HH:MM"
+                    const earliest = w.earliest_start_time?.slice(0, 5) || "00:00";
+                    const latest = w.latest_start_time?.slice(0, 5) || "23:59";
+
+                    if (projectTime < earliest || projectTime > latest) {
+                        return false;
+                    }
+                }
+
+                // TODO: Distance constraint requires Worker Lat/Lng which are derived from Zip Code
+                // For now, filtering strictly by time if provided. (Geolocation of Zip codes to follow)
+
+                return true;
+            });
+        }
+    }
 
     // Attach rates
     const workersWithRates = filteredWorkers.map(w => {

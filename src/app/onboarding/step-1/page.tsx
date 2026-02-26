@@ -45,7 +45,7 @@ export default function Step1Info() {
 
             if (!res.ok) throw new Error("Failed to save");
 
-            router.push("/onboarding/step-2");
+            router.push("/dashboard");
         } catch (error) {
             console.error(error);
             alert("Error saving company info. Please try again.");

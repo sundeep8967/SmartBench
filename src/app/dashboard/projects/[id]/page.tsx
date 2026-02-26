@@ -1,17 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { WorkOrderDialog } from "@/components/projects/work-order-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar as CalendarIcon, Clock, ArrowLeft, Users, DollarSign } from "lucide-react";
+import { MapPin, Calendar as CalendarIcon, Clock, ArrowLeft, Users, DollarSign, Navigation2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Project, WorkOrder } from "@/types";
+import { StaticMap } from "@/components/ui/static-map";
 
-export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
-    const projectId = params.id;
+export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id: projectId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -83,9 +85,74 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                             </div>
                         </div>
                     </div>
-                    <Badge variant={project.status === 'Active' ? 'default' : 'secondary'} className="text-base px-3 py-1">
-                        {project.status}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                        <DeleteProjectButton projectId={projectId} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Project Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {project.project_description && (
+                                <div>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Project Description</h4>
+                                    <p className="text-sm">{project.project_description}</p>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                                <div>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Daily Start Time</h4>
+                                    <p className="text-sm font-medium flex items-center">
+                                        <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                                        {project.daily_start_time ? project.daily_start_time.slice(0, 5) : 'Not specified'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Meeting Point</h4>
+                                    <p className="text-sm font-medium flex items-center">
+                                        <Users className="w-4 h-4 mr-2 text-green-600" />
+                                        {project.meeting_location_type || 'Front of House'}
+                                    </p>
+                                </div>
+                            </div>
+                            {project.meeting_instructions && (
+                                <div className="pt-4 border-t">
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Arrival Instructions</h4>
+                                    <p className="text-sm bg-amber-50 text-amber-900 p-3 rounded-md border border-amber-200">
+                                        {project.meeting_instructions}
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center">
+                                <Navigation2 className="w-4 h-4 mr-2" />
+                                Site Location
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="aspect-square w-full rounded-md overflow-hidden bg-gray-100 mb-3 border relative">
+                                {project.lat && project.lng ? (
+                                    <StaticMap lat={project.lat} lng={project.lng} zoom={15} />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-4 text-center">
+                                        No coordinates available for this location.
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-sm text-muted-foreground break-words">{project.address}</p>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
@@ -170,6 +237,6 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                     )}
                 </div>
             </section>
-        </div>
+        </div >
     );
 }
