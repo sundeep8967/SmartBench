@@ -126,3 +126,49 @@ export async function sendVerificationFailedEmail(email: string, name: string, r
   }
 }
 
+
+export async function sendSavedSearchAlertEmail(email: string, searchName: string, matchedWorkersCount: number, isDailyDigest: boolean = false) {
+  if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_FROM_EMAIL) {
+    console.warn('SendGrid not configured. Mocking email send.');
+    console.log(`[Mock Email] Saved Search Alert To: ${email}, Search: ${searchName}, Matches: ${matchedWorkersCount}`);
+    return;
+  }
+
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+  const alertType = isDailyDigest ? "Daily Digest" : "Instant Alert";
+  const subject = `[${alertType}] SmartBench: ${matchedWorkersCount} new matches for "${searchName}"`;
+  
+  const msg = {
+    to: email,
+    from: process.env.SENDGRID_FROM_EMAIL,
+    subject: subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="color: #0f172a;">SmartBench Match Alert</h2>
+        <p>Hi there,</p>
+        <p>We found <strong>${matchedWorkersCount} new workers</strong> that match your saved search criteria for <strong>"${searchName}"</strong>.</p>
+        
+        <p>Log in to view these new matches before they get booked by someone else!</p>
+        
+        <div style="margin: 30px 0;">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/marketplace" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            View Matches Now
+          </a>
+        </div>
+        
+        <hr style="border: 1px solid #e2e8f0; margin: 30px 0;" />
+        <p style="color: #64748b; font-size: 12px;">
+          You are receiving this because you set an alert for this search on SmartBench.<br>
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/marketplace" style="color: #2563eb;">Manage your Alert Preferences</a>
+        </p>
+      </div>
+    `,
+  };
+
+  try {
+    await sgMail.send(msg);
+  } catch (error: any) {
+    console.error('SendGrid Error sending saved search alert:', error);
+  }
+}

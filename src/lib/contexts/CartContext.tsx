@@ -14,6 +14,7 @@ type CartContextType = {
     cartCount: number;
     refreshCart: () => Promise<void>;
     loading: boolean;
+    companyId: string | null;
 };
 
 const CartContext = createContext<CartContextType>({
@@ -21,12 +22,13 @@ const CartContext = createContext<CartContextType>({
     cartCount: 0,
     refreshCart: async () => { },
     loading: false,
+    companyId: null,
 });
 
 export const useCart = () => useContext(CartContext);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-    const { user, hasCompletedOnboarding } = useAuth();
+    const { user, hasCompletedOnboarding, companyId } = useAuth();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -57,7 +59,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, [refreshCart]);
 
     return (
-        <CartContext.Provider value={{ cartItems, cartCount, refreshCart, loading }}>
+        <CartContext.Provider value={{ cartItems, cartCount, refreshCart, loading, companyId }}>
             {children}
         </CartContext.Provider>
     );

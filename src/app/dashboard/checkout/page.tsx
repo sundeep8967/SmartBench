@@ -227,10 +227,10 @@ function CheckoutContent() {
                             {cartItems.map(item => (
                                 <div key={item.id} className="flex items-center gap-3">
                                     <div className="h-8 w-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-xs border border-white shadow-sm shrink-0">
-                                        {item.worker_profile?.user?.full_name?.charAt(0) || 'W'}
+                                        {item.worker?.full_name?.charAt(0) || 'W'}
                                     </div>
                                     <div className="flex-grow">
-                                        <h4 className="font-bold text-gray-900 text-sm">{item.worker_profile?.user?.full_name || 'Worker'}</h4>
+                                        <h4 className="font-bold text-gray-900 text-sm">{item.worker?.full_name || 'Worker'}</h4>
                                         <p className="text-xs text-gray-500">{item.work_order?.role}</p>
                                     </div>
                                     <div className="text-right">

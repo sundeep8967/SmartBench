@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 3958.8; // Radius of earth in miles
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -10,6 +22,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q")?.toLowerCase() || "";
     const trade = searchParams.get("trade") || "";
+    const projectId = searchParams.get("projectId") || "";
 
     // Get user's company
     const { data: member } = await supabase
@@ -70,6 +83,42 @@ export async function GET(request: NextRequest) {
 
     // Exclude the current user from marketplace results
     filteredWorkers = filteredWorkers.filter(w => w.user_id !== user.id);
+
+    // Apply Project constraints if a project is selected
+    if (projectId && projectId !== "All") {
+        const { data: project } = await supabase
+            .from('projects')
+            .select('daily_start_time, lat, lng')
+            .eq('id', projectId)
+            .single();
+
+        if (project) {
+            filteredWorkers = filteredWorkers.filter(w => {
+                // Time constraint
+                if (project.daily_start_time) {
+                    const projectTime = project.daily_start_time.slice(0, 5); // "HH:MM"
+                    const earliest = w.earliest_start_time?.slice(0, 5) || "00:00";
+                    const latest = w.latest_start_time?.slice(0, 5) || "23:59";
+
+                    if (projectTime < earliest || projectTime > latest) {
+                        return false;
+                    }
+                }
+
+                // Distance constraint (Worker Lat/Lng)
+                if (project.lat && project.lng && w.lat && w.lng) {
+                    const distance = calculateDistance(project.lat, project.lng, w.lat, w.lng);
+                    const workerRadius = w.travel_radius_miles || 50; // default to 50 miles
+
+                    if (distance > workerRadius) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
+    }
 
     // Attach rates
     const workersWithRates = filteredWorkers.map(w => {

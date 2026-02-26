@@ -9,11 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { CalendarIcon, Plus } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DatePicker } from "@/components/ui/date-picker";
-import { format, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
+import { AddressInput } from "@/components/ui/address-input";
+import { LocationPickerMap } from "@/components/ui/location-picker-map";
 import { createProjectAction } from "@/app/dashboard/projects/actions";
 
 export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: () => void } = {}) {
@@ -24,11 +22,14 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
 
     const [formData, setFormData] = useState({
         name: "",
-        description: "",
+        project_description: "",
         address: "",
+        lat: undefined as number | undefined,
+        lng: undefined as number | undefined,
         timezone: "America/Chicago",
-        start_date: undefined as Date | undefined,
-        end_date: undefined as Date | undefined
+        daily_start_time: "07:00",
+        meeting_location_type: "Front of House",
+        meeting_instructions: ""
     });
 
     const handleChange = (field: string, value: any) => {
@@ -40,21 +41,33 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
         setLoading(true);
 
         try {
+            if (formData.lat === undefined || formData.lng === undefined) {
+                toast({
+                    title: "Invalid Address Selection",
+                    description: "Please select an address from the Google Maps dropdown to ensure accurate coordinates.",
+                    variant: "destructive"
+                });
+                setLoading(false);
+                return;
+            }
+
             await createProjectAction({
                 ...formData,
-                start_date: formData.start_date ? formData.start_date.toISOString() : undefined,
-                end_date: formData.end_date ? formData.end_date.toISOString() : undefined
+                // Optional format standardizer if needed
             });
 
             toast({ title: "Success", description: "Project created successfully." });
             setOpen(false);
             setFormData({
                 name: "",
-                description: "",
+                project_description: "",
                 address: "",
+                lat: undefined,
+                lng: undefined,
                 timezone: "America/Chicago",
-                start_date: undefined,
-                end_date: undefined
+                daily_start_time: "07:00",
+                meeting_location_type: "Front of House",
+                meeting_instructions: ""
             });
             // router.refresh() is handled automatically by revalidatePath in the server action
         } catch (error: any) {
@@ -69,7 +82,15 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
             <DialogTrigger asChild>
                 <Button><Plus className="mr-2 h-4 w-4" /> New Project</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
+            <DialogContent
+                className="sm:max-w-[525px]"
+                onInteractOutside={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest('.pac-container')) {
+                        e.preventDefault();
+                    }
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle>Create New Project</DialogTitle>
                     <DialogDescription>
@@ -84,44 +105,81 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
 
                     <div className="space-y-2">
                         <Label htmlFor="address">Site Address</Label>
-                        <Input id="address" value={formData.address} onChange={(e) => handleChange('address', e.target.value)} placeholder="123 Main St, City, State" required />
+                        <AddressInput
+                            value={formData.address}
+                            onChange={(address, lat, lng) => {
+                                setFormData(prev => ({ ...prev, address, lat, lng }));
+                            }}
+                            required
+                        />
                     </div>
+
+                    {formData.lat !== undefined && formData.lng !== undefined && (
+                        <div className="space-y-2">
+                            <Label>Confirm Pin Location</Label>
+                            <LocationPickerMap
+                                lat={formData.lat}
+                                lng={formData.lng}
+                                onChange={(lat, lng, address) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        lat,
+                                        lng,
+                                        ...(address ? { address } : {})
+                                    }))
+                                }}
+                            />
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="start_date">Start Date</Label>
-                            <DatePicker
-                                value={formData.start_date}
-                                onChange={(date) => handleChange('start_date', date)}
-                                placeholder="Select start date"
+                            <Label htmlFor="daily_start_time">Shift Start Time</Label>
+                            <Input
+                                id="daily_start_time"
+                                type="time"
+                                value={formData.daily_start_time}
+                                onChange={(e) => handleChange('daily_start_time', e.target.value)}
+                                required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="end_date">End Date</Label>
-                            <DatePicker
-                                value={formData.end_date}
-                                onChange={(date) => handleChange('end_date', date)}
-                                placeholder="Select end date"
-                            />
+                            <Label htmlFor="timezone">Timezone</Label>
+                            <Select value={formData.timezone} onValueChange={(v) => handleChange('timezone', v)}>
+                                <SelectTrigger> <SelectValue /> </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="America/Chicago">Central (Chicago)</SelectItem>
+                                    <SelectItem value="America/New_York">Eastern (New York)</SelectItem>
+                                    <SelectItem value="America/Denver">Mountain (Denver)</SelectItem>
+                                    <SelectItem value="America/Los_Angeles">Pacific (Los Angeles)</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="timezone">Timezone</Label>
-                        <Select value={formData.timezone} onValueChange={(v) => handleChange('timezone', v)}>
+                        <Label htmlFor="meeting_location_type">Meeting Point</Label>
+                        <Select value={formData.meeting_location_type} onValueChange={(v) => handleChange('meeting_location_type', v)}>
                             <SelectTrigger> <SelectValue /> </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="America/Chicago">Central (Chicago)</SelectItem>
-                                <SelectItem value="America/New_York">Eastern (New York)</SelectItem>
-                                <SelectItem value="America/Denver">Mountain (Denver)</SelectItem>
-                                <SelectItem value="America/Los_Angeles">Pacific (Los Angeles)</SelectItem>
+                                <SelectItem value="Front of House">Front of House</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
+                    {formData.meeting_location_type === 'Other' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="meeting_instructions">Meeting Instructions</Label>
+                            <Input id="meeting_instructions" value={formData.meeting_instructions} onChange={(e) => handleChange('meeting_instructions', e.target.value)} placeholder="e.g. Go to the back alley and text me" />
+                        </div>
+                    )}
+
+
+
                     <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea id="description" value={formData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Brief details about the project scope..." />
+                        <Label htmlFor="project_description">Project Description</Label>
+                        <Textarea id="project_description" value={formData.project_description} onChange={(e) => handleChange('project_description', e.target.value)} placeholder="Brief details about the project scope..." />
                     </div>
 
                     <DialogFooter>

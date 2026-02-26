@@ -133,3 +133,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix for Google Maps Autocomplete dropdown appearing behind or losing focus against Radix UI Dialogs */
+.pac-container {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}

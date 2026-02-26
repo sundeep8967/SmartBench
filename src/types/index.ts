@@ -2,12 +2,14 @@ export interface Project {
     id: string;
     company_id: string;
     name: string;
-    description?: string;
+    project_description?: string;
     address: string;
     timezone: string;
-    status: 'Planning' | 'Active' | 'Completed' | 'Archived';
-    start_date?: string;
-    end_date?: string;
+    daily_start_time?: string;
+    meeting_location_type?: string;
+    meeting_instructions?: string;
+    lat?: number;
+    lng?: number;
     created_at: string;
     updated_at: string;
 }
@@ -30,6 +32,26 @@ export interface WorkOrder {
     project?: Project;
 }
 
+export interface WorkerProfile {
+    id: string;
+    user_id: string;
+    trade?: string;
+    skills?: string[];
+    years_of_experience?: any;
+    certifications?: any;
+    languages?: any;
+    tools_equipment?: string;
+    photo_url?: string;
+    home_zip_code?: string;
+    lat?: number;
+    lng?: number;
+    travel_radius_miles?: number;
+    earliest_start_time?: string;
+    latest_start_time?: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface CartItem {
     id: string;
     borrower_company_id: string;
@@ -40,7 +62,7 @@ export interface CartItem {
     end_date: string;
     created_at: string;
     work_order?: WorkOrder; // Joined data
-    worker_profile?: any; // Joined data (TODO: Define WorkerProfile type properly)
+    worker_profile?: WorkerProfile; // Joined data
     worker?: {
         full_name: string;
         email?: string;

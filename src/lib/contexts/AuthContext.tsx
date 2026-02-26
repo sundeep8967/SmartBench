@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextType {
     user: User | null;
+    companyId: string | null;
     loading: boolean;
     hasCompletedOnboarding: boolean;
     signInWithGoogle: () => Promise<void>;
@@ -19,20 +20,45 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [companyId, setCompanyId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const hasCompletedOnboarding = user?.user_metadata?.is_onboarded === true;
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createClient();
 
+    const fetchCompanyData = async (userId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('company_members')
+                .select('company_id')
+                .eq('user_id', userId)
+                .eq('status', 'Active')
+                .maybeSingle();
 
+            if (data && !error) {
+                setCompanyId(data.company_id);
+            } else {
+                setCompanyId(null);
+            }
+        } catch (error) {
+            console.error("AuthContext: Error fetching company data", error);
+            setCompanyId(null);
+        }
+    };
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             console.log("AuthContext: Initial session retrieved", session);
-            setUser(session?.user ?? null);
-            setLoading(false);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+            if (currentUser) {
+                fetchCompanyData(currentUser.id).finally(() => setLoading(false));
+            } else {
+                setCompanyId(null);
+                setLoading(false);
+            }
         });
 
         // Listen for auth changes
@@ -40,7 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             console.log(`AuthContext: Auth event ${_event}`, session);
-            setUser(session?.user ?? null);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+
+            if (currentUser) {
+                fetchCompanyData(currentUser.id);
+            } else {
+                setCompanyId(null);
+            }
 
             // Session is handled generically
             if (_event === "SIGNED_OUT") {
@@ -79,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, hasCompletedOnboarding, signInWithGoogle, logout }}>
+        <AuthContext.Provider value={{ user, companyId, loading, hasCompletedOnboarding, signInWithGoogle, logout }}>
             {children}
         </AuthContext.Provider>
     );
