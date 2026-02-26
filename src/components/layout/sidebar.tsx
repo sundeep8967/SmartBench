@@ -79,6 +79,7 @@ export function Sidebar() {
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                prefetch={true}
                                 className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${isActive
                                     ? "bg-blue-900 text-white shadow-sm"
                                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -121,7 +122,7 @@ export function Sidebar() {
                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {dropdownNav.map((item) => (
-                            <Link key={item.name} href={item.href}>
+                            <Link key={item.name} href={item.href} prefetch={true}>
                                 <DropdownMenuItem className="cursor-pointer">
                                     <item.icon className="mr-2 h-4 w-4" />
                                     <span>{item.name}</span>
