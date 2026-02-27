@@ -35,20 +35,32 @@ export default function Step1Info() {
         }
 
         try {
-            // Updated API call structure will be needed, 
-            // but for now let's persist to `companies` table via an API route.
             const res = await fetch("/api/onboarding/step1", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
-            if (!res.ok) throw new Error("Failed to save");
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to save");
+            }
 
-            router.push("/dashboard");
-        } catch (error) {
+            // Mark onboarding as complete so the proxy allows dashboard access
+            const completeRes = await fetch("/api/onboarding/complete", {
+                method: "POST",
+            });
+
+            if (!completeRes.ok) {
+                console.error("Failed to mark onboarding complete");
+            }
+
+            // Full page navigation to ensure server-side session cookies
+            // are properly sent when the dashboard server component loads
+            window.location.href = "/dashboard";
+        } catch (error: any) {
             console.error(error);
-            alert("Error saving company info. Please try again.");
+            alert(error.message || "Error saving company info. Please try again.");
         } finally {
             setLoading(false);
         }

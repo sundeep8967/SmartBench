@@ -55,7 +55,7 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
                     <div className="bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-xl p-3 flex items-center justify-between w-64 hover:bg-white transition-colors duration-200">
                         <div className="flex items-center min-w-0">
                             <img
-                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.full_name || user?.email || 'User')}&background=111827&color=fff`}
+                                src={user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.full_name || user?.email || 'User')}&background=111827&color=fff`}
                                 alt={user?.user_metadata?.full_name || "User"}
                                 className="h-10 w-10 rounded-full ring-2 ring-white shadow-sm flex-shrink-0"
                             />

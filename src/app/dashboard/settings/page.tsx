@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { WorkerProfileForm } from "./worker-profile-form";
+import { DeleteAccountModal } from "./delete-account-modal";
 import { createClient } from "@/lib/supabase/client";
 import type { WorkerProfile } from "@/types";
 
@@ -101,18 +102,6 @@ export default function SettingsPage() {
                                         </Button>
                                     </div>
 
-                                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-                                        <div>
-                                            <p className="font-bold text-blue-900 flex items-center">
-                                                Identity Verification <AlertTriangle size={14} className="ml-2 text-yellow-600" />
-                                            </p>
-                                            <p className="text-sm text-blue-700">You must verify your business with our payment processor (Stripe) to transact on the marketplace.</p>
-                                        </div>
-                                        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                                            <Link href="/onboarding/step-2">Verify KYC</Link>
-                                        </Button>
-                                    </div>
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
@@ -174,6 +163,19 @@ export default function SettingsPage() {
                                             <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">PRIMARY</span>
                                         </div>
                                     </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="shadow-sm border-red-200 mt-6 bg-red-50/30">
+                                <CardHeader className="border-b border-red-100 pb-4">
+                                    <CardTitle className="text-base font-bold text-red-700">Danger Zone</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div>
+                                        <p className="font-bold text-gray-900">Delete Account</p>
+                                        <p className="text-sm text-gray-500 text-balance max-w-md">Permanently remove your personal account and all of its contents from the SmartBench platform. This action is not reversible.</p>
+                                    </div>
+                                    <DeleteAccountModal />
                                 </CardContent>
                             </Card>
                         </>
