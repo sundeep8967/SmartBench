@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, Upload, ShoppingCart, Bookmark, Download, Filter, UserPlus } from "lucide-react";
+import { Plus, Download, ShoppingCart, Bookmark, UserPlus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/contexts/CartContext";
+import { useSidebar } from "@/lib/contexts/SidebarContext";
 
 const routeConfig: Record<string, { section: string; page: string }> = {
   "/dashboard": { section: "Dashboard", page: "Overview" },
@@ -26,22 +27,35 @@ export function Header() {
   const isMarketplace = pathname.includes("/marketplace");
   const isRoster = pathname.includes("/roster");
   const { cartCount } = useCart();
+  const { toggle } = useSidebar();
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Breadcrumbs */}
-      <div className="flex items-center text-sm">
-        <span className="text-gray-500 font-medium">
-          {config.section}
-        </span>
-        <span className="mx-2 text-gray-400">›</span>
-        <span className="text-gray-900 font-semibold bg-gray-100 px-2 py-0.5 rounded text-xs">
-          {config.page}
-        </span>
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40">
+      {/* Left: hamburger + breadcrumbs */}
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <button
+          onClick={toggle}
+          className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu size={22} />
+        </button>
+
+        {/* Breadcrumbs */}
+        <div className="flex items-center text-sm">
+          <span className="text-gray-500 font-medium hidden sm:inline">
+            {config.section}
+          </span>
+          <span className="mx-2 text-gray-400 hidden sm:inline">›</span>
+          <span className="text-gray-900 font-semibold bg-gray-100 px-2 py-0.5 rounded text-xs">
+            {config.page}
+          </span>
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 sm:space-x-3">
         {isMarketplace ? (
           <>
             <Button variant="outline" size="sm" className="hidden md:flex items-center text-gray-700 h-9">
@@ -49,9 +63,9 @@ export function Header() {
               Saved
             </Button>
             <Link href="/dashboard/cart">
-              <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm relative h-9 px-4">
-                <ShoppingCart size={16} className="mr-2" />
-                Cart
+              <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm relative h-9 px-3 sm:px-4">
+                <ShoppingCart size={16} className="sm:mr-2" />
+                <span className="hidden sm:inline">Cart</span>
                 {cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold border-2 border-white">
                     {cartCount}
@@ -61,9 +75,9 @@ export function Header() {
             </Link>
           </>
         ) : isRoster ? (
-          <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-4">
-            <UserPlus size={16} className="mr-2" />
-            Add Worker
+          <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-3 sm:px-4">
+            <UserPlus size={16} className="sm:mr-2" />
+            <span className="hidden sm:inline">Add Worker</span>
           </Button>
         ) : (
           <>
@@ -71,13 +85,13 @@ export function Header() {
               <Download size={16} className="mr-2" />
               Export
             </Button>
-            <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-4">
-              <Plus size={16} className="mr-1" />
-              New Project
+            <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-3 sm:px-4">
+              <Plus size={16} className="sm:mr-1" />
+              <span className="hidden sm:inline">New Project</span>
             </Button>
           </>
         )}
       </div>
-    </header >
+    </header>
   );
 }

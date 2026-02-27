@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 
 export default function Step1Info() {
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         companyName: "",
@@ -25,15 +22,6 @@ export default function Step1Info() {
         e.preventDefault();
         setLoading(true);
 
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            console.error("No user found");
-            setLoading(false);
-            return;
-        }
-
         try {
             const res = await fetch("/api/onboarding/step1", {
                 method: "POST",
@@ -46,17 +34,8 @@ export default function Step1Info() {
                 throw new Error(data.error || "Failed to save");
             }
 
-            // Mark onboarding as complete so the proxy allows dashboard access
-            const completeRes = await fetch("/api/onboarding/complete", {
-                method: "POST",
-            });
-
-            if (!completeRes.ok) {
-                console.error("Failed to mark onboarding complete");
-            }
-
-            // Full page navigation to ensure server-side session cookies
-            // are properly sent when the dashboard server component loads
+            // Full page navigation — the proxy will see the updated JWT
+            // with is_onboarded=true and let us through to /dashboard
             window.location.href = "/dashboard";
         } catch (error: any) {
             console.error(error);

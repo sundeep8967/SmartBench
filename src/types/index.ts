@@ -1,70 +1,33 @@
-export interface Project {
-    id: string;
-    company_id: string;
-    name: string;
-    project_description?: string;
-    address: string;
-    timezone: string;
-    daily_start_time?: string;
-    meeting_location_type?: string;
-    meeting_instructions?: string;
-    lat?: number;
-    lng?: number;
-    created_at: string;
-    updated_at: string;
-}
+/**
+ * Re-exports from auto-generated database types.
+ * Use `Tables<'table_name'>` for row types.
+ *
+ * For custom/joined types, define them here extending the generated types.
+ */
+export type { Database, Tables, TablesInsert, TablesUpdate } from './database.types'
+import type { Tables } from './database.types'
 
-export interface WorkOrder {
-    id: string;
-    project_id: string;
-    role: string;
-    quantity: number;
-    start_date: string; // YYYY-MM-DD
-    end_date: string;   // YYYY-MM-DD
-    start_time: string; // HH:MM:SS
-    end_time: string;   // HH:MM:SS
-    status: 'Draft' | 'Open' | 'Filled' | 'Completed';
-    description?: string;
-    hourly_rate_min?: number;
-    hourly_rate_max?: number;
-    created_at: string;
-    updated_at: string;
-    project?: Project;
-}
+// ─── Convenient aliases ─────────────────────────────────────────
 
-export interface WorkerProfile {
-    id: string;
-    user_id: string;
-    trade?: string;
-    skills?: string[];
-    years_of_experience?: any;
-    certifications?: any;
-    languages?: any;
-    tools_equipment?: string;
-    photo_url?: string;
-    home_zip_code?: string;
-    lat?: number;
-    lng?: number;
-    travel_radius_miles?: number;
-    earliest_start_time?: string;
-    latest_start_time?: string;
-    created_at: string;
-    updated_at: string;
-}
+export type Project = Tables<'projects'>
+export type WorkOrder = Tables<'work_orders'>
+export type WorkerProfile = Tables<'worker_profiles'>
+export type CartItem = Tables<'cart_items'>
+export type Company = Tables<'companies'>
+export type CompanyMember = Tables<'company_members'>
+export type Booking = Tables<'bookings'>
+export type User = Tables<'users'>
+export type Notification = Tables<'notifications'>
+export type TimeEntry = Tables<'time_entries'>
 
-export interface CartItem {
-    id: string;
-    borrower_company_id: string;
-    work_order_id: string;
-    worker_id: string;
-    hourly_rate: number;
-    start_date: string;
-    end_date: string;
-    created_at: string;
-    work_order?: WorkOrder; // Joined data
-    worker_profile?: WorkerProfile; // Joined data
+// ─── Joined / Custom types ──────────────────────────────────────
+
+/** CartItem with joined work_order, worker_profile, and worker user data */
+export interface CartItemWithDetails extends CartItem {
+    work_order?: WorkOrder & { project?: Project }
+    worker_profile?: WorkerProfile
     worker?: {
-        full_name: string;
-        email?: string;
-    };
+        full_name: string
+        email?: string
+    }
 }

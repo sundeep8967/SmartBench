@@ -1,65 +1,48 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { updateSession } from '@/lib/supabase/session'
 
+/**
+ * Proxy (Next.js middleware equivalent).
+ *
+ * Responsibility: Session refresh + route guards.
+ * Session refresh is delegated to lib/supabase/middleware.ts
+ * so it can be independently upgraded (e.g. to getClaims()).
+ */
 export async function proxy(request: NextRequest) {
-    let supabaseResponse = NextResponse.next({
-        request,
-    })
+    // 1. Refresh session & get authenticated user
+    const { user, supabaseResponse } = await updateSession(request)
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
-                },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) =>
-                        request.cookies.set(name, value)
-                    )
-                    supabaseResponse = NextResponse.next({
-                        request,
-                    })
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set({ name, value, ...options })
-                    )
-                },
-            },
-        }
-    )
+    // 2. Route classification
+    const { pathname } = request.nextUrl
+    const isLoginPage = pathname.startsWith('/login')
+    const isOnboardingPage = pathname.startsWith('/onboarding')
+    const isDashboardPage = pathname.startsWith('/dashboard')
+    const isAuthRoute = pathname.startsWith('/auth')
+    const isApiRoute = pathname.startsWith('/api')
+    const isRootPage = pathname === '/'
 
-    // IMPORTANT: Do NOT run code between createServerClient and getUser()
-    // Doing so will cause the server and client to be out of sync
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    // 3. Route guards
 
-    const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-    const isOnboardingPage = request.nextUrl.pathname.startsWith('/onboarding')
-    const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
-    const isRootPage = request.nextUrl.pathname === '/'
-
-    // Unauthenticated users trying to access protected routes
+    // Unauthenticated → protected routes → redirect to login
     if (!user && (isDashboardPage || isOnboardingPage)) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    // Authenticated users
+    // Authenticated route guards
     if (user) {
-        const isOnboarded = user.user_metadata?.is_onboarded === true;
+        const isOnboarded = user.user_metadata?.is_onboarded === true
 
         if (!isOnboarded) {
-            // Not onboarded: must go to onboarding. Block from dashboard, login, and root.
-            if (!isOnboardingPage && !request.nextUrl.pathname.startsWith('/auth') && !request.nextUrl.pathname.startsWith('/api')) {
+            // Not onboarded → force to onboarding (except auth/api routes)
+            if (!isOnboardingPage && !isAuthRoute && !isApiRoute) {
                 const url = request.nextUrl.clone()
                 url.pathname = '/onboarding/step-1'
                 return NextResponse.redirect(url)
             }
         } else {
-            // Onboarded: must go to dashboard if they try to access login, onboarding, or root.
+            // Onboarded → redirect away from login/onboarding/root to dashboard
             if (isOnboardingPage || isLoginPage || isRootPage) {
                 const url = request.nextUrl.clone()
                 url.pathname = '/dashboard'
@@ -74,11 +57,11 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
+         * Match all request paths except:
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - public folder
+         * - Static assets (svg, png, jpg, etc.)
          */
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
