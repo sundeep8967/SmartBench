@@ -1,11 +1,6 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MapPin, Clock, ArrowRight } from "lucide-react";
-import { format } from "date-fns";
+import { ProjectsList } from "@/components/projects/projects-list";
 import type { Project } from "@/types";
 
 export default async function ProjectsPage() {
@@ -16,7 +11,6 @@ export default async function ProjectsPage() {
         redirect("/login");
     }
 
-    // Get user's company
     const { data: member } = await supabase
         .from('company_members')
         .select('company_id')
@@ -32,69 +26,20 @@ export default async function ProjectsPage() {
         );
     }
 
-    const { data: projects, error } = await supabase
+    const { data: projects } = await supabase
         .from('projects')
         .select('*')
         .eq('company_id', member.company_id)
         .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error("Error fetching projects:", error);
-    }
-
-    const projectList: Project[] = projects || [];
-
     return (
-        <div className="max-w-6xl mx-auto p-6 space-y-8">
+        <div className="max-w-6xl mx-auto space-y-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
                 <p className="text-muted-foreground">Manage your job sites and work orders.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projectList.map((project) => (
-                    <Link href={`/dashboard/projects/${project.id}`} key={project.id} className="flex h-full w-full group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
-                        <Card className="flex flex-col h-full w-full hover:shadow-md transition-all group-hover:border-primary/50 cursor-pointer">
-                            <CardHeader className="pb-3 flex-none">
-                                <div className="flex justify-between items-start">
-                                    <CardTitle className="text-lg font-semibold truncate pr-2">{project.name}</CardTitle>
-                                </div>
-                                <CardDescription className="flex items-center mt-1">
-                                    <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                                    <span className="truncate">{project.address}</span>
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col flex-grow h-full">
-                                <div className="space-y-4 flex flex-col flex-grow">
-                                    <div className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-                                        {project.project_description || "No description provided."}
-                                    </div>
-
-                                    {project.daily_start_time && (
-                                        <div className="flex items-center text-sm">
-                                            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                                            <span>Starts at {project.daily_start_time.slice(0, 5)}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="mt-4 pt-2 border-t border-transparent">
-                                    <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium transition-colors group-hover:bg-gray-50 text-gray-900 shadow-sm">
-                                        View Details <ArrowRight className="ml-2 h-4 w-4" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                ))}
-
-                {projectList.length === 0 && (
-                    <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
-                        <p className="text-muted-foreground mb-4">No projects found. Create your first project to get started.</p>
-                        <CreateProjectDialog />
-                    </div>
-                )}
-            </div>
+            <ProjectsList projects={(projects as Project[]) || []} />
         </div>
     );
 }

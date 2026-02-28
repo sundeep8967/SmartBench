@@ -138,7 +138,7 @@ export default function LandingDemo() {
                 <div className="max-w-6xl mx-auto text-center relative z-10">
                     <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">All-in-one Engine</h2>
                     <p className="text-xl text-zinc-400 mb-20 max-w-2xl mx-auto">
-                        Rosters, timesheets, compliance, payments, and talent discovery... everything in one place.
+                        Employees, timesheets, compliance, payments, and talent discovery... everything in one place.
                     </p>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto">

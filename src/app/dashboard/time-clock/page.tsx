@@ -58,8 +58,8 @@ export default async function TimeClockPage() {
 
     return (
         <TimeClockClient
-            initialActiveShift={activeShiftRes.data || null}
-            recentShifts={recentShiftsRes.data || []}
+            initialActiveShift={(activeShiftRes.data as any) || null}
+            recentShifts={(recentShiftsRes.data as any) || []}
             projects={projectsRes.data || []}
         />
     );

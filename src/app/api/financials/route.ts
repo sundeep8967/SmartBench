@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
             amount: (Number(b.total_amount) || 0) / 100,
             status: b.status,
         })),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
 
     return NextResponse.json({
         balance: (moneyIn - moneyOut) / 100, // amounts stored in cents

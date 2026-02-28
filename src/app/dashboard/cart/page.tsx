@@ -95,10 +95,10 @@ export default function CartPage() {
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-4">
                                         <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg border border-white shadow-sm">
-                                            {item.worker?.full_name?.charAt(0) || 'W'}
+                                            {(item as any).worker?.full_name?.charAt(0) || 'W'}
                                         </div>
                                         <div>
-                                            <CardTitle className="text-lg">{item.worker?.full_name || 'Worker'} </CardTitle>
+                                            <CardTitle className="text-lg">{(item as any).worker?.full_name || 'Worker'} </CardTitle>
                                             <CardDescription className="flex items-center gap-2">
                                                 <BadgeCheck size={14} className="text-green-500" />
                                                 Verified Professional
@@ -115,7 +115,7 @@ export default function CartPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                                     <div className="space-y-1">
                                         <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Role & Rate</span>
-                                        <p className="font-medium text-gray-900">{item.work_order?.role || 'General Labor'}</p>
+                                        <p className="font-medium text-gray-900">{(item as any).work_order?.role || 'General Labor'}</p>
                                         <p className="text-gray-600">${item.hourly_rate}/hr</p>
                                     </div>
                                     <div className="space-y-1">

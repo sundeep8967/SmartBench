@@ -471,7 +471,7 @@ export default function MarketplacePage() {
                                             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                                                 {search.name}
                                                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500">
-                                                    {search.search_criteria?.trade ? "Roster" : "General"}
+                                                    {search.search_criteria?.trade ? "Employee" : "General"}
                                                 </span>
                                             </h3>
                                             <p className="text-sm text-gray-500 mt-1">
