@@ -16,9 +16,10 @@ import {
     BadgeCheck,
     Loader2,
     Mail,
+    LayoutGrid,
+    List,
 } from "lucide-react";
 import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
-import { ViewToggle } from "@/components/ui/view-toggle";
 
 interface RosterMember {
     id: string;
@@ -132,38 +133,66 @@ export default function RosterPage() {
                 </Card>
             </div>
 
-            {/* Search and Controls */}
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-                <div className="flex flex-col sm:flex-row w-full md:w-auto overflow-hidden rounded-md border border-gray-300">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search workers..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-none"
-                        />
-                    </div>
-                    <div className="border-t sm:border-t-0 sm:border-l border-gray-300 bg-white">
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full sm:w-auto h-full px-3 py-2.5 text-sm text-gray-700 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                        >
-                            <option value="All">All Statuses</option>
-                            <option value="Deployed">Deployed</option>
-                            <option value="Bench">On Bench</option>
-                        </select>
-                    </div>
+            {/* Unified Filter Bar */}
+            <div className="flex flex-wrap items-stretch bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                {/* Search */}
+                <div className="flex items-center flex-1 min-w-[200px] px-3">
+                    <Search className="h-4 w-4 text-gray-400 flex-shrink-0" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Search employees..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none"
+                    />
                 </div>
-                <div className="flex items-center gap-3">
+
+                {/* Divider */}
+                <div className="w-px bg-gray-200 self-stretch" />
+
+                {/* Status Filter */}
+                <div className="flex items-center">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="h-full px-4 py-2.5 text-sm text-gray-600 bg-transparent border-none focus:outline-none focus:ring-0 cursor-pointer appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em', paddingRight: '2rem' }}
+                    >
+                        <option value="All">All Statuses</option>
+                        <option value="Deployed">Deployed</option>
+                        <option value="Bench">On Bench</option>
+                    </select>
+                </div>
+
+                {/* Divider */}
+                <div className="w-px bg-gray-200 self-stretch" />
+
+                {/* View Toggle */}
+                <div className="flex items-center">
+                    <button
+                        onClick={() => setView("card")}
+                        className={`p-2.5 transition-colors ${view === "card" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                        title="Card view"
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                    </button>
+                    <div className="w-px bg-gray-200 self-stretch" />
+                    <button
+                        onClick={() => setView("table")}
+                        className={`p-2.5 transition-colors ${view === "table" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                        title="Table view"
+                    >
+                        <List className="h-4 w-4" />
+                    </button>
+                </div>
+
+                {/* Divider */}
+                <div className="w-px bg-gray-200 self-stretch" />
+
+                {/* Invite Button */}
+                <div className="flex items-center px-2">
                     <InviteWorkerDialog />
                 </div>
-            </div>
-
-            <div className="flex justify-end">
-                <ViewToggle view={view} onChange={setView} />
             </div>
 
             {view === "card" ? (
@@ -257,8 +286,12 @@ export default function RosterPage() {
                                         <td className="px-6 py-4 text-center font-bold text-gray-900">
                                             {worker.hourly_rate ? `$${Number(worker.hourly_rate).toFixed(2)}/hr` : "—"}
                                         </td>
-                                        <td className="px-6 py-4 text-center text-gray-600">
-                                            {worker.trade || "—"}
+                                        <td className="px-6 py-4 text-center">
+                                            {worker.trade ? (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">{worker.trade}</span>
+                                            ) : (
+                                                <span className="text-gray-400">—</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="text-xs text-gray-500">

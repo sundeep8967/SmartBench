@@ -1,18 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Clock, ArrowRight } from "lucide-react";
-import { ViewToggle } from "@/components/ui/view-toggle";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Clock, ArrowRight, Search, MoreHorizontal, LayoutGrid, List } from "lucide-react";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import type { Project } from "@/types";
 
-/**
- * Splits a single-line address into street + city/state/zip.
- * e.g. "123 Main St, Austin, TX 78701" → ["123 Main St", "Austin, TX 78701"]
- */
 function formatAddress(address: string): [string, string] {
     const parts = address.split(",").map((s) => s.trim());
     if (parts.length <= 1) return [address, ""];
@@ -21,9 +17,6 @@ function formatAddress(address: string): [string, string] {
     return [street, rest];
 }
 
-/**
- * Converts "07:00" or "14:30" to "7:00am" or "2:30pm"
- */
 function formatTime12hr(time: string): string {
     const [hStr, mStr] = time.slice(0, 5).split(":");
     let h = parseInt(hStr, 10);
@@ -35,7 +28,19 @@ function formatTime12hr(time: string): string {
 
 export function ProjectsList({ projects }: { projects: Project[] }) {
     const [view, setView] = useState<"card" | "table">("card");
+    const [searchTerm, setSearchTerm] = useState("");
     const router = useRouter();
+
+    const filteredProjects = useMemo(() => {
+        return projects.filter((p) => {
+            return (
+                !searchTerm ||
+                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (p.project_description || "").toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        });
+    }, [projects, searchTerm]);
 
     if (projects.length === 0) {
         return (
@@ -48,14 +53,51 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
 
     return (
         <div className="space-y-4">
-            {/* View toggle */}
-            <div className="flex justify-end">
-                <ViewToggle view={view} onChange={setView} />
+            {/* Unified Filter Bar */}
+            <div className="flex flex-wrap items-stretch bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                {/* Search */}
+                <div className="flex items-center flex-1 min-w-[200px] px-3">
+                    <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <input
+                        type="text"
+                        placeholder="Search projects..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none"
+                    />
+                </div>
+
+                {/* Divider */}
+                <div className="w-px bg-gray-200 self-stretch" />
+
+                {/* View Toggle */}
+                <div className="flex items-center">
+                    <button
+                        onClick={() => setView("card")}
+                        className={`p-2.5 transition-colors ${view === "card" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                        title="Card view"
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                    </button>
+                    <div className="w-px bg-gray-200 self-stretch" />
+                    <button
+                        onClick={() => setView("table")}
+                        className={`p-2.5 transition-colors ${view === "table" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                        title="Table view"
+                    >
+                        <List className="h-4 w-4" />
+                    </button>
+                </div>
             </div>
+
+            {/* Results count */}
+            {searchTerm ? (
+                <p className="text-xs text-gray-500">{filteredProjects.length} of {projects.length} projects</p>
+            ) : null}
 
             {view === "card" ? (
                 <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                    {projects.map((project) => {
+                    {filteredProjects.map((project) => {
                         const [street, cityState] = formatAddress(project.address);
                         return (
                             <Link
@@ -82,16 +124,21 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                         </p>
                                     </div>
 
-                                    {project.daily_start_time && (
-                                        <div className="px-4 mt-auto">
-                                            <div className="flex items-center text-sm text-gray-500">
-                                                <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                                                <span>Earliest Start: {formatTime12hr(project.daily_start_time)}</span>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="px-4 pb-3 mt-auto flex flex-wrap gap-2">
+                                        {project.daily_start_time && (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                                <Clock className="h-3 w-3 mr-1" />
+                                                {formatTime12hr(project.daily_start_time)}
+                                            </span>
+                                        )}
+                                        {project.meeting_location_type && (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                {project.meeting_location_type}
+                                            </span>
+                                        )}
+                                    </div>
 
-                                    <div className="px-4 pb-4 pt-3 mt-auto">
+                                    <div className="px-4 pb-4 pt-1 mt-auto">
                                         <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors group-hover:bg-gray-50 text-gray-900 shadow-sm">
                                             View Details <ArrowRight className="ml-2 h-4 w-4" />
                                         </div>
@@ -107,15 +154,15 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b bg-gray-50/50">
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500">Project Name</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500 hidden md:table-cell">Description</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500 hidden sm:table-cell">Earliest Start</th>
-                                    <th className="px-4 py-3 w-10"></th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider">Project Name</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider">Address</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider hidden lg:table-cell">Description</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">Earliest Start</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider hidden md:table-cell">Meeting Point</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {projects.map((project) => {
+                                {filteredProjects.map((project) => {
                                     const [street, cityState] = formatAddress(project.address);
                                     return (
                                         <tr
@@ -123,21 +170,37 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                             className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
                                             onClick={() => router.push(`/dashboard/projects/${project.id}`)}
                                         >
-                                            <td className="px-4 py-3 font-medium text-gray-900">{project.name}</td>
+                                            <td className="px-4 py-3">
+                                                <span className="font-medium text-blue-700 hover:text-blue-900">
+                                                    {project.name}
+                                                </span>
+                                            </td>
                                             <td className="px-4 py-3 text-gray-600">
                                                 <div className="leading-tight">
                                                     <p>{street}</p>
                                                     {cityState && <p className="text-xs text-gray-400">{cityState}</p>}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500 max-w-xs truncate hidden md:table-cell">
+                                            <td className="px-4 py-3 text-gray-500 max-w-xs truncate hidden lg:table-cell">
                                                 {project.project_description || "—"}
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-                                                {project.daily_start_time ? formatTime12hr(project.daily_start_time) : "—"}
+                                            <td className="px-4 py-3 hidden sm:table-cell">
+                                                {project.daily_start_time ? (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                                        {formatTime12hr(project.daily_start_time)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400">—</span>
+                                                )}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <ArrowRight className="h-4 w-4 text-gray-400" />
+                                            <td className="px-4 py-3 hidden md:table-cell">
+                                                {project.meeting_location_type ? (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                        {project.meeting_location_type}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400">—</span>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -145,6 +208,12 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {filteredProjects.length === 0 && projects.length > 0 && (
+                <div className="text-center py-8 text-gray-500">
+                    <p>No projects match your search or filters.</p>
                 </div>
             )}
         </div>
