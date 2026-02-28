@@ -21,8 +21,8 @@ export function WorkerProfileForm({ initialData }: { initialData?: WorkerProfile
         earliest_start_time: initialData?.earliest_start_time || "06:00",
         latest_start_time: initialData?.latest_start_time || "09:00",
         home_zip_code: initialData?.home_zip_code || "",
-        lat: initialData?.lat,
-        lng: initialData?.lng
+        lat: initialData?.lat ?? undefined,
+        lng: initialData?.lng ?? undefined
     });
 
     const handleSubmit = async (e: React.FormEvent) => {

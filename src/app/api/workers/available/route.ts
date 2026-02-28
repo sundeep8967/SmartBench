@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
             const name = (w.user?.full_name || "").toLowerCase();
             const workerTrade = (w.trade || "").toLowerCase();
             const skills = Array.isArray(w.skills)
-                ? w.skills.map((s: string) => s.toLowerCase()).join(" ")
+                ? (w.skills as string[]).map((s: string) => s.toLowerCase()).join(" ")
                 : "";
             return name.includes(query) || workerTrade.includes(query) || skills.includes(query);
         });

@@ -160,7 +160,7 @@ function CheckoutContent() {
                             <div className="space-y-2">
                                 <Label>Project</Label>
                                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
-                                    {cartItems[0]?.work_order?.project?.name || "Untitled Project"}
+                                    {(cartItems[0] as any)?.work_order?.project?.name || "Untitled Project"}
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -172,7 +172,7 @@ function CheckoutContent() {
                             <div className="col-span-1 md:col-span-2 space-y-2">
                                 <Label>Site Address</Label>
                                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
-                                    {cartItems[0]?.work_order?.project?.address || "No address provided"}
+                                    {(cartItems[0] as any)?.work_order?.project?.address || "No address provided"}
                                 </div>
                             </div>
                         </div>
@@ -227,11 +227,11 @@ function CheckoutContent() {
                             {cartItems.map(item => (
                                 <div key={item.id} className="flex items-center gap-3">
                                     <div className="h-8 w-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-xs border border-white shadow-sm shrink-0">
-                                        {item.worker?.full_name?.charAt(0) || 'W'}
+                                        {(item as any).worker?.full_name?.charAt(0) || 'W'}
                                     </div>
                                     <div className="flex-grow">
-                                        <h4 className="font-bold text-gray-900 text-sm">{item.worker?.full_name || 'Worker'}</h4>
-                                        <p className="text-xs text-gray-500">{item.work_order?.role}</p>
+                                        <h4 className="font-bold text-gray-900 text-sm">{(item as any).worker?.full_name || 'Worker'}</h4>
+                                        <p className="text-xs text-gray-500">{(item as any).work_order?.role}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-medium text-gray-900">${item.hourly_rate}/hr</p>

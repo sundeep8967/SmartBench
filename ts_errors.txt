@@ -1,0 +1,30 @@
+src/app/api/workers/available/route.ts(78,32): error TS2345: Argument of type '(s: string) => string' is not assignable to parameter of type '(value: Json, index: number, array: Json[]) => string'.
+  Types of parameters 's' and 'value' are incompatible.
+    Type 'Json' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+src/app/dashboard/cart/page.tsx(98,51): error TS2339: Property 'worker' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'.
+src/app/dashboard/cart/page.tsx(101,82): error TS2339: Property 'worker' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'.
+src/app/dashboard/cart/page.tsx(118,88): error TS2551: Property 'work_order' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'. Did you mean 'work_order_id'?
+src/app/dashboard/checkout/page.tsx(163,52): error TS2551: Property 'work_order' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'. Did you mean 'work_order_id'?
+src/app/dashboard/checkout/page.tsx(175,52): error TS2551: Property 'work_order' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'. Did you mean 'work_order_id'?
+src/app/dashboard/checkout/page.tsx(230,47): error TS2339: Property 'worker' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'.
+src/app/dashboard/checkout/page.tsx(233,95): error TS2339: Property 'worker' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'.
+src/app/dashboard/checkout/page.tsx(234,84): error TS2551: Property 'work_order' does not exist on type '{ borrower_company_id: string; created_at: string | null; end_date: string; hourly_rate: number; id: string; start_date: string; work_order_id: string; worker_id: string; }'. Did you mean 'work_order_id'?
+src/app/dashboard/settings/worker-profile-form.tsx(32,45): error TS2345: Argument of type '{ travel_radius_miles: number; earliest_start_time: string; latest_start_time: string; home_zip_code: string; lat: number | null | undefined; lng: number | null | undefined; }' is not assignable to parameter of type '{ travel_radius_miles: number; earliest_start_time: string; latest_start_time: string; home_zip_code: string; lat?: number | undefined; lng?: number | undefined; }'.
+  Types of property 'lat' are incompatible.
+    Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+      Type 'null' is not assignable to type 'number | undefined'.
+src/app/dashboard/settings/worker-profile-form.tsx(67,41): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/dashboard/settings/worker-profile-form.tsx(68,41): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/dashboard/time-clock/page.tsx(61,13): error TS2322: Type '{ booking_id: string | null; break_end: string | null; break_start: string | null; clock_in: string; clock_out: string | null; company_id: string; created_at: string | null; gps_clock_in: Json; ... 8 more ...; project: { ...; } | null; } | null' is not assignable to type 'TimeEntry | null'.
+  Type '{ booking_id: string | null; break_end: string | null; break_start: string | null; clock_in: string; clock_out: string | null; company_id: string; created_at: string | null; gps_clock_in: Json; ... 8 more ...; project: { ...; } | null; }' is not assignable to type 'TimeEntry'.
+    Types of property 'total_break_minutes' are incompatible.
+      Type 'number | null' is not assignable to type 'number'.
+        Type 'null' is not assignable to type 'number'.
+src/app/dashboard/time-clock/page.tsx(62,13): error TS2322: Type '{ booking_id: string | null; break_end: string | null; break_start: string | null; clock_in: string; clock_out: string | null; company_id: string; created_at: string | null; gps_clock_in: Json; ... 8 more ...; project: { ...; } | null; }[]' is not assignable to type 'TimeEntry[]'.
+  Type '{ booking_id: string | null; break_end: string | null; break_start: string | null; clock_in: string; clock_out: string | null; company_id: string; created_at: string | null; gps_clock_in: Json; ... 8 more ...; project: { ...; } | null; }' is not assignable to type 'TimeEntry'.
+    Types of property 'total_break_minutes' are incompatible.
+      Type 'number | null' is not assignable to type 'number'.
+        Type 'null' is not assignable to type 'number'.
