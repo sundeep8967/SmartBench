@@ -54,7 +54,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
             </div>
 
             {view === "card" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {projects.map((project) => {
                         const [street, cityState] = formatAddress(project.address);
                         return (

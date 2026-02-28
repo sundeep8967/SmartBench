@@ -90,7 +90,7 @@ export default function FinancialsPage() {
             </Card>
 
             {/* Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">

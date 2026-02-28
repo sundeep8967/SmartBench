@@ -127,7 +127,7 @@ export default function InsurancePage() {
             <h1 className="text-3xl font-bold tracking-tight">Insurance Compliance</h1>
             <p className="text-muted-foreground">Upload your General Liability and Workers' Compensation policies to enable bookings.</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 {/* Upload Form */}
                 <Card>
                     <CardHeader>

@@ -11,7 +11,7 @@ export default function Loading() {
             </div>
 
             {/* Grid Cards Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="flex flex-col h-[296px] w-full rounded-xl border border-gray-100 bg-white p-6 shadow-sm justify-between">
                         <div className="space-y-3">

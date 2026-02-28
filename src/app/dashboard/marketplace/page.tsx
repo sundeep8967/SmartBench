@@ -255,7 +255,7 @@ export default function MarketplacePage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                                 <select
                                     value={selectedTrade}
                                     onChange={(e) => setSelectedTrade(e.target.value)}
