@@ -167,3 +167,74 @@ export async function updateProjectAction(projectId: string, formData: any) {
     revalidatePath("/dashboard/projects");
     return data;
 }
+
+export async function bulkDeleteProjectsAction(projectIds: string[]) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id, roles')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
+
+    if (!member) throw new Error("Forbidden");
+
+    // Check Role
+    const roles = (member.roles as string[]).map(r => r.toLowerCase());
+    if (!roles.includes('admin')) {
+        throw new Error("Only admins can delete projects");
+    }
+
+    const { error } = await supabase
+        .from('projects')
+        .delete()
+        .in('id', projectIds)
+        .eq('company_id', member.company_id);
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/dashboard/projects");
+    return { success: true };
+}
+
+export async function bulkImportProjectsAction(projectsData: any[]) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id, roles')
+        .eq('user_id', user.id)
+        .eq('status', 'Active')
+        .single();
+
+    if (!member) throw new Error("Forbidden");
+
+    // Check Role
+    const roles = (member.roles as string[]).map(r => r.toLowerCase());
+    if (!roles.includes('admin') && !roles.includes('manager')) {
+        throw new Error("Insufficient permissions");
+    }
+
+    // Attach company_id to all projects
+    const payload = projectsData.map(p => ({
+        ...p,
+        company_id: member.company_id
+    }));
+
+    const { data, error } = await supabase
+        .from('projects')
+        .insert(payload)
+        .select();
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/dashboard/projects");
+    return data;
+}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, Download, ShoppingCart, Bookmark, UserPlus, Menu } from "lucide-react";
+import { Plus, Download, Upload, ShoppingCart, Bookmark, UserPlus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/contexts/CartContext";
 import { useSidebar } from "@/lib/contexts/SidebarContext";
@@ -76,14 +76,38 @@ export function Header() {
             <UserPlus size={16} className="sm:mr-2" />
             <span className="hidden sm:inline">Add Worker</span>
           </Button>
-        ) : (
+        ) : pathname.includes("/projects") ? (
           <>
-            <Button variant="outline" size="sm" className="hidden md:flex items-center text-gray-700 h-9">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:flex items-center text-gray-700 h-9"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('triggerProjectsExport'));
+                }
+              }}
+            >
               <Download size={16} className="mr-2" />
               Export
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:flex items-center text-gray-700 h-9"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('triggerProjectsImport'));
+                }
+              }}
+            >
+              <Upload size={16} className="mr-2" />
+              Import
+            </Button>
             <CreateProjectDialog />
           </>
+        ) : (
+          null
         )}
       </div>
     </header>
