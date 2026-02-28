@@ -6,6 +6,7 @@ import { Plus, Download, ShoppingCart, Bookmark, UserPlus, Menu } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/contexts/CartContext";
 import { useSidebar } from "@/lib/contexts/SidebarContext";
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 
 const routeConfig: Record<string, { section: string; page: string }> = {
   "/dashboard": { section: "Dashboard", page: "Overview" },
@@ -81,10 +82,7 @@ export function Header() {
               <Download size={16} className="mr-2" />
               Export
             </Button>
-            <Button size="sm" className="bg-blue-900 hover:bg-blue-800 text-white flex items-center shadow-sm h-9 px-3 sm:px-4">
-              <Plus size={16} className="sm:mr-1" />
-              <span className="hidden sm:inline">New Project</span>
-            </Button>
+            <CreateProjectDialog />
           </>
         )}
       </div>
