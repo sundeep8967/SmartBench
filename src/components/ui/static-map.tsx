@@ -7,7 +7,7 @@ const libraries: ("places")[] = ["places"];
 const containerStyle = {
     width: "100%",
     height: "100%",
-    borderRadius: "0.5rem"
+    borderRadius: "inherit"
 };
 
 export function StaticMap({ lat, lng, zoom = 14 }: { lat: number; lng: number, zoom?: number }) {

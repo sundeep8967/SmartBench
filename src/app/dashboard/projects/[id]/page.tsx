@@ -143,33 +143,35 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
 
                 <div className="space-y-6">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base flex items-center">
-                                <Navigation2 className="w-4 h-4 mr-2" />
+                    <Card className="overflow-hidden shadow-sm" noPadding>
+                        <CardHeader className="px-3 pt-4 pb-2 border-b border-gray-100 bg-white z-10 relative">
+                            <CardTitle className="text-sm font-semibold flex items-center text-gray-900">
+                                <Navigation2 className="w-3.5 h-3.5 mr-2 text-gray-500" />
                                 Site Location
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pb-3 space-y-2">
-                            <div className="aspect-square w-full rounded-md overflow-hidden bg-gray-100 border relative">
+                        <CardContent className="p-0 flex flex-col">
+                            <div className="w-full h-48 sm:h-56 bg-gray-100 flex-shrink-0">
                                 {project.lat && project.lng ? (
                                     <StaticMap lat={project.lat} lng={project.lng} zoom={18} />
                                 ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-4 text-center">
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm p-4 text-center">
                                         No coordinates available for this location.
                                     </div>
                                 )}
                             </div>
                             {project.lat && project.lng && (
-                                <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors py-1"
-                                >
-                                    <MapPin className="h-3.5 w-3.5" />
-                                    Open in Google Maps
-                                </a>
+                                <div className="p-2 flex justify-center bg-gray-50 border-t border-gray-100">
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                                    >
+                                        <MapPin className="h-3 w-3" />
+                                        Open in Google Maps
+                                    </a>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
