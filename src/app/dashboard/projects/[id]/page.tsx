@@ -109,7 +109,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                             )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
                                 <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Daily Start Time</h4>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Earliest Start Time</h4>
                                     <p className="text-sm font-medium flex items-center">
                                         <Clock className="w-4 h-4 mr-2 text-blue-600" />
                                         {project.daily_start_time ? (() => {

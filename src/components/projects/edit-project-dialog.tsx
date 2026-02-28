@@ -141,7 +141,7 @@ export function EditProjectDialog({ project }: { project: Project }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="edit-daily_start_time">Shift Start Time</Label>
+                            <Label htmlFor="edit-daily_start_time">Earliest Start Time</Label>
                             <Input
                                 id="edit-daily_start_time"
                                 type="time"

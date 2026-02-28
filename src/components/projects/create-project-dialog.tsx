@@ -134,7 +134,7 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="daily_start_time">Shift Start Time</Label>
+                            <Label htmlFor="daily_start_time">Earliest Start Time</Label>
                             <Input
                                 id="daily_start_time"
                                 type="time"

@@ -86,7 +86,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                         <div className="px-4 mt-auto">
                                             <div className="flex items-center text-sm text-gray-500">
                                                 <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                                                <span>Daily Start Time: {formatTime12hr(project.daily_start_time)}</span>
+                                                <span>Earliest Start: {formatTime12hr(project.daily_start_time)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -110,7 +110,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                     <th className="text-left px-4 py-3 font-medium text-gray-500">Project Name</th>
                                     <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
                                     <th className="text-left px-4 py-3 font-medium text-gray-500 hidden md:table-cell">Description</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500 hidden sm:table-cell">Start Time</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-500 hidden sm:table-cell">Earliest Start</th>
                                     <th className="px-4 py-3 w-10"></th>
                                 </tr>
                             </thead>
