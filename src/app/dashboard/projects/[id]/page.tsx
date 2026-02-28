@@ -74,10 +74,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2">{project.name}</h1>
-                        <div className="flex items-center text-muted-foreground">
-                            <MapPin className="h-4 w-4 mr-2" />
-                            {project.address}
-                        </div>
+                        <a
+                            href={project.lat && project.lng
+                                ? `https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`
+                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center text-muted-foreground hover:text-blue-600 transition-colors"
+                        >
+                            <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="underline underline-offset-2">{project.address}</span>
+                        </a>
                     </div>
                     <div className="flex items-center gap-3">
                         <DeleteProjectButton projectId={projectId} />
@@ -141,8 +148,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                 Site Location
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="aspect-square w-full rounded-md overflow-hidden bg-gray-100 mb-3 border relative">
+                        <CardContent className="px-3 pb-3">
+                            <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block aspect-square w-full rounded-md overflow-hidden bg-gray-100 border relative cursor-pointer"
+                            >
                                 {project.lat && project.lng ? (
                                     <StaticMap lat={project.lat} lng={project.lng} zoom={15} />
                                 ) : (
@@ -150,8 +162,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                         No coordinates available for this location.
                                     </div>
                                 )}
-                            </div>
-                            <p className="text-sm text-muted-foreground break-words">{project.address}</p>
+                            </a>
                         </CardContent>
                     </Card>
                 </div>
