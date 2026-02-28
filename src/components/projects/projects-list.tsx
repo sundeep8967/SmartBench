@@ -50,7 +50,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                 className="group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
                             >
                                 <Card className="h-full hover:shadow-md transition-all group-hover:border-primary/50 cursor-pointer flex flex-col">
-                                    <div className="p-[25px] flex-grow">
+                                    <div className="p-4 flex-grow">
                                         <h3 className="text-base font-bold text-gray-900 truncate mb-3">
                                             {project.name}
                                         </h3>
@@ -69,7 +69,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                     </div>
 
                                     {project.daily_start_time && (
-                                        <div className="px-[25px] pb-[25px] mt-auto">
+                                        <div className="px-4 pb-4 mt-auto">
                                             <div className="flex items-center text-sm text-gray-500">
                                                 <Clock className="h-4 w-4 mr-2 text-gray-400" />
                                                 <span>Starts at {project.daily_start_time.slice(0, 5)}</span>
