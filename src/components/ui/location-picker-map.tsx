@@ -1,6 +1,6 @@
 "use client";
 
-import { useLoadScript, GoogleMap, Marker } from "@react-google-maps/api";
+import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
 import { useCallback, useRef, useState } from "react";
 
 const containerStyle = {
@@ -18,7 +18,8 @@ interface LocationPickerMapProps {
 }
 
 export function LocationPickerMap({ lat, lng, onChange }: LocationPickerMapProps) {
-    const { isLoaded, loadError } = useLoadScript({
+    const { isLoaded, loadError } = useJsApiLoader({
+        id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
         libraries,
     });

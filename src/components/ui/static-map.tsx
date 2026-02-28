@@ -1,6 +1,8 @@
 "use client";
 
-import { useLoadScript, GoogleMap, Marker } from "@react-google-maps/api";
+import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
+
+const libraries: ("places")[] = ["places"];
 
 const containerStyle = {
     width: "100%",
@@ -9,8 +11,10 @@ const containerStyle = {
 };
 
 export function StaticMap({ lat, lng, zoom = 14 }: { lat: number; lng: number, zoom?: number }) {
-    const { isLoaded, loadError } = useLoadScript({
+    const { isLoaded, loadError } = useJsApiLoader({
+        id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+        libraries,
     });
 
     const center = { lat, lng };

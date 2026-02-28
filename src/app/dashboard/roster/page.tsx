@@ -18,6 +18,7 @@ import {
     Mail,
 } from "lucide-react";
 import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
+import { ViewToggle } from "@/components/ui/view-toggle";
 
 interface RosterMember {
     id: string;
@@ -49,6 +50,7 @@ interface Metrics {
 export default function RosterPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
+    const [view, setView] = useState<"card" | "table">("table");
 
     const { data, isLoading: loading } = useSWR('/api/workers/roster', fetcher, {
         revalidateOnFocus: false,
@@ -155,109 +157,164 @@ export default function RosterPage() {
                         </select>
                     </div>
                 </div>
-                <InviteWorkerDialog />
+                <div className="flex items-center gap-3">
+                    <InviteWorkerDialog />
+                </div>
             </div>
 
-            {/* Roster Table */}
-            <Card className="border border-gray-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-white border-b border-gray-100 divide-x divide-gray-100 text-xs uppercase font-semibold text-gray-500">
-                            <tr>
-                                <th className="px-6 py-4 w-1/4">Worker</th>
-                                <th className="px-6 py-4 text-center">Status</th>
-                                <th className="px-6 py-4 text-center">Lending Rate</th>
-                                <th className="px-6 py-4 text-center">Trade</th>
-                                <th className="px-6 py-4 text-center">Role</th>
-                                <th className="px-6 py-4 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                            {filteredRoster.map((worker) => (
-                                <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
+            <div className="flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
+            {view === "card" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredRoster.map((worker) => (
+                        <Card key={worker.id} className="p-4 border border-gray-200 hover:shadow-md transition-all">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                                    {worker.photo_url ? (
+                                        <img src={worker.photo_url} alt={worker.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <span className="font-bold text-gray-500 text-xs">{getInitials(worker.name)}</span>
+                                    )}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-semibold text-gray-900 truncate">{worker.name}</p>
+                                    <p className="text-xs text-gray-500 truncate">{worker.email}</p>
+                                </div>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Trade</span>
+                                    <span className="font-medium text-gray-900">{worker.trade || "—"}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Rate</span>
+                                    <span className="font-medium text-gray-900">{worker.hourly_rate ? `$${Number(worker.hourly_rate).toFixed(2)}/hr` : "—"}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Role</span>
+                                    <span className="text-xs text-gray-600">{Array.isArray(worker.roles) ? worker.roles.join(", ") : "—"}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
+                                        ? "bg-green-50 text-green-600 border border-green-100"
+                                        : "bg-orange-50 text-orange-500 border border-orange-100"
+                                        }`}>{worker.deployment_status}</span>
+                                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600 h-8 w-8 p-0">
+                                        <PenSquare size={16} />
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                    {filteredRoster.length === 0 && (
+                        <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
+                            <p className="text-muted-foreground">{roster.length === 0 ? "No workers in your roster yet." : "No workers match your search."}</p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <Card className="border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-white border-b border-gray-100 divide-x divide-gray-100 text-xs uppercase font-semibold text-gray-500">
+                                <tr>
+                                    <th className="px-6 py-4 w-1/4">Worker</th>
+                                    <th className="px-6 py-4 text-center">Status</th>
+                                    <th className="px-6 py-4 text-center">Lending Rate</th>
+                                    <th className="px-6 py-4 text-center">Trade</th>
+                                    <th className="px-6 py-4 text-center">Role</th>
+                                    <th className="px-6 py-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 bg-white">
+                                {filteredRoster.map((worker) => (
+                                    <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                                                    {worker.photo_url ? (
+                                                        <img src={worker.photo_url} alt={worker.name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <span className="font-bold text-gray-500 text-xs">{getInitials(worker.name)}</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{worker.name}</p>
+                                                    <p className="text-xs text-gray-500">{worker.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
+                                                ? "bg-green-50 text-green-600 border border-green-100"
+                                                : "bg-orange-50 text-orange-500 border border-orange-100"
+                                                }`}>
+                                                {worker.deployment_status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                                            {worker.hourly_rate ? `$${Number(worker.hourly_rate).toFixed(2)}/hr` : "—"}
+                                        </td>
+                                        <td className="px-6 py-4 text-center text-gray-600">
+                                            {worker.trade || "—"}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="text-xs text-gray-500">
+                                                {Array.isArray(worker.roles) ? worker.roles.join(", ") : "—"}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">
+                                                <PenSquare size={16} />
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredRoster.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                                            {roster.length === 0 ? "No workers in your roster yet. Invite workers to get started." : "No workers match your search."}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pending Invitations */}
+                    {invitations.length > 0 && (
+                        <div className="border-t border-gray-200">
+                            <div className="px-6 py-3 bg-gray-50">
+                                <p className="text-xs font-semibold text-gray-500 uppercase">Pending Invitations ({invitations.length})</p>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {invitations.map((inv) => (
+                                    <div key={inv.id} className="px-6 py-3 flex items-center justify-between">
                                         <div className="flex items-center space-x-3">
-                                            <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-                                                {worker.photo_url ? (
-                                                    <img src={worker.photo_url} alt={worker.name} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <span className="font-bold text-gray-500 text-xs">{getInitials(worker.name)}</span>
-                                                )}
+                                            <div className="h-8 w-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
+                                                <Mail size={14} className="text-blue-500" />
                                             </div>
                                             <div>
-                                                <p className="font-bold text-gray-900">{worker.name}</p>
-                                                <p className="text-xs text-gray-500">{worker.email}</p>
+                                                <p className="text-sm text-gray-700">{inv.email}</p>
+                                                <p className="text-xs text-gray-400">{inv.role} · Pending</p>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
-                                            ? "bg-green-50 text-green-600 border border-green-100"
-                                            : "bg-orange-50 text-orange-500 border border-orange-100"
-                                            }`}>
-                                            {worker.deployment_status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center font-bold text-gray-900">
-                                        {worker.hourly_rate ? `$${Number(worker.hourly_rate).toFixed(2)}/hr` : "—"}
-                                    </td>
-                                    <td className="px-6 py-4 text-center text-gray-600">
-                                        {worker.trade || "—"}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="text-xs text-gray-500">
-                                            {Array.isArray(worker.roles) ? worker.roles.join(", ") : "—"}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">
-                                            <PenSquare size={16} />
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredRoster.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                                        {roster.length === 0 ? "No workers in your roster yet. Invite workers to get started." : "No workers match your search."}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pending Invitations */}
-                {invitations.length > 0 && (
-                    <div className="border-t border-gray-200">
-                        <div className="px-6 py-3 bg-gray-50">
-                            <p className="text-xs font-semibold text-gray-500 uppercase">Pending Invitations ({invitations.length})</p>
-                        </div>
-                        <div className="divide-y divide-gray-100">
-                            {invitations.map((inv) => (
-                                <div key={inv.id} className="px-6 py-3 flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="h-8 w-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
-                                            <Mail size={14} className="text-blue-500" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-700">{inv.email}</p>
-                                            <p className="text-xs text-gray-400">{inv.role} · Pending</p>
-                                        </div>
+                                        <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full border border-yellow-100 font-medium">Pending</span>
                                     </div>
-                                    <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full border border-yellow-100 font-medium">Pending</span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <div className="border-t border-gray-100 p-4 flex items-center justify-between">
-                    <p className="text-sm text-gray-500">
-                        Showing {filteredRoster.length} of {roster.length} workers
-                    </p>
-                </div>
-            </Card>
+                    <div className="border-t border-gray-100 p-4 flex items-center justify-between">
+                        <p className="text-sm text-gray-500">
+                            Showing {filteredRoster.length} of {roster.length} workers
+                        </p>
+                    </div>
+                </Card>
+            )}
         </div>
     );
 }

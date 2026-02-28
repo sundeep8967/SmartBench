@@ -42,14 +42,10 @@ export function Header() {
           <Menu size={22} />
         </button>
 
-        {/* Breadcrumbs */}
+        {/* Page Title */}
         <div className="flex items-center text-sm">
-          <span className="text-gray-500 font-medium hidden sm:inline">
+          <span className="text-gray-900 font-semibold">
             {config.section}
-          </span>
-          <span className="mx-2 text-gray-400 hidden sm:inline">›</span>
-          <span className="text-gray-900 font-semibold bg-gray-100 px-2 py-0.5 rounded text-xs">
-            {config.page}
           </span>
         </div>
       </div>

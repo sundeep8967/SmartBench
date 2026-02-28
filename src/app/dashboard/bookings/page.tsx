@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Calendar,
     Search,
-    Filter,
     MoreHorizontal,
     MapPin,
     Download,
@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
+import { ViewToggle } from "@/components/ui/view-toggle";
 
 
 
 export default function BookingsPage() {
+    const [view, setView] = useState<"card" | "table">("table");
     const { data, isLoading: loading } = useSWR('/api/bookings', fetcher, {
         revalidateOnFocus: false,
         dedupingInterval: 30000,
@@ -80,87 +82,132 @@ export default function BookingsPage() {
                 </div>
             </div>
 
-            {/* Bookings Table */}
-            <Card className="shadow-sm border border-gray-200 overflow-hidden rounded-lg">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Booking ID</th>
-                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Worker</th>
-                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Project / Location</th>
-                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Schedule</th>
-                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Financials</th>
-                                <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Status</th>
-                                <th className="px-6 py-4 text-right font-bold tracking-wider text-gray-400">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">Loading bookings...</td>
-                                </tr>
-                            ) : bookings.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">No bookings found.</td>
-                                </tr>
-                            ) : (
-                                bookings.map((booking) => (
-                                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 font-bold text-gray-900">#{booking.id.slice(0, 8)}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center border border-white shadow-sm shrink-0 text-blue-700 font-bold">
-                                                    {booking.worker?.full_name?.charAt(0) || "W"}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900">{booking.worker?.full_name || "Unknown Worker"}</p>
-                                                    <p className="text-xs text-gray-500">{booking.work_order?.role || "General Labor"}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-gray-900">{booking.project?.name || "Untitled Project"}</span>
-                                                <span className="text-xs text-gray-400 mt-0.5">
-                                                    {booking.project?.address || "No Address"}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-900">
-                                            <div className="flex flex-col">
-                                                <span className="font-medium">{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
-                                                <span className="text-xs text-blue-600 font-medium mt-0.5">
-                                                    Est. {Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24) + 1) * 8} Hours
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-gray-900">${(booking.total_amount / 100).toFixed(2)}</span>
-                                                <span className="text-xs text-gray-400 mt-0.5">Total Bill</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${booking.status === "Confirmed" ? "bg-green-50 text-green-600 border border-green-100" :
-                                                booking.status === "Pending" ? "bg-orange-50 text-orange-500 border border-orange-100" :
-                                                    "bg-gray-100 text-gray-600 border border-gray-200"
-                                                }`}>
-                                                {booking.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600">
-                                                <MoreHorizontal size={18} />
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+            <div className="flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
+            {view === "card" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {loading ? (
+                        <div className="col-span-full text-center py-12 text-gray-500">Loading bookings...</div>
+                    ) : bookings.length === 0 ? (
+                        <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
+                            <p className="text-muted-foreground">No bookings found.</p>
+                        </div>
+                    ) : bookings.map((booking) => (
+                        <Card key={booking.id} className="p-4 border border-gray-200 hover:shadow-md transition-all cursor-pointer">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+                                    {booking.worker?.full_name?.charAt(0) || "W"}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-semibold text-gray-900 truncate">{booking.worker?.full_name || "Unknown Worker"}</p>
+                                    <p className="text-xs text-gray-500">{booking.work_order?.role || "General Labor"}</p>
+                                </div>
+                                <span className={`ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${booking.status === "Confirmed" ? "bg-green-50 text-green-600 border border-green-100" :
+                                    booking.status === "Pending" ? "bg-orange-50 text-orange-500 border border-orange-100" :
+                                        "bg-gray-100 text-gray-600 border border-gray-200"
+                                    }`}>{booking.status}</span>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center text-gray-600">
+                                    <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                                    <span className="truncate">{booking.project?.name || "Untitled Project"}</span>
+                                </div>
+                                <div className="flex items-center text-gray-600">
+                                    <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                                    <span>{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t">
+                                    <span className="font-bold text-gray-900">${(booking.total_amount / 100).toFixed(2)}</span>
+                                    <span className="text-xs text-gray-400">Total Bill</span>
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
                 </div>
-            </Card>
+            ) : (
+                <Card className="shadow-sm border border-gray-200 overflow-hidden rounded-lg">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Booking ID</th>
+                                    <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Worker</th>
+                                    <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Project / Location</th>
+                                    <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Schedule</th>
+                                    <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Financials</th>
+                                    <th className="px-6 py-4 font-bold tracking-wider text-gray-400">Status</th>
+                                    <th className="px-6 py-4 text-right font-bold tracking-wider text-gray-400">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 bg-white">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-4 text-center text-gray-500">Loading bookings...</td>
+                                    </tr>
+                                ) : bookings.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-4 text-center text-gray-500">No bookings found.</td>
+                                    </tr>
+                                ) : (
+                                    bookings.map((booking) => (
+                                        <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 font-bold text-gray-900">#{booking.id.slice(0, 8)}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center border border-white shadow-sm shrink-0 text-blue-700 font-bold">
+                                                        {booking.worker?.full_name?.charAt(0) || "W"}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{booking.worker?.full_name || "Unknown Worker"}</p>
+                                                        <p className="text-xs text-gray-500">{booking.work_order?.role || "General Labor"}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-900">{booking.project?.name || "Untitled Project"}</span>
+                                                    <span className="text-xs text-gray-400 mt-0.5">
+                                                        {booking.project?.address || "No Address"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-900">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
+                                                    <span className="text-xs text-blue-600 font-medium mt-0.5">
+                                                        Est. {Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24) + 1) * 8} Hours
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-900">${(booking.total_amount / 100).toFixed(2)}</span>
+                                                    <span className="text-xs text-gray-400 mt-0.5">Total Bill</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${booking.status === "Confirmed" ? "bg-green-50 text-green-600 border border-green-100" :
+                                                    booking.status === "Pending" ? "bg-orange-50 text-orange-500 border border-orange-100" :
+                                                        "bg-gray-100 text-gray-600 border border-gray-200"
+                                                    }`}>
+                                                    {booking.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600">
+                                                    <MoreHorizontal size={18} />
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            )}
         </div>
     );
 }
