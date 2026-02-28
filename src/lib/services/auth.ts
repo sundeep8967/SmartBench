@@ -5,9 +5,14 @@ import { createClient } from '@/lib/supabase/server'
 interface CreateCompanyParams {
     companyName: string
     address?: string | null
+    city?: string | null
+    state?: string | null
+    zipCode?: string | null
     ein?: string | null
     contactPhone?: string | null
     type?: string | null
+    lat?: number | null
+    lng?: number | null
 }
 
 interface OnboardCompanyResult {
@@ -28,7 +33,7 @@ export async function onboardCompany(
     params: CreateCompanyParams
 ): Promise<OnboardCompanyResult> {
     const supabase = await createClient()
-    const { companyName, address, ein, contactPhone, type } = params
+    const { companyName, address, city, state, zipCode, ein, contactPhone, type, lat, lng } = params
 
     // 1. Check for existing membership (retry/resume flow)
     const { data: existingMember } = await supabase
@@ -48,8 +53,13 @@ export async function onboardCompany(
             .update({
                 name: companyName,
                 address: address ?? null,
+                city: city ?? null,
+                state: state ?? null,
+                zip_code: zipCode ?? null,
                 ein: ein ?? null,
                 contact_phone: contactPhone ?? null,
+                lat: lat ?? null,
+                lng: lng ?? null,
             })
             .eq('id', existingMember.company_id)
 
@@ -62,10 +72,15 @@ export async function onboardCompany(
             .insert({
                 name: companyName,
                 address: address ?? null,
+                city: city ?? null,
+                state: state ?? null,
+                zip_code: zipCode ?? null,
                 ein: ein ?? null,
                 contact_phone: contactPhone ?? null,
                 kyb_status: 'pending',
                 type: type ?? null,
+                lat: lat ?? null,
+                lng: lng ?? null,
             })
             .select('id')
             .single()

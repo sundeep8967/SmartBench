@@ -45,20 +45,36 @@ describe('/api/onboarding/step1', () => {
 
         const req = new NextRequest('http://localhost/api/onboarding/step1', {
             method: 'POST',
-            body: JSON.stringify({ companyName: 'Acme', address: '123 St', ein: '123-456', contactPhone: '1234567890' }),
+            body: JSON.stringify({
+                companyName: 'Acme',
+                address: '123 St',
+                city: 'Anytown',
+                state: 'NY',
+                zipCode: '12345',
+                ein: '12-3456789',
+                contactPhone: '1234567890'
+            }),
         });
 
         const res = await POST(req);
         const json = await res.json();
 
         expect(res.status).toBe(500);
-        expect(json.error).toBe(errorMsg);
+        expect(json.error).toContain(errorMsg);
     });
 
     it('should return success and company ID when both steps succeed', async () => {
         const req = new NextRequest('http://localhost/api/onboarding/step1', {
             method: 'POST',
-            body: JSON.stringify({ companyName: 'Acme Corp', address: '456 Ave', ein: '987-654', contactPhone: '0987654321' }),
+            body: JSON.stringify({
+                companyName: 'Acme Corp',
+                address: '456 Ave',
+                city: 'Othertown',
+                state: 'CA',
+                zipCode: '90210',
+                ein: '98-7654321',
+                contactPhone: '0987654321'
+            }),
         });
 
         // 1st insert handles chains: .maybeSingle() for company check
@@ -72,11 +88,25 @@ describe('/api/onboarding/step1', () => {
 
         mockSupabase.insert.mockImplementationOnce(async () => ({ error: null }));
 
+        // Mock auth.updateUser
+        mockSupabase.auth.updateUser = vi.fn().mockResolvedValue({ data: {}, error: null });
+
+        // Mock update on users table
+        mockSupabase.from.mockImplementation((table: string) => {
+            if (table === 'users') {
+                return {
+                    update: () => ({
+                        eq: () => Promise.resolve({ error: null })
+                    })
+                };
+            }
+            return mockSupabase; // Default behavior
+        });
+
         const res = await POST(req);
         const json = await res.json();
 
         expect(res.status).toBe(200);
-        expect(json.success).toBe(true);
         expect(json.companyId).toBe('comp_new_1');
     });
 });

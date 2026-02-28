@@ -2,6 +2,7 @@
 
 import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
 import { useCallback, useRef, useState } from "react";
+import { AddressComponents } from "./address-input";
 
 const containerStyle = {
     width: "100%",
@@ -14,7 +15,7 @@ const libraries: ("places")[] = ["places"];
 interface LocationPickerMapProps {
     lat: number;
     lng: number;
-    onChange: (lat: number, lng: number, address?: string) => void;
+    onChange: (lat: number, lng: number, address?: string, components?: AddressComponents) => void;
 }
 
 export function LocationPickerMap({ lat, lng, onChange }: LocationPickerMapProps) {
@@ -41,7 +42,43 @@ export function LocationPickerMap({ lat, lng, onChange }: LocationPickerMapProps
                 geocoderRef.current.geocode({ location: { lat: newLat, lng: newLng } }, (results, status) => {
                     setIsDragging(false);
                     if (status === 'OK' && results && results[0]) {
-                        onChange(newLat, newLng, results[0].formatted_address);
+                        const place = results[0];
+                        const addressComponents = place.address_components || [];
+                        let streetNumber = "";
+                        let route = "";
+
+                        const components: AddressComponents = {
+                            street: "",
+                            city: "",
+                            state: "",
+                            zipCode: "",
+                            formattedAddress: place.formatted_address,
+                            lat: newLat,
+                            lng: newLng,
+                        };
+
+                        for (const component of addressComponents) {
+                            const types = component.types;
+                            if (types.includes("street_number")) {
+                                streetNumber = component.long_name;
+                            } else if (types.includes("route")) {
+                                route = component.long_name;
+                            } else if (types.includes("locality")) {
+                                components.city = component.long_name;
+                            } else if (types.includes("sublocality_level_1")) {
+                                components.city = components.city || component.long_name;
+                            } else if (types.includes("postal_town")) {
+                                components.city = components.city || component.long_name;
+                            } else if (types.includes("administrative_area_level_1")) {
+                                components.state = component.long_name;
+                            } else if (types.includes("postal_code")) {
+                                components.zipCode = component.long_name;
+                            }
+                        }
+
+                        components.street = `${streetNumber} ${route}`.trim();
+
+                        onChange(newLat, newLng, place.formatted_address, components);
                     } else {
                         onChange(newLat, newLng);
                     }

@@ -19,7 +19,7 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
 
     return (
         <div className="min-h-screen bg-neutral-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative">
-            <div className="w-full max-w-md space-y-8 relative z-10">
+            <div className="w-full max-w-xl space-y-8 relative z-10">
                 {/* Header */}
                 <div className="text-center">
                     <h2 className="mt-2 text-xl font-bold tracking-tight text-neutral-900">
