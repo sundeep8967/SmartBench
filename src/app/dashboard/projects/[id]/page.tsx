@@ -34,7 +34,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     }
 
     // Parallel Fetching
-    const [projectRes, workOrdersRes] = await Promise.all([
+    const [projectRes, workOrdersRes, companyRes] = await Promise.all([
         supabase
             .from('projects')
             .select('*')
@@ -45,11 +45,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             .from('work_orders')
             .select('*')
             .eq('project_id', projectId)
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: false }),
+        supabase
+            .from('companies')
+            .select('minimum_shift_length_hours')
+            .eq('id', member.company_id)
+            .single()
     ]);
 
     const project = projectRes.data as Project | null;
     const workOrders = workOrdersRes.data as WorkOrder[] || [];
+    const company = companyRes.data;
 
     if (!project) {
         return (
@@ -129,7 +135,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Min. Shift</h4>
                                     <p className="text-sm font-medium flex items-center">
                                         <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                                        {project.minimum_shift_length_hours ? `${project.minimum_shift_length_hours} Hours` : 'Firm Default'}
+                                        {project.minimum_shift_length_hours ? `${project.minimum_shift_length_hours} Hours` : `${company?.minimum_shift_length_hours ?? 8} Hours (Firm Default)`}
                                     </p>
                                 </div>
                                 <div>
