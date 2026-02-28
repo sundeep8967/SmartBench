@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Clock, ArrowRight } from "lucide-react";
@@ -20,8 +21,21 @@ function formatAddress(address: string): [string, string] {
     return [street, rest];
 }
 
+/**
+ * Converts "07:00" or "14:30" to "7:00am" or "2:30pm"
+ */
+function formatTime12hr(time: string): string {
+    const [hStr, mStr] = time.slice(0, 5).split(":");
+    let h = parseInt(hStr, 10);
+    const suffix = h >= 12 ? "pm" : "am";
+    if (h === 0) h = 12;
+    else if (h > 12) h -= 12;
+    return `${h}:${mStr}${suffix}`;
+}
+
 export function ProjectsList({ projects }: { projects: Project[] }) {
     const [view, setView] = useState<"card" | "table">("card");
+    const router = useRouter();
 
     if (projects.length === 0) {
         return (
@@ -69,13 +83,19 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                     </div>
 
                                     {project.daily_start_time && (
-                                        <div className="px-4 pb-4 mt-auto">
+                                        <div className="px-4 mt-auto">
                                             <div className="flex items-center text-sm text-gray-500">
                                                 <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                                                <span>Starts at {project.daily_start_time.slice(0, 5)}</span>
+                                                <span>Daily Start Time: {formatTime12hr(project.daily_start_time)}</span>
                                             </div>
                                         </div>
                                     )}
+
+                                    <div className="px-4 pb-4 pt-3 mt-auto">
+                                        <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors group-hover:bg-gray-50 text-gray-900 shadow-sm">
+                                            View Details <ArrowRight className="ml-2 h-4 w-4" />
+                                        </div>
+                                    </div>
                                 </Card>
                             </Link>
                         );
@@ -98,30 +118,28 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                 {projects.map((project) => {
                                     const [street, cityState] = formatAddress(project.address);
                                     return (
-                                        <Link
-                                            href={`/dashboard/projects/${project.id}`}
+                                        <tr
                                             key={project.id}
-                                            className="contents"
+                                            className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            onClick={() => router.push(`/dashboard/projects/${project.id}`)}
                                         >
-                                            <tr className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors">
-                                                <td className="px-4 py-3 font-medium text-gray-900">{project.name}</td>
-                                                <td className="px-4 py-3 text-gray-600">
-                                                    <div className="leading-tight">
-                                                        <p>{street}</p>
-                                                        {cityState && <p className="text-xs text-gray-400">{cityState}</p>}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-500 max-w-xs truncate hidden md:table-cell">
-                                                    {project.project_description || "—"}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-                                                    {project.daily_start_time?.slice(0, 5) || "—"}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <ArrowRight className="h-4 w-4 text-gray-400" />
-                                                </td>
-                                            </tr>
-                                        </Link>
+                                            <td className="px-4 py-3 font-medium text-gray-900">{project.name}</td>
+                                            <td className="px-4 py-3 text-gray-600">
+                                                <div className="leading-tight">
+                                                    <p>{street}</p>
+                                                    {cityState && <p className="text-xs text-gray-400">{cityState}</p>}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-500 max-w-xs truncate hidden md:table-cell">
+                                                {project.project_description || "—"}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
+                                                {project.daily_start_time ? formatTime12hr(project.daily_start_time) : "—"}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <ArrowRight className="h-4 w-4 text-gray-400" />
+                                            </td>
+                                        </tr>
                                     );
                                 })}
                             </tbody>

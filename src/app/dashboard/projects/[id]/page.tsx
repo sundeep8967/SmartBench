@@ -74,15 +74,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2">{project.name}</h1>
-                        <div className="flex items-center text-muted-foreground space-x-4">
-                            <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-2" />
-                                {project.address}
-                            </div>
-                            <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-2" />
-                                {project.timezone}
-                            </div>
+                        <div className="flex items-center text-muted-foreground">
+                            <MapPin className="h-4 w-4 mr-2" />
+                            {project.address}
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -109,7 +103,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Daily Start Time</h4>
                                     <p className="text-sm font-medium flex items-center">
                                         <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                                        {project.daily_start_time ? project.daily_start_time.slice(0, 5) : 'Not specified'}
+                                        {project.daily_start_time ? (() => {
+                                            const [h, m] = project.daily_start_time.slice(0, 5).split(":");
+                                            let hr = parseInt(h, 10);
+                                            const suffix = hr >= 12 ? "pm" : "am";
+                                            if (hr === 0) hr = 12;
+                                            else if (hr > 12) hr -= 12;
+                                            return `${hr}:${m}${suffix}`;
+                                        })() : 'Not specified'}
                                     </p>
                                 </div>
                                 <div>
