@@ -109,8 +109,13 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                         <Label htmlFor="address">Site Address</Label>
                         <AddressInput
                             value={formData.address}
-                            onChange={(address, lat, lng) => {
-                                setFormData(prev => ({ ...prev, address, lat, lng }));
+                            onChange={(address, components) => {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    address,
+                                    lat: components?.lat,
+                                    lng: components?.lng
+                                }));
                             }}
                             required
                         />

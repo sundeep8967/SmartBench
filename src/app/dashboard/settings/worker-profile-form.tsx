@@ -55,7 +55,12 @@ export function WorkerProfileForm({ initialData }: { initialData?: WorkerProfile
                                 </Label>
                                 <AddressInput
                                     value={formData.home_zip_code}
-                                    onChange={(address, lat, lng) => setFormData({ ...formData, home_zip_code: address, lat, lng })}
+                                    onChange={(address, components) => setFormData({
+                                        ...formData,
+                                        home_zip_code: address,
+                                        lat: components?.lat,
+                                        lng: components?.lng
+                                    })}
                                     required
                                 />
                             </div>

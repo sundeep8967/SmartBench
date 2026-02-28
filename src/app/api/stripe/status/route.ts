@@ -47,10 +47,28 @@ export async function GET(req: Request) {
             account.charges_enabled &&
             account.details_submitted;
 
+        let last4 = null;
+        let bankName = null;
+
+        if (isFullyOnboarded) {
+            const externalAccounts = await stripe.accounts.listExternalAccounts(
+                company.stripe_account_id,
+                { object: 'bank_account', limit: 1 }
+            );
+
+            if (externalAccounts.data.length > 0) {
+                const bankAccount = externalAccounts.data[0] as any;
+                last4 = bankAccount.last4;
+                bankName = bankAccount.bank_name;
+            }
+        }
+
         return NextResponse.json({
             is_fully_onboarded: isFullyOnboarded,
             details_submitted: account.details_submitted,
             charges_enabled: account.charges_enabled,
+            last4: last4,
+            bank_name: bankName
         });
 
     } catch (error: any) {

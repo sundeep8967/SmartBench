@@ -12,13 +12,18 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { companyName, address, ein, contactPhone } = await req.json()
+        const { companyName, address, city, state, zipCode, ein, contactPhone, lat, lng } = await req.json()
 
         const result = await onboardCompany(user.id, {
             companyName,
             address,
+            city,
+            state,
+            zipCode,
             ein,
             contactPhone,
+            lat,
+            lng,
         })
 
         return success(result)
