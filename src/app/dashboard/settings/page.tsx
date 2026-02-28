@@ -23,6 +23,12 @@ import type { WorkerProfile } from "@/types";
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("Company Profile");
     const [profile, setProfile] = useState<WorkerProfile | null>(null);
+    const [company, setCompany] = useState<any>(null);
+    const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+    const [isStripeFullyOnboarded, setIsStripeFullyOnboarded] = useState(false);
+    const [isLoadingStripe, setIsLoadingStripe] = useState(true);
+    const [bankDetails, setBankDetails] = useState<{ last4: string, bankName: string } | null>(null);
+    const [isConnectingStripe, setIsConnectingStripe] = useState(false);
 
     const tabs = [
         { name: "Company Profile", icon: Building2 },
@@ -38,25 +44,78 @@ export default function SettingsPage() {
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data } = await supabase
-                    .from('worker_profiles')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .single();
-                if (data) setProfile(data);
+                const [profileRes, memberRes] = await Promise.all([
+                    supabase
+                        .from('worker_profiles')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .single(),
+                    supabase
+                        .from('company_members')
+                        .select('companies(*)')
+                        .eq('user_id', user.id)
+                        .eq('status', 'Active')
+                        .single()
+                ]);
+
+                if (profileRes.data) setProfile(profileRes.data);
+                if (memberRes.data && memberRes.data.companies) {
+                    const companiesData = Array.isArray(memberRes.data.companies) ? memberRes.data.companies[0] : memberRes.data.companies;
+                    if (companiesData) {
+                        setCompany(companiesData);
+                        setStripeAccountId(companiesData.stripe_account_id);
+
+                        if (companiesData.stripe_account_id) {
+                            try {
+                                const statusRes = await fetch('/api/stripe/status');
+                                if (statusRes.ok) {
+                                    const statusData = await statusRes.json();
+                                    setIsStripeFullyOnboarded(statusData.is_fully_onboarded);
+                                    if (statusData.last4) {
+                                        setBankDetails({
+                                            last4: statusData.last4,
+                                            bankName: statusData.bank_name || 'Bank Account'
+                                        });
+                                    }
+                                }
+                            } catch (error) {
+                                console.error("Failed to fetch Stripe status:", error);
+                            }
+                        }
+                        setIsLoadingStripe(false);
+                    } else {
+                        setIsLoadingStripe(false);
+                    }
+                } else {
+                    setIsLoadingStripe(false);
+                }
+            } else {
+                setIsLoadingStripe(false);
             }
         };
         fetchProfile();
     }, []);
 
-    return (
-        <div className="space-y-6">
-            <div>
-                <div className="text-sm text-gray-500 mb-1">System → Settings</div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h1>
-                <p className="text-gray-500">Manage company profile, insurance requirements, and billing details.</p>
-            </div>
+    const handleConnectStripe = async () => {
+        setIsConnectingStripe(true);
+        try {
+            const res = await fetch("/api/stripe/connect", { method: "POST" });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || "Failed to connect to Stripe");
+            }
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message);
+        } finally {
+            setIsConnectingStripe(false);
+        }
+    };
 
+    return (
+        <div className="space-y-6 pt-2">
             <div className="border-b border-gray-200">
                 <nav className="flex space-x-6">
                     {tabs.map((tab) => (
@@ -105,12 +164,12 @@ export default function SettingsPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                            <input type="text" defaultValue="SmartBench Construction LLC" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                            <input type="text" defaultValue={company?.name || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">EIN / Tax ID</label>
                                             <div className="relative">
-                                                <input type="text" defaultValue="83-1234567" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:pr-24" />
+                                                <input type="text" defaultValue={company?.ein || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:pr-24" />
                                                 <span className="hidden md:flex absolute right-2 top-1/2 transform -translate-y-1/2 items-center text-xs text-green-600 font-medium">
                                                     <Check size={12} className="mr-1" /> Verified
                                                 </span>
@@ -118,11 +177,11 @@ export default function SettingsPage() {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                                            <input type="text" defaultValue="https://smartbench.app" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                            <input type="text" defaultValue={company?.website || ""} placeholder="https://" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                            <input type="text" defaultValue="+1 (555) 987-6543" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                            <input type="text" defaultValue={company?.contact_phone || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Shift Length (Hours)</label>
@@ -139,40 +198,6 @@ export default function SettingsPage() {
 
                                     <div className="pt-2 flex justify-end">
                                         <Button className="bg-blue-900 hover:bg-blue-800 text-white">Save Changes</Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="shadow-sm border-gray-200">
-                                <CardHeader className="border-b border-gray-100 bg-gray-50/50 pb-4">
-                                    <CardTitle className="text-base font-bold text-gray-900">Payout Method</CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center p-4 bg-purple-50 rounded-lg border border-purple-100 mb-6">
-                                        <div className="h-10 w-10 rounded bg-purple-100 flex items-center justify-center mr-4">
-                                            <span className="text-purple-600 font-bold">S</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-gray-900 flex items-center">Stripe Connected Account <Check size={14} className="ml-1 text-green-600" /></p>
-                                            <p className="text-sm text-gray-500">Payouts are automatically transferred weekly.</p>
-                                        </div>
-                                        <Button variant="ghost" size="sm" className="text-purple-700 hover:bg-purple-100">Manage</Button>
-                                    </div>
-
-                                    <div>
-                                        <h4 className="text-sm font-medium text-gray-900 mb-3">Linked Bank Accounts</h4>
-                                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer bg-white">
-                                            <div className="flex items-center">
-                                                <div className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-gray-500">
-                                                    <CreditCard size={16} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-900">Chase Bank **** 4242</p>
-                                                    <p className="text-xs text-gray-500">Checking Account</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">PRIMARY</span>
-                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -194,43 +219,77 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-6">
-                    <Card className="shadow-sm border-gray-200 border-l-4 border-l-green-500">
-                        <CardContent className="p-6">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="flex items-center">
-                                    <Shield className="text-green-600 mr-2" size={20} />
-                                    <span className="font-bold text-gray-900">General Liability</span>
+                    {activeTab === "Company Profile" && (
+                        <Card className="shadow-sm border-gray-200">
+                            <CardHeader className="border-b border-gray-100 bg-gray-50/50 pb-4">
+                                <CardTitle className="text-base font-bold text-gray-900">Payout Method</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="flex flex-col space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+                                    <div className="flex items-center">
+                                        <div className="h-10 w-10 rounded bg-purple-100 flex items-center justify-center mr-4 shrink-0">
+                                            <span className="text-purple-600 font-bold">S</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            {isLoadingStripe ? (
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-4 h-4 rounded-full border-2 border-purple-600 border-t-transparent animate-spin"></div>
+                                                    <p className="text-sm text-gray-500">Checking status...</p>
+                                                </div>
+                                            ) : isStripeFullyOnboarded ? (
+                                                <>
+                                                    <p className="font-bold text-gray-900 flex items-center">Stripe Connected <Check size={14} className="ml-1 text-green-600" /></p>
+                                                    {bankDetails ? (
+                                                        <p className="text-sm text-gray-500">{bankDetails.bankName} ending in •••• {bankDetails.last4}</p>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500">Payouts enabled.</p>
+                                                    )}
+                                                </>
+                                            ) : stripeAccountId ? (
+                                                <>
+                                                    <p className="font-bold text-gray-900 flex items-center">Account Created <AlertTriangle size={14} className="ml-1 text-yellow-500" /></p>
+                                                    <p className="text-sm text-gray-500">Action Required: Finish onboarding.</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="font-bold text-gray-900 flex items-center">Not Connected</p>
+                                                    <p className="text-sm text-gray-500">Connect to receive payouts.</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="w-full">
+                                        {stripeAccountId ? (
+                                            <Button
+                                                variant={isStripeFullyOnboarded ? "ghost" : "default"}
+                                                size="sm"
+                                                className={isStripeFullyOnboarded ? "text-purple-700 hover:bg-purple-100 w-full" : "bg-purple-600 hover:bg-purple-700 text-white w-full"}
+                                                onClick={handleConnectStripe}
+                                                disabled={isConnectingStripe}
+                                            >
+                                                {isConnectingStripe ? "Opening..." : "Manage Stripe Account"}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                size="sm"
+                                                className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                                                onClick={handleConnectStripe}
+                                                disabled={isConnectingStripe}
+                                            >
+                                                {isConnectingStripe ? "Connecting..." : "Connect Stripe"}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
-                                <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Active</span>
-                            </div>
-                            <p className="text-sm text-gray-500 mb-4">Policy #GL-9832290</p>
-                            <div className="flex justify-between items-end border-t border-gray-100 pt-3">
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase">Coverage</p>
-                                    <p className="font-bold text-gray-900">$2,000,000</p>
-                                </div>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
 
-                    <Card className="shadow-sm border-gray-200 border-l-4 border-l-yellow-500">
-                        <CardContent className="p-6">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="flex items-center">
-                                    <AlertTriangle className="text-yellow-600 mr-2" size={20} />
-                                    <span className="font-bold text-gray-900">Worker's Comp</span>
-                                </div>
-                                <span className="bg-yellow-100 text-yellow-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Expiring</span>
-                            </div>
-                            <p className="text-sm text-gray-500 mb-4">Policy #WC-1120043</p>
-                            <div className="flex justify-between items-end border-t border-gray-100 pt-3">
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase">Coverage</p>
-                                    <p className="font-bold text-gray-900">$1,000,000</p>
-                                </div>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs">Renew</Button>
-                            </div>
+                    {/* Placeholder for future insurance modules */}
+                    <Card className="shadow-sm border-gray-200 bg-gray-50/50">
+                        <CardContent className="p-6 text-center text-gray-500 text-sm">
+                            <Shield className="mx-auto mb-2 text-gray-400" size={24} />
+                            Insurance tracking module coming soon.
                         </CardContent>
                     </Card>
                 </div>

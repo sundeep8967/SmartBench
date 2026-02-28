@@ -31,7 +31,7 @@ export function Header() {
   const { toggle } = useSidebar();
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40">
+    <header className="min-h-[4rem] py-2 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40">
       {/* Left: hamburger + breadcrumbs */}
       <div className="flex items-center gap-3">
         {/* Mobile hamburger */}
@@ -44,10 +44,19 @@ export function Header() {
         </button>
 
         {/* Page Title */}
-        <div className="flex items-center text-sm">
-          <span className="text-gray-900 font-semibold">
-            {config.section}
-          </span>
+        <div className="flex flex-col py-1">
+          {pathname.includes("/settings") ? (
+            <>
+              <h1 className="text-base md:text-lg font-bold text-gray-900 leading-none mb-1">Settings</h1>
+              <p className="text-[10px] md:text-xs text-gray-500 leading-none hidden sm:block">Manage company profile, insurance requirements, and billing details.</p>
+            </>
+          ) : (
+            <div className="flex items-center text-sm">
+              <span className="text-gray-900 font-semibold">
+                {config.section}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
