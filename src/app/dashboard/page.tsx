@@ -152,7 +152,7 @@ export default async function DashboardPage() {
                 {/* Main Column (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                         {/* Active Bookings */}
                         <Card className="shadow-sm border-gray-200">
                             <CardContent className="pt-6">

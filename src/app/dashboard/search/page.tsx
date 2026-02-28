@@ -121,7 +121,7 @@ export default function WorkerSearchPage() {
             {loading ? (
                 <div>Loading workers...</div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {workers.map((worker) => (
                         <Card key={worker.id} className="overflow-hidden">
                             <CardHeader className="bg-muted/50 pb-4">

@@ -69,9 +69,9 @@ export default function CartPage() {
 
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold tracking-tight">Review Bookings</h1>
-                <Button variant="outline" asChild>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Review Bookings</h1>
+                <Button variant="outline" asChild className="w-full sm:w-auto">
                     <Link href="/dashboard/projects">Continue Shopping</Link>
                 </Button>
             </div>
@@ -112,7 +112,7 @@ export default function CartPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                                <div className="grid gap-6 text-sm" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
                                     <div className="space-y-1">
                                         <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Role & Rate</span>
                                         <p className="font-medium text-gray-900">{(item as any).work_order?.role || 'General Labor'}</p>

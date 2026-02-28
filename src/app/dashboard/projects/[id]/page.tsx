@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { WorkOrderDialog } from "@/components/projects/work-order-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,9 +72,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     <Link href="/dashboard/projects"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects</Link>
                 </Button>
 
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2">{project.name}</h1>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                    <div className="min-w-0">
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{project.name}</h1>
                         <a
                             href={project.lat && project.lng
                                 ? `https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`
@@ -83,10 +84,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                             className="flex items-center text-muted-foreground hover:text-blue-600 transition-colors"
                         >
                             <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                            <span className="underline underline-offset-2">{project.address}</span>
+                            <span className="underline underline-offset-2 break-words">{project.address}</span>
                         </a>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                        <EditProjectDialog project={project} />
                         <DeleteProjectButton projectId={projectId} />
                     </div>
                 </div>
@@ -105,9 +107,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                     <p className="text-sm">{project.project_description}</p>
                                 </div>
                             )}
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
                                 <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Daily Start Time</h4>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Earliest Start Time</h4>
                                     <p className="text-sm font-medium flex items-center">
                                         <Clock className="w-4 h-4 mr-2 text-blue-600" />
                                         {project.daily_start_time ? (() => {
@@ -148,21 +150,27 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                 Site Location
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pb-3">
-                            <a
-                                href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block aspect-square w-full rounded-md overflow-hidden bg-gray-100 border relative cursor-pointer"
-                            >
+                        <CardContent className="px-3 pb-3 space-y-2">
+                            <div className="aspect-square w-full rounded-md overflow-hidden bg-gray-100 border relative">
                                 {project.lat && project.lng ? (
-                                    <StaticMap lat={project.lat} lng={project.lng} zoom={15} />
+                                    <StaticMap lat={project.lat} lng={project.lng} zoom={18} />
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-4 text-center">
                                         No coordinates available for this location.
                                     </div>
                                 )}
-                            </a>
+                            </div>
+                            {project.lat && project.lng && (
+                                <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors py-1"
+                                >
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    Open in Google Maps
+                                </a>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -209,7 +217,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-2">
+                                    <div className="grid gap-4 text-sm mt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
                                         <div className="flex items-center">
                                             <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                                             <span>

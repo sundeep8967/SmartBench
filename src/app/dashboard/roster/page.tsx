@@ -96,7 +96,7 @@ export default function RosterPage() {
             </div>
 
             {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                 <Card className="p-5 border border-gray-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-500">Total Workers</p>
@@ -134,7 +134,7 @@ export default function RosterPage() {
 
             {/* Search and Controls */}
             <div className="flex flex-col md:flex-row justify-between gap-4">
-                <div className="flex w-full md:w-auto overflow-hidden rounded-md border border-gray-300">
+                <div className="flex flex-col sm:flex-row w-full md:w-auto overflow-hidden rounded-md border border-gray-300">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                         <input
@@ -142,14 +142,14 @@ export default function RosterPage() {
                             placeholder="Search workers..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full md:w-64 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-none"
+                            className="w-full pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-none"
                         />
                     </div>
-                    <div className="border-l border-gray-300 bg-white">
+                    <div className="border-t sm:border-t-0 sm:border-l border-gray-300 bg-white">
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="h-full px-3 py-2.5 text-sm text-gray-700 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            className="w-full sm:w-auto h-full px-3 py-2.5 text-sm text-gray-700 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         >
                             <option value="All">All Statuses</option>
                             <option value="Deployed">Deployed</option>
@@ -167,7 +167,7 @@ export default function RosterPage() {
             </div>
 
             {view === "card" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {filteredRoster.map((worker) => (
                         <Card key={worker.id} className="p-[25px] border border-gray-200 hover:shadow-md transition-all">
                             <div className="flex items-center gap-3 mb-5">
