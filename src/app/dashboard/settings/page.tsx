@@ -259,7 +259,16 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                     <div className="w-full">
-                                        {stripeAccountId ? (
+                                        {isLoadingStripe ? (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="w-full bg-purple-100/50 text-purple-400 cursor-not-allowed"
+                                                disabled={true}
+                                            >
+                                                Loading...
+                                            </Button>
+                                        ) : stripeAccountId ? (
                                             <Button
                                                 variant={isStripeFullyOnboarded ? "ghost" : "default"}
                                                 size="sm"

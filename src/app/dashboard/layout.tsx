@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider } from "@/lib/contexts/SidebarContext";
+import { StripeSetupAlert } from "@/components/dashboard/stripe-setup-alert";
 
 export default function DashboardLayout({
     children,
@@ -15,6 +16,7 @@ export default function DashboardLayout({
                 <div className="lg:pl-64 flex flex-col min-h-screen">
                     <Header />
                     <main className="flex-1 p-4 sm:p-6">
+                        <StripeSetupAlert />
                         {children}
                     </main>
                 </div>
