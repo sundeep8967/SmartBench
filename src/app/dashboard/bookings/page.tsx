@@ -95,32 +95,34 @@ export default function BookingsPage() {
                             <p className="text-muted-foreground">No bookings found.</p>
                         </div>
                     ) : bookings.map((booking) => (
-                        <Card key={booking.id} className="p-4 border border-gray-200 hover:shadow-md transition-all cursor-pointer">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
-                                    {booking.worker?.full_name?.charAt(0) || "W"}
+                        <Card key={booking.id} className="p-[25px] border border-gray-200 hover:shadow-md transition-all cursor-pointer">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+                                        {booking.worker?.full_name?.charAt(0) || "W"}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-gray-900 truncate">{booking.worker?.full_name || "Unknown Worker"}</p>
+                                        <p className="text-sm text-gray-500">{booking.work_order?.role || "General Labor"}</p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">{booking.worker?.full_name || "Unknown Worker"}</p>
-                                    <p className="text-xs text-gray-500">{booking.work_order?.role || "General Labor"}</p>
-                                </div>
-                                <span className={`ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${booking.status === "Confirmed" ? "bg-green-50 text-green-600 border border-green-100" :
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 ${booking.status === "Confirmed" ? "bg-green-50 text-green-600 border border-green-100" :
                                     booking.status === "Pending" ? "bg-orange-50 text-orange-500 border border-orange-100" :
                                         "bg-gray-100 text-gray-600 border border-gray-200"
                                     }`}>{booking.status}</span>
                             </div>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex items-center text-gray-600">
-                                    <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                                    <span className="truncate">{booking.project?.name || "Untitled Project"}</span>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex items-start text-gray-500">
+                                    <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span className="leading-[1.6] truncate">{booking.project?.name || "Untitled Project"}</span>
                                 </div>
-                                <div className="flex items-center text-gray-600">
-                                    <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                                    <span>{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
+                                <div className="flex items-start text-gray-500">
+                                    <Calendar className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span className="leading-[1.6]">{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
                                 </div>
-                                <div className="flex justify-between items-center pt-2 border-t">
+                                <div className="flex justify-between items-center pt-4 border-t mt-4">
                                     <span className="font-bold text-gray-900">${(booking.total_amount / 100).toFixed(2)}</span>
-                                    <span className="text-xs text-gray-400">Total Bill</span>
+                                    <span className="text-sm text-gray-500">Total Bill</span>
                                 </div>
                             </div>
                         </Card>

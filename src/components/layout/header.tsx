@@ -11,7 +11,7 @@ const routeConfig: Record<string, { section: string; page: string }> = {
   "/dashboard": { section: "Dashboard", page: "Overview" },
   "/dashboard/marketplace": { section: "Marketplace", page: "Search" },
   "/dashboard/bookings": { section: "Bookings", page: "Management" },
-  "/dashboard/roster": { section: "Roster", page: "Team" },
+  "/dashboard/roster": { section: "Employees", page: "Team" },
   "/dashboard/time-clock": { section: "Time Clock", page: "Tracker" },
   "/dashboard/timesheets": { section: "Verification", page: "Queue" },
   "/dashboard/financials": { section: "Financials", page: "Overview" },

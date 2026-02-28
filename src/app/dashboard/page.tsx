@@ -68,13 +68,13 @@ export default async function DashboardPage() {
                 // Money in (as lender)
                 supabase
                     .from('bookings')
-                    .select('total_cost')
+                    .select('total_amount')
                     .eq('lender_company_id', companyId)
                     .in('status', ['Confirmed', 'Active', 'Completed']),
                 // Money out (as borrower)
                 supabase
                     .from('bookings')
-                    .select('total_cost')
+                    .select('total_amount')
                     .eq('borrower_company_id', companyId)
                     .in('status', ['Confirmed', 'Active', 'Completed']),
             ]),
@@ -98,8 +98,8 @@ export default async function DashboardPage() {
 
         // Calculate financials
         const [lenderRes, borrowerRes] = financialsRes;
-        const moneyIn = (lenderRes.data || []).reduce((sum, b) => sum + (b.total_cost || 0), 0);
-        const moneyOut = (borrowerRes.data || []).reduce((sum, b) => sum + (b.total_cost || 0), 0);
+        const moneyIn = (lenderRes.data || []).reduce((sum, b) => sum + (b.total_amount || 0), 0);
+        const moneyOut = (borrowerRes.data || []).reduce((sum, b) => sum + (b.total_amount || 0), 0);
         balance = moneyIn - moneyOut;
 
         activeBookings = bookingsRes.count || 0;
@@ -276,7 +276,7 @@ export default async function DashboardPage() {
                             <Link href="/dashboard/roster">
                                 <Button variant="outline" className="w-full justify-start h-12 text-base font-medium text-gray-700 border-gray-300 hover:bg-gray-50">
                                     <UserPlus size={18} className="mr-3" />
-                                    Add to Roster
+                                    Add Employee
                                 </Button>
                             </Link>
                         </div>

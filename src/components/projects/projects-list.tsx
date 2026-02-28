@@ -49,39 +49,33 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                 key={project.id}
                                 className="group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
                             >
-                                <Card className="h-full hover:shadow-md transition-all group-hover:border-primary/50 cursor-pointer">
-                                    <CardHeader className="p-4 pb-2">
-                                        <CardTitle className="text-base font-semibold truncate">
+                                <Card className="h-full hover:shadow-md transition-all group-hover:border-primary/50 cursor-pointer flex flex-col">
+                                    <div className="p-[25px] flex-grow">
+                                        <h3 className="text-base font-bold text-gray-900 truncate mb-3">
                                             {project.name}
-                                        </CardTitle>
-                                        <div className="flex items-start mt-1 text-sm text-muted-foreground">
-                                            <MapPin className="h-3.5 w-3.5 mr-1.5 mt-0.5 flex-shrink-0" />
-                                            <div className="leading-tight">
+                                        </h3>
+                                        <div className="flex items-start text-sm text-gray-500 mb-4">
+                                            <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                                            <div className="leading-[1.6]">
                                                 <p className="truncate">{street}</p>
                                                 {cityState && (
-                                                    <p className="truncate text-xs">{cityState}</p>
+                                                    <p className="truncate">{cityState}</p>
                                                 )}
                                             </div>
                                         </div>
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-2 space-y-3">
-                                        <p className="text-sm text-muted-foreground line-clamp-2">
+                                        <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">
                                             {project.project_description || "No description provided."}
                                         </p>
+                                    </div>
 
-                                        {project.daily_start_time && (
-                                            <div className="flex items-center text-sm text-muted-foreground">
-                                                <Clock className="h-3.5 w-3.5 mr-1.5" />
+                                    {project.daily_start_time && (
+                                        <div className="px-[25px] pb-[25px] mt-auto">
+                                            <div className="flex items-center text-sm text-gray-500">
+                                                <Clock className="h-4 w-4 mr-2 text-gray-400" />
                                                 <span>Starts at {project.daily_start_time.slice(0, 5)}</span>
                                             </div>
-                                        )}
-
-                                        <div className="pt-2 border-t">
-                                            <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors group-hover:bg-gray-50 text-gray-900 shadow-sm">
-                                                View Details <ArrowRight className="ml-2 h-4 w-4" />
-                                            </div>
                                         </div>
-                                    </CardContent>
+                                    )}
                                 </Card>
                             </Link>
                         );

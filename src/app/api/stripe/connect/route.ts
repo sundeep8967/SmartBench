@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
-import { createCompanyAndAdmin } from '@/lib/services/auth';
+import { onboardCompany } from '@/lib/services/auth';
 
 export async function POST(req: Request) {
     try {
@@ -32,10 +32,7 @@ export async function POST(req: Request) {
                 // Determine user full name from metadata
                 const fullName = user.user_metadata?.full_name || user.user_metadata?.name || null;
 
-                const result = await createCompanyAndAdmin({
-                    userId: user.id,
-                    email: user.email || '',
-                    fullName: fullName,
+                const result = await onboardCompany(user.id, {
                     companyName: body.businessName || 'Unnamed Company',
                     ein: body.ein || null,
                     address: body.address || null,

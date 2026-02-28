@@ -91,7 +91,7 @@ export default function RosterPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Roster Management</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Employee Management</h1>
                 <p className="text-gray-500 mt-1">Manage your workforce availability and marketplace listings.</p>
             </div>
 
@@ -169,22 +169,22 @@ export default function RosterPage() {
             {view === "card" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredRoster.map((worker) => (
-                        <Card key={worker.id} className="p-4 border border-gray-200 hover:shadow-md transition-all">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <Card key={worker.id} className="p-[25px] border border-gray-200 hover:shadow-md transition-all">
+                            <div className="flex items-center gap-3 mb-5">
+                                <div className="h-12 w-12 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                                     {worker.photo_url ? (
                                         <img src={worker.photo_url} alt={worker.name} className="h-full w-full object-cover" />
                                     ) : (
-                                        <span className="font-bold text-gray-500 text-xs">{getInitials(worker.name)}</span>
+                                        <span className="font-bold text-gray-500 text-sm">{getInitials(worker.name)}</span>
                                     )}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">{worker.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{worker.email}</p>
+                                    <p className="font-bold text-lg text-gray-900 truncate">{worker.name}</p>
+                                    <p className="text-sm text-gray-500 truncate">{worker.email}</p>
                                 </div>
                             </div>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex items-center justify-between">
+                            <div className="space-y-3 text-sm">
+                                <div className="flex items-center justify-between mt-2">
                                     <span className="text-gray-500">Trade</span>
                                     <span className="font-medium text-gray-900">{worker.trade || "—"}</span>
                                 </div>
@@ -194,9 +194,9 @@ export default function RosterPage() {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-gray-500">Role</span>
-                                    <span className="text-xs text-gray-600">{Array.isArray(worker.roles) ? worker.roles.join(", ") : "—"}</span>
+                                    <span className="text-gray-600">{Array.isArray(worker.roles) ? worker.roles.join(", ") : "—"}</span>
                                 </div>
-                                <div className="flex justify-between items-center pt-2 border-t">
+                                <div className="flex justify-between items-center pt-4 border-t mt-4">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
                                         ? "bg-green-50 text-green-600 border border-green-100"
                                         : "bg-orange-50 text-orange-500 border border-orange-100"
@@ -210,7 +210,7 @@ export default function RosterPage() {
                     ))}
                     {filteredRoster.length === 0 && (
                         <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
-                            <p className="text-muted-foreground">{roster.length === 0 ? "No workers in your roster yet." : "No workers match your search."}</p>
+                            <p className="text-muted-foreground">{roster.length === 0 ? "No employees added yet." : "No workers match your search."}</p>
                         </div>
                     )}
                 </div>
@@ -275,7 +275,7 @@ export default function RosterPage() {
                                 {filteredRoster.length === 0 && (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                                            {roster.length === 0 ? "No workers in your roster yet. Invite workers to get started." : "No workers match your search."}
+                                            {roster.length === 0 ? "No employees added yet. Invite workers to get started." : "No workers match your search."}
                                         </td>
                                     </tr>
                                 )}
