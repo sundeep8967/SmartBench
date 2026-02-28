@@ -1,7 +1,7 @@
 "use client";
 
 import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { AddressComponents } from "./address-input";
 
 const containerStyle = {
@@ -26,13 +26,22 @@ export function LocationPickerMap({ lat, lng, onChange }: LocationPickerMapProps
     });
 
     const [isDragging, setIsDragging] = useState(false);
+    const [localCenter, setLocalCenter] = useState({ lat, lng });
     const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+
+    // Sync local center if the props change externally
+    useEffect(() => {
+        setLocalCenter({ lat, lng });
+    }, [lat, lng]);
 
     const onDragEnd = useCallback((e: google.maps.MapMouseEvent) => {
         setIsDragging(true);
         if (e.latLng) {
             const newLat = e.latLng.lat();
             const newLng = e.latLng.lng();
+
+            // Instantly update the visual center so it doesn't bounce back
+            setLocalCenter({ lat: newLat, lng: newLng });
 
             if (!geocoderRef.current && window.google) {
                 geocoderRef.current = new window.google.maps.Geocoder();
@@ -95,29 +104,29 @@ export function LocationPickerMap({ lat, lng, onChange }: LocationPickerMapProps
     if (loadError) return <div className="p-4 bg-gray-50 flex items-center justify-center h-[200px] text-red-500 rounded-lg">Error loading map preview</div>;
     if (!isLoaded) return <div className="p-4 bg-gray-50 flex items-center justify-center h-[200px] text-gray-400 rounded-lg animate-pulse">Loading map preview...</div>;
 
-    const center = { lat, lng };
-
     return (
-        <div className="border border-gray-200 rounded-lg overflow-hidden relative">
-            <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={center}
-                zoom={16}
-                options={{
-                    disableDefaultUI: true,
-                    zoomControl: true,
-                    scrollwheel: true,
-                }}
-            >
-                <Marker
-                    position={center}
-                    draggable={true}
-                    onDragEnd={onDragEnd}
-                    title="Drag to adjust exact location"
-                />
-            </GoogleMap>
-            <div className="absolute top-2 left-2 bg-white/90 px-3 py-1.5 rounded-md shadow-sm border border-gray-100 text-xs font-medium text-gray-700 pointer-events-none">
-                {isDragging ? 'Updating address...' : 'Drag the pin to adjust exact location'}
+        <div className="space-y-2">
+            <div className="border border-gray-200 rounded-lg overflow-hidden relative">
+                <GoogleMap
+                    mapContainerStyle={containerStyle}
+                    center={localCenter}
+                    zoom={18}
+                    options={{
+                        disableDefaultUI: true,
+                        zoomControl: true,
+                        scrollwheel: true,
+                    }}
+                >
+                    <Marker
+                        position={localCenter}
+                        draggable={true}
+                        onDragEnd={onDragEnd}
+                        title="Drag to adjust exact location"
+                    />
+                </GoogleMap>
+            </div>
+            <div className="text-sm font-medium text-gray-600 text-center">
+                {isDragging ? <span className="text-purple-600">Updating address...</span> : 'First, drag the pin to select the exact location. Then, click the confirm button.'}
             </div>
         </div>
     );

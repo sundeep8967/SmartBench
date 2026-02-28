@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,16 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const [isPinMoved, setIsPinMoved] = useState(false);
+    const [isPinConfirmed, setIsPinConfirmed] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setIsPinMoved(false);
+            setIsPinConfirmed(false);
+        }
+    }, [open]);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -110,6 +120,8 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                         <AddressInput
                             value={formData.address}
                             onChange={(address, components) => {
+                                setIsPinMoved(false);
+                                setIsPinConfirmed(false);
                                 setFormData(prev => ({
                                     ...prev,
                                     address,
@@ -123,11 +135,25 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
 
                     {formData.lat !== undefined && formData.lng !== undefined && (
                         <div className="space-y-2">
-                            <Label>Confirm Pin Location</Label>
+                            <div className="flex items-center justify-between">
+                                <Label>Confirm Pin Location</Label>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={isPinConfirmed ? "outline" : "default"}
+                                    className={isPinConfirmed ? "border-green-500 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800" : ""}
+                                    disabled={!isPinMoved || isPinConfirmed}
+                                    onClick={() => setIsPinConfirmed(true)}
+                                >
+                                    {isPinConfirmed ? "Confirmed ✓" : "Confirm Pin"}
+                                </Button>
+                            </div>
                             <LocationPickerMap
                                 lat={formData.lat}
                                 lng={formData.lng}
                                 onChange={(lat, lng, address) => {
+                                    setIsPinMoved(true);
+                                    setIsPinConfirmed(false);
                                     setFormData(prev => ({
                                         ...prev,
                                         lat,
@@ -203,7 +229,9 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create Project"}</Button>
+                        <Button type="submit" disabled={loading || (formData.lat !== undefined && !isPinConfirmed)}>
+                            {loading ? "Creating..." : "Create Project"}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
