@@ -68,8 +68,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <div className="max-w-6xl mx-auto p-6 space-y-8">
             {/* Header */}
             <div className="space-y-4">
-                <Button variant="ghost" size="sm" asChild className="-ml-2">
-                    <Link href="/dashboard/projects"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects</Link>
+                <Button variant="ghost" size="sm" asChild className="-ml-2 group transition-all duration-300">
+                    <Link href="/dashboard/projects">
+                        <ArrowLeft className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+                        Back to Projects
+                    </Link>
                 </Button>
 
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -94,7 +97,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
                 <div className="md:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
@@ -107,7 +110,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                     <p className="text-sm">{project.project_description}</p>
                                 </div>
                             )}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
                                 <div>
                                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Earliest Start Time</h4>
                                     <p className="text-sm font-medium flex items-center">
@@ -120,6 +123,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                             else if (hr > 12) hr -= 12;
                                             return `${hr}:${m}${suffix}`;
                                         })() : 'Not specified'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Min. Shift</h4>
+                                    <p className="text-sm font-medium flex items-center">
+                                        <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                                        {project.minimum_shift_length_hours ? `${project.minimum_shift_length_hours} Hours` : 'Firm Default'}
                                     </p>
                                 </div>
                                 <div>
@@ -166,7 +176,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                         href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-all duration-200 hover:scale-[1.02] active:scale-95"
                                     >
                                         <MapPin className="h-3 w-3" />
                                         Open in Google Maps
@@ -205,8 +215,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                             </CardContent>
                         </Card>
                     ) : (
-                        workOrders.map((wo) => (
-                            <Card key={wo.id}>
+                        workOrders.map((wo, index) => (
+                            <Card key={wo.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both" style={{ animationDelay: `${index * 100}ms` }}>
                                 <CardHeader className="pb-2">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -247,7 +257,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                         </div>
                                     )}
                                     <div className="mt-4 flex justify-end">
-                                        <Button size="sm" asChild>
+                                        <Button size="sm" asChild className="transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow">
                                             <Link href={`/dashboard/search?workOrderId=${wo.id}&projectId=${projectId}`}>
                                                 Find Workers
                                             </Link>

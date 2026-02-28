@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, ArrowRight, Search, LayoutGrid, List, Download, Upload, Trash2, CheckSquare } from "lucide-react";
+import { MapPin, Clock, ArrowRight, Search, LayoutGrid, List, Download, Upload, Trash2, CheckSquare, Loader2 } from "lucide-react";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import type { Project } from "@/types";
 import { bulkDeleteProjectsAction, bulkImportProjectsAction } from "@/app/dashboard/projects/actions";
@@ -39,6 +39,8 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
     const pressTimer = useRef<NodeJS.Timeout | null>(null);
     const isLongPressTriggered = useRef(false);
     const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+    const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
     const filteredProjects = useMemo(() => {
         return projects.filter((p) => {
@@ -136,7 +138,10 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
         } else {
             // Ensure we don't navigate if they were just ending a long press
             // The pressEnd will clear the timer, we can safely navigate if selection mode didn't trigger
-            router.push(`/dashboard/projects/${id}`);
+            setNavigatingId(id);
+            startTransition(() => {
+                router.push(`/dashboard/projects/${id}`);
+            });
         }
     };
 
@@ -260,7 +265,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                     <div className="flex items-center">
                         <button
                             onClick={() => setView("card")}
-                            className={`p-2.5 transition-colors ${view === "card" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                            className={`p-2.5 transition-all duration-200 hover:scale-105 active:scale-95 ${view === "card" ? "text-blue-600 bg-blue-50 rounded-md" : "text-gray-400 hover:text-gray-600"}`}
                             title="Card view"
                         >
                             <LayoutGrid className="h-4 w-4" />
@@ -268,7 +273,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                         <div className="w-px bg-gray-200 self-stretch" />
                         <button
                             onClick={() => setView("table")}
-                            className={`p-2.5 transition-colors ${view === "table" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                            className={`p-2.5 transition-all duration-200 hover:scale-105 active:scale-95 ${view === "table" ? "text-blue-600 bg-blue-50 rounded-md" : "text-gray-400 hover:text-gray-600"}`}
                             title="Table view"
                         >
                             <List className="h-4 w-4" />
@@ -301,6 +306,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                     {filteredProjects.map((project) => {
                         const [street, cityState] = formatAddress(project.address);
                         const isSelected = selectedProjects.has(project.id);
+                        const isNavigatingThis = isPending && navigatingId === project.id;
                         return (
                             <div
                                 key={project.id}
@@ -310,16 +316,22 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                 onMouseLeave={handlePressEnd}
                                 onTouchStart={(e) => handlePressStart(project.id, e)}
                                 onTouchEnd={handlePressEnd}
-                                className="group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl relative block"
+                                className="group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl relative block animate-in fade-in zoom-in-95 duration-300"
+                                style={{ animationFillMode: 'both', animationDelay: `${Math.min(filteredProjects.indexOf(project) * 50, 500)}ms` }}
                             >
-                                <Card className={`h-full hover:shadow-md transition-all cursor-pointer flex flex-col ${isSelected ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}>
+                                <Card className={`h-full transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg cursor-pointer flex flex-col relative overflow-hidden ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-primary/50'} ${isNavigatingThis ? 'opacity-80' : ''}`}>
+                                    {isNavigatingThis && (
+                                        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-20 flex items-center justify-center">
+                                            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                                        </div>
+                                    )}
                                     {selectionMode && (
-                                        <div className="absolute top-3 right-3 z-10">
+                                        <div className="absolute top-3 right-3 z-10 animate-in zoom-in spin-in-12 duration-200">
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
                                                 onChange={() => { }} // dummy onChange since click is handled on the container
-                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer pointer-events-none"
+                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer pointer-events-none transition-transform duration-200 active:scale-90"
                                             />
                                         </div>
                                     )}
@@ -356,8 +368,8 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                     </div>
 
                                     <div className="px-3 pb-3 pt-1 mt-auto">
-                                        <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors group-hover:bg-gray-50 text-gray-900 shadow-sm">
-                                            View Details <ArrowRight className="ml-2 h-4 w-4" />
+                                        <div className="flex items-center justify-center w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium transition-all duration-300 ease-out group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-200 shadow-sm group-hover:shadow">
+                                            View Details <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
                                         </div>
                                     </div>
                                 </Card>
@@ -394,10 +406,12 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                 {filteredProjects.map((project) => {
                                     const [street, cityState] = formatAddress(project.address);
                                     const isSelected = selectedProjects.has(project.id);
+                                    const isNavigatingThis = isPending && navigatingId === project.id;
                                     return (
                                         <tr
                                             key={project.id}
-                                            className={`border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/5' : ''}`}
+                                            className={`border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-[1.005] origin-left animate-in fade-in slide-in-from-left-4 relative ${isSelected ? 'bg-primary/5' : ''}`}
+                                            style={{ animationFillMode: 'both', animationDelay: `${Math.min(filteredProjects.indexOf(project) * 30, 300)}ms` }}
                                             onClick={(e) => handleItemClick(project.id, e)}
                                             onMouseDown={(e) => handlePressStart(project.id, e)}
                                             onMouseUp={handlePressEnd}
@@ -405,6 +419,11 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                             onTouchStart={(e) => handlePressStart(project.id, e)}
                                             onTouchEnd={handlePressEnd}
                                         >
+                                            {isNavigatingThis && (
+                                                <td colSpan={100} className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-20 flex items-center justify-center">
+                                                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                                                </td>
+                                            )}
                                             {selectionMode && (
                                                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                                     <input

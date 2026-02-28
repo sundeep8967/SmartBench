@@ -29,7 +29,8 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
         timezone: "America/Chicago",
         daily_start_time: "07:00",
         meeting_location_type: "Front of House",
-        meeting_instructions: ""
+        meeting_instructions: "",
+        minimum_shift_length_hours: 0 // 0 means use company default
     });
 
     const handleChange = (field: string, value: any) => {
@@ -67,7 +68,8 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                 timezone: "America/Chicago",
                 daily_start_time: "07:00",
                 meeting_location_type: "Front of House",
-                meeting_instructions: ""
+                meeting_instructions: "",
+                minimum_shift_length_hours: 0
             });
             // router.refresh() is handled automatically by revalidatePath in the server action
         } catch (error: any) {
@@ -175,9 +177,21 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                         </div>
                     )}
 
-
-
                     <div className="space-y-2">
+                        <Label htmlFor="minimum_shift_length_hours">Minimum Shift Length (Hours)</Label>
+                        <Select value={String(formData.minimum_shift_length_hours)} onValueChange={(v) => handleChange('minimum_shift_length_hours', parseInt(v))}>
+                            <SelectTrigger> <SelectValue /> </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="0">Company Default</SelectItem>
+                                <SelectItem value="4">4 Hours</SelectItem>
+                                <SelectItem value="6">6 Hours</SelectItem>
+                                <SelectItem value="8">8 Hours</SelectItem>
+                                <SelectItem value="10">10 Hours</SelectItem>
+                                <SelectItem value="12">12 Hours</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500 mt-1">Leave as "Company Default" to use your global setting.</p>
+                    </div>                    <div className="space-y-2">
                         <Label htmlFor="project_description">Project Description</Label>
                         <Textarea id="project_description" value={formData.project_description} onChange={(e) => handleChange('project_description', e.target.value)} placeholder="Brief details about the project scope..." />
                     </div>

@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     devIndicators: false,
+    experimental: {
+        staleTimes: {
+            dynamic: 30, // cache dynamic routes for 30 seconds on client
+            static: 180, // cache static routes for 3 minutes
+        },
+    },
 
     // Allow external images (Google profile pics, avatar placeholder, etc.)
     images: {
