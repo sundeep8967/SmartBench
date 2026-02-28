@@ -8,12 +8,9 @@ export default function Step3Users() {
     const router = useRouter();
 
     const handleFinish = async () => {
-        try {
-            await fetch("/api/onboarding/complete", { method: "POST" });
-        } catch (error) {
-            console.error("Failed to complete onboarding", error);
-        }
-        router.push("/dashboard");
+        // Onboarding already marked complete in step-1
+        // Full page navigation for clean session pickup
+        window.location.href = "/dashboard";
     };
 
     return (

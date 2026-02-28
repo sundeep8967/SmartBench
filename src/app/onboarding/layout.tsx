@@ -1,8 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Progress } from "@/components/ui/progress";
-import { usePathname } from "next/navigation";
+
 
 // We can pass current step via props if we use a client component wrapper, 
 // or simpler: just hardcode the progress value in each page?
@@ -16,32 +15,20 @@ import { useAuth } from "@/lib/contexts/AuthContext";
 import { LogOut } from "lucide-react";
 
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
-    const pathname = usePathname();
     const { user, logout } = useAuth();
-
-    // Determine progress based on path
-    let progress = 0;
-    let step = 0;
-
-    if (pathname.includes("step-1")) { progress = 33; step = 1; }
-    else if (pathname.includes("step-2")) { progress = 66; step = 2; }
-    else if (pathname.includes("step-3")) { progress = 100; step = 3; }
 
     return (
         <div className="min-h-screen bg-neutral-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative">
             <div className="w-full max-w-md space-y-8 relative z-10">
-                {/* Header / Logo */}
+                {/* Header */}
                 <div className="text-center">
                     <h2 className="mt-2 text-xl font-bold tracking-tight text-neutral-900">
                         Setup your Company
                     </h2>
                     <p className="mt-1 text-sm text-neutral-500">
-                        Step {step} of 3
+                        Fill in your company details to get started
                     </p>
                 </div>
-
-                {/* Progress Bar */}
-                <Progress value={progress} className="w-full h-2" />
 
                 {/* Content Card */}
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -55,7 +42,7 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
                     <div className="bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-xl p-3 flex items-center justify-between w-64 hover:bg-white transition-colors duration-200">
                         <div className="flex items-center min-w-0">
                             <img
-                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.full_name || user?.email || 'User')}&background=111827&color=fff`}
+                                src={user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.full_name || user?.email || 'User')}&background=111827&color=fff`}
                                 alt={user?.user_metadata?.full_name || "User"}
                                 className="h-10 w-10 rounded-full ring-2 ring-white shadow-sm flex-shrink-0"
                             />

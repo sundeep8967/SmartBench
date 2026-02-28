@@ -30,8 +30,8 @@ export default function RootLayout({
             <body className={inter.className} suppressHydrationWarning={true}>
                 <Providers>
                     {children}
+                    <Toaster />
                 </Providers>
-                <Toaster />
             </body>
         </html>
     );

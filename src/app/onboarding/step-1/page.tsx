@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 
 export default function Step1Info() {
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         companyName: "",
@@ -25,30 +22,24 @@ export default function Step1Info() {
         e.preventDefault();
         setLoading(true);
 
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            console.error("No user found");
-            setLoading(false);
-            return;
-        }
-
         try {
-            // Updated API call structure will be needed, 
-            // but for now let's persist to `companies` table via an API route.
             const res = await fetch("/api/onboarding/step1", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
-            if (!res.ok) throw new Error("Failed to save");
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to save");
+            }
 
-            router.push("/dashboard");
-        } catch (error) {
+            // Full page navigation — the proxy will see the updated JWT
+            // with is_onboarded=true and let us through to /dashboard
+            window.location.href = "/dashboard";
+        } catch (error: any) {
             console.error(error);
-            alert("Error saving company info. Please try again.");
+            alert(error.message || "Error saving company info. Please try again.");
         } finally {
             setLoading(false);
         }
