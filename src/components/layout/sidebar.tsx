@@ -17,7 +17,6 @@ import {
     BookOpen,
     MoreVertical,
     Settings,
-    ChevronLeft,
     X
 } from "lucide-react";
 import { useAuth } from "@/lib/contexts/AuthContext";
@@ -78,13 +77,12 @@ export function Sidebar() {
                         <img src="/Logo.png" alt="SmartBench" className="h-8 w-8" />
                         <span className="text-xl font-bold text-gray-900 tracking-tight">SmartBench</span>
                     </div>
-                    {/* Close button on mobile, collapse on desktop */}
+                    {/* Close button on mobile */}
                     <button
                         onClick={close}
-                        className="text-gray-400 hover:text-gray-600 transition-colors lg:block"
+                        className="text-gray-400 hover:text-gray-600 transition-colors lg:hidden block"
                     >
-                        <X size={20} className="lg:hidden" />
-                        <ChevronLeft size={20} className="hidden lg:block" />
+                        <X size={20} />
                     </button>
                 </div>
 
