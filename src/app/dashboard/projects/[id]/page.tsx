@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { WorkOrderDialog } from "@/components/projects/work-order-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +88,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                         </a>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
+                        <EditProjectDialog project={project} />
                         <DeleteProjectButton projectId={projectId} />
                     </div>
                 </div>
@@ -148,21 +150,27 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                 Site Location
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pb-3">
-                            <a
-                                href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block aspect-square w-full rounded-md overflow-hidden bg-gray-100 border relative cursor-pointer"
-                            >
+                        <CardContent className="px-3 pb-3 space-y-2">
+                            <div className="aspect-square w-full rounded-md overflow-hidden bg-gray-100 border relative">
                                 {project.lat && project.lng ? (
-                                    <StaticMap lat={project.lat} lng={project.lng} zoom={15} />
+                                    <StaticMap lat={project.lat} lng={project.lng} zoom={18} />
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-4 text-center">
                                         No coordinates available for this location.
                                     </div>
                                 )}
-                            </a>
+                            </div>
+                            {project.lat && project.lng && (
+                                <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${project.lat},${project.lng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors py-1"
+                                >
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    Open in Google Maps
+                                </a>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
