@@ -36,3 +36,40 @@ export async function updateWorkerProfileAction(formData: {
     revalidatePath("/dashboard/settings");
     return { success: true };
 }
+
+export async function updateCompanyProfileAction(companyId: string, data: {
+    minimum_shift_length_hours: number;
+}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Unauthorized");
+
+    // Verify company member
+    const { data: member } = await supabase
+        .from('company_members')
+        .select('roles')
+        .eq('user_id', user.id)
+        .eq('company_id', companyId)
+        .eq('status', 'Active')
+        .single();
+
+    if (!member) throw new Error("Forbidden");
+
+    const roles = (member.roles as string[]).map(r => r.toLowerCase());
+    if (!roles.includes('admin') && !roles.includes('manager')) {
+        throw new Error("Insufficient permissions");
+    }
+
+    const { error } = await supabase
+        .from('companies')
+        .update({
+            minimum_shift_length_hours: data.minimum_shift_length_hours
+        })
+        .eq('id', companyId);
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/dashboard/settings");
+    return { success: true };
+}

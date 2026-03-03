@@ -37,7 +37,6 @@ export async function createProjectAction(formData: any) {
             daily_start_time: formData.daily_start_time,
             meeting_location_type: formData.meeting_location_type,
             meeting_instructions: formData.meeting_instructions,
-            minimum_shift_length_hours: formData.minimum_shift_length_hours || null,
         })
         .select()
         .single();
@@ -156,7 +155,6 @@ export async function updateProjectAction(projectId: string, formData: any) {
             daily_start_time: formData.daily_start_time,
             meeting_location_type: formData.meeting_location_type,
             meeting_instructions: formData.meeting_instructions,
-            minimum_shift_length_hours: formData.minimum_shift_length_hours || null,
         })
         .eq('id', projectId)
         .eq('company_id', member.company_id)

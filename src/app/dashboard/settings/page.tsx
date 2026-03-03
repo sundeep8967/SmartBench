@@ -18,7 +18,9 @@ import Link from "next/link";
 import { WorkerProfileForm } from "./worker-profile-form";
 import { DeleteAccountModal } from "./delete-account-modal";
 import { createClient } from "@/lib/supabase/client";
+import { updateCompanyProfileAction } from "./actions";
 import type { WorkerProfile } from "@/types";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("Company Profile");
@@ -29,6 +31,8 @@ export default function SettingsPage() {
     const [isLoadingStripe, setIsLoadingStripe] = useState(true);
     const [bankDetails, setBankDetails] = useState<{ last4: string, bankName: string } | null>(null);
     const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+    const [isSavingCompany, setIsSavingCompany] = useState(false);
+    const { toast } = useToast();
 
     const tabs = [
         { name: "Company Profile", icon: Building2 },
@@ -114,6 +118,37 @@ export default function SettingsPage() {
         }
     };
 
+    const handleCompanySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!company?.id) return;
+
+        setIsSavingCompany(true);
+        try {
+            const formData = new FormData(e.currentTarget);
+            const minimum_shift_length_hours = Number(formData.get("min_shift_length"));
+
+            await updateCompanyProfileAction(company.id, {
+                minimum_shift_length_hours
+            });
+
+            toast({
+                title: "Settings Saved",
+                description: "Company profile has been updated successfully.",
+            });
+
+            // Optionally update local company state if needed
+            setCompany((prev: any) => ({ ...prev, minimum_shift_length_hours }));
+        } catch (error: any) {
+            toast({
+                title: "Update Failed",
+                description: error.message || "An error occurred while saving company details.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSavingCompany(false);
+        }
+    };
+
     return (
         <div className="space-y-6 pt-2">
             <div className="border-b border-gray-200">
@@ -151,54 +186,60 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-6 space-y-6">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="h-16 w-16 rounded-lg bg-orange-100 flex items-center justify-center text-2xl border border-orange-200 text-orange-600">
-                                            <Building2 />
+                                <CardContent className="p-6">
+                                    <form onSubmit={handleCompanySubmit} className="space-y-6">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="h-16 w-16 rounded-lg bg-orange-100 flex items-center justify-center text-2xl border border-orange-200 text-orange-600">
+                                                <Building2 />
+                                            </div>
+                                            <Button type="button" variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                                                Upload New Logo
+                                            </Button>
                                         </div>
-                                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                                            Upload New Logo
-                                        </Button>
-                                    </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                            <input type="text" defaultValue={company?.name || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">EIN / Tax ID</label>
-                                            <div className="relative">
-                                                <input type="text" defaultValue={company?.ein || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:pr-24" />
-                                                <span className="hidden md:flex absolute right-2 top-1/2 transform -translate-y-1/2 items-center text-xs text-green-600 font-medium">
-                                                    <Check size={12} className="mr-1" /> Verified
-                                                </span>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                                <input name="name" type="text" defaultValue={company?.name || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">EIN / Tax ID</label>
+                                                <div className="relative">
+                                                    <input name="ein" type="text" defaultValue={company?.ein || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:pr-24" />
+                                                    <span className="hidden md:flex absolute right-2 top-1/2 transform -translate-y-1/2 items-center text-xs text-green-600 font-medium">
+                                                        <Check size={12} className="mr-1" /> Verified
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                                                <input name="website" type="text" defaultValue={company?.website || ""} placeholder="https://" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                                <input name="contact_phone" type="text" defaultValue={company?.contact_phone || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Shift Length (Hours)</label>
+                                                <select name="min_shift_length" defaultValue={company?.minimum_shift_length_hours?.toString() || "8"} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                                                    <option value="2">2 Hours</option>
+                                                    <option value="3">3 Hours</option>
+                                                    <option value="4">4 Hours</option>
+                                                    <option value="5">5 Hours</option>
+                                                    <option value="6">6 Hours</option>
+                                                    <option value="7">7 Hours</option>
+                                                    <option value="8">8 Hours</option>
+                                                </select>
+                                                <p className="text-xs text-gray-500 mt-1">Default applied when listing workers.</p>
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                                            <input type="text" defaultValue={company?.website || ""} placeholder="https://" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                            <input type="text" defaultValue={company?.contact_phone || ""} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Shift Length (Hours)</label>
-                                            <select defaultValue="8" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
-                                                <option value="4">4 Hours</option>
-                                                <option value="6">6 Hours</option>
-                                                <option value="8">8 Hours</option>
-                                                <option value="10">10 Hours</option>
-                                                <option value="12">12 Hours</option>
-                                            </select>
-                                            <p className="text-xs text-gray-500 mt-1">Default applied to new jobs.</p>
-                                        </div>
-                                    </div>
 
-                                    <div className="pt-2 flex justify-end">
-                                        <Button className="bg-blue-900 hover:bg-blue-800 text-white">Save Changes</Button>
-                                    </div>
+                                        <div className="pt-2 flex justify-end">
+                                            <Button type="submit" disabled={isSavingCompany} className="bg-blue-900 hover:bg-blue-800 text-white">
+                                                {isSavingCompany ? "Saving..." : "Save Changes"}
+                                            </Button>
+                                        </div>
+                                    </form>
                                 </CardContent>
                             </Card>
 

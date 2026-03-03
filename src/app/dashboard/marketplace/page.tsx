@@ -63,12 +63,14 @@ export default function MarketplacePage() {
     const [newSearchName, setNewSearchName] = useState("");
     const [alertPref, setAlertPref] = useState("daily");
     const [isSaving, setIsSaving] = useState(false);
+    const [shiftHours, setShiftHours] = useState("Any");
 
     // Build SWR key from search params
     const params = new URLSearchParams();
     if (searchTerm) params.set("q", searchTerm);
     if (selectedTrade !== "All") params.set("trade", selectedTrade);
     if (selectedProjectId !== "All") params.set("projectId", selectedProjectId);
+    if (shiftHours !== "Any") params.set("shift_hours", shiftHours);
     const swrKey = `/api/workers/available?${params.toString()}`;
 
     const { data: searchData, isLoading: loading } = useSWR(swrKey, fetcher, {
@@ -277,9 +279,19 @@ export default function MarketplacePage() {
                                     ))}
                                 </select>
 
-                                <select className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                    <option>Availability</option>
-                                    <option>Available Now</option>
+                                <select
+                                    value={shiftHours}
+                                    onChange={(e) => setShiftHours(e.target.value)}
+                                    className="px-3 py-2.5 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                >
+                                    <option value="Any">Any Shift Length</option>
+                                    <option value="2">2 Hours</option>
+                                    <option value="3">3 Hours</option>
+                                    <option value="4">4 Hours</option>
+                                    <option value="5">5 Hours</option>
+                                    <option value="6">6 Hours</option>
+                                    <option value="7">7 Hours</option>
+                                    <option value="8">8 Hours</option>
                                 </select>
 
                                 <div className="flex space-x-2">

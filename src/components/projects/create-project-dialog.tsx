@@ -39,8 +39,7 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
         timezone: "America/Chicago",
         daily_start_time: "07:00",
         meeting_location_type: "Front of House",
-        meeting_instructions: "",
-        minimum_shift_length_hours: 0 // 0 means use company default
+        meeting_instructions: ""
     });
 
     const handleChange = (field: string, value: any) => {
@@ -78,8 +77,7 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                 timezone: "America/Chicago",
                 daily_start_time: "07:00",
                 meeting_location_type: "Front of House",
-                meeting_instructions: "",
-                minimum_shift_length_hours: 0
+                meeting_instructions: ""
             });
             // router.refresh() is handled automatically by revalidatePath in the server action
         } catch (error: any) {
@@ -176,18 +174,36 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                                 required
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="timezone">Timezone</Label>
-                            <Select value={formData.timezone} onValueChange={(v) => handleChange('timezone', v)}>
-                                <SelectTrigger> <SelectValue /> </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="America/Chicago">Central (Chicago)</SelectItem>
-                                    <SelectItem value="America/New_York">Eastern (New York)</SelectItem>
-                                    <SelectItem value="America/Denver">Mountain (Denver)</SelectItem>
-                                    <SelectItem value="America/Los_Angeles">Pacific (Los Angeles)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+
+                    </div>
+
+                    {/* Timezone — Central locked for MVP; other zones disabled with lock icon */}
+                    <div className="space-y-2">
+                        <Label htmlFor="timezone" className="text-gray-700">Timezone</Label>
+                        <Select value="America/Chicago" onValueChange={() => { }}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="America/Chicago">Central — Chicago / Minneapolis</SelectItem>
+                                <SelectItem value="America/New_York" disabled>
+                                    <span className="flex items-center justify-between w-full gap-4">
+                                        Eastern — New York <span className="text-gray-400">🔒</span>
+                                    </span>
+                                </SelectItem>
+                                <SelectItem value="America/Denver" disabled>
+                                    <span className="flex items-center justify-between w-full gap-4">
+                                        Mountain — Denver <span className="text-gray-400">🔒</span>
+                                    </span>
+                                </SelectItem>
+                                <SelectItem value="America/Los_Angeles" disabled>
+                                    <span className="flex items-center justify-between w-full gap-4">
+                                        Pacific — Los Angeles <span className="text-gray-400">🔒</span>
+                                    </span>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-400">Other timezones coming soon.</p>
                     </div>
 
                     <div className="space-y-2">
@@ -209,20 +225,6 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="minimum_shift_length_hours">Minimum Shift Length (Hours)</Label>
-                        <Select value={String(formData.minimum_shift_length_hours)} onValueChange={(v) => handleChange('minimum_shift_length_hours', parseInt(v))}>
-                            <SelectTrigger> <SelectValue /> </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="0">Company Default</SelectItem>
-                                <SelectItem value="4">4 Hours</SelectItem>
-                                <SelectItem value="6">6 Hours</SelectItem>
-                                <SelectItem value="8">8 Hours</SelectItem>
-                                <SelectItem value="10">10 Hours</SelectItem>
-                                <SelectItem value="12">12 Hours</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-500 mt-1">Leave as "Company Default" to use your global setting.</p>
-                    </div>                    <div className="space-y-2">
                         <Label htmlFor="project_description">Project Description</Label>
                         <Textarea id="project_description" value={formData.project_description} onChange={(e) => handleChange('project_description', e.target.value)} placeholder="Brief details about the project scope..." />
                     </div>

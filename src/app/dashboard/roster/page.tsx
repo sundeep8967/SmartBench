@@ -10,16 +10,16 @@ import {
     Users,
     Briefcase,
     MapPin,
-    ShieldCheck,
     PenSquare,
-    ChevronDown,
-    BadgeCheck,
-    Loader2,
-    Mail,
     LayoutGrid,
     List,
+    Mail,
+    BadgeCheck,
+    Loader2
 } from "lucide-react";
 import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
+import { ListWorkerDialog } from "@/components/workers/list-worker-dialog";
+import { useSWRConfig } from "swr";
 
 interface RosterMember {
     id: string;
@@ -28,7 +28,7 @@ interface RosterMember {
     email: string;
     roles: string[];
     status: string;
-    deployment_status: "Deployed" | "Bench";
+    deployment_status: "Deployed" | "Bench" | "Listed";
     trade: string | null;
     skills: string[];
     photo_url: string | null;
@@ -57,10 +57,16 @@ export default function RosterPage() {
         revalidateOnFocus: false,
         dedupingInterval: 30000,
     });
+    const { mutate } = useSWRConfig();
 
     const roster: RosterMember[] = data?.roster || [];
     const invitations: Invitation[] = data?.invitations || [];
     const metrics: Metrics = data?.metrics || { totalWorkers: 0, deployed: 0, bench: 0 };
+    const companySettings = data?.companySettings || { minimum_shift_length_hours: 8 };
+
+    const handleListSuccess = () => {
+        mutate("/api/workers/roster");
+    };
 
     const getInitials = (name: string) => {
         return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -228,11 +234,25 @@ export default function RosterPage() {
                                 <div className="flex justify-between items-center pt-4 border-t mt-4">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
                                         ? "bg-green-50 text-green-600 border border-green-100"
-                                        : "bg-orange-50 text-orange-500 border border-orange-100"
+                                        : worker.deployment_status === "Listed"
+                                            ? "bg-blue-50 text-blue-600 border border-blue-100"
+                                            : "bg-orange-50 text-orange-500 border border-orange-100"
                                         }`}>{worker.deployment_status}</span>
-                                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600 h-8 w-8 p-0">
-                                        <PenSquare size={16} />
-                                    </Button>
+                                    <div className="flex items-center space-x-2">
+                                        {worker.deployment_status === "Bench" && (
+                                            <ListWorkerDialog
+                                                workerId={worker.user_id}
+                                                workerName={worker.name}
+                                                trade={worker.trade}
+                                                rate={worker.hourly_rate}
+                                                defaultMinShiftLength={companySettings.minimum_shift_length_hours}
+                                                onListSuccess={handleListSuccess}
+                                            />
+                                        )}
+                                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600 h-8 w-8 p-0">
+                                            <PenSquare size={16} />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </Card>
@@ -299,9 +319,21 @@ export default function RosterPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">
-                                                <PenSquare size={16} />
-                                            </Button>
+                                            <div className="flex items-center justify-end space-x-2">
+                                                {worker.deployment_status === "Bench" && (
+                                                    <ListWorkerDialog
+                                                        workerId={worker.user_id}
+                                                        workerName={worker.name}
+                                                        trade={worker.trade}
+                                                        rate={worker.hourly_rate}
+                                                        defaultMinShiftLength={companySettings.minimum_shift_length_hours}
+                                                        onListSuccess={handleListSuccess}
+                                                    />
+                                                )}
+                                                <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">
+                                                    <PenSquare size={16} />
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
