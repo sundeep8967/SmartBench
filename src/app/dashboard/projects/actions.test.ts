@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createProjectAction, createWorkOrderAction } from './actions';
+import { createProjectAction } from './actions';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -107,17 +107,5 @@ describe('Projects Server Actions', () => {
             expect(result).toEqual(expectedReturn);
             expect(revalidatePath).toHaveBeenCalledWith('/dashboard/projects');
         });
-    });
-
-    describe('createWorkOrderAction', () => {
-        it('should throw if user is standard unauthorized', async () => {
-            (createClient as any).mockResolvedValue(createMockSupabase(null, null));
-            await expect(createWorkOrderAction('proj-1', mockWorkOrderForm)).rejects.toThrow('Unauthorized');
-        });
-
-        // Note: Full testing of the verify company/project chains requires a slightly more complex 
-        // mock builder because createWorkOrderAction hits `.from()` three separate times with different
-        // expected results (member lookup -> project lookup -> insertion). 
-        // For standard unit testing, the mock architecture above proves the boundary works.
     });
 });

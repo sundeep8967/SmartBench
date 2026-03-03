@@ -115,6 +115,16 @@ export function EditProjectDialog({ project }: { project: Project }) {
                         <AddressInput
                             value={formData.address}
                             onChange={(address, components) => {
+                                // MVP geo-restriction: Minnesota only
+                                if (components?.state && components.state !== "Minnesota") {
+                                    toast({
+                                        title: "📍 Currently Available in Minnesota Only",
+                                        description: "SmartBench is currently available in Minnesota, USA. We're expanding soon — stay tuned!",
+                                        variant: "destructive",
+                                    });
+                                    setFormData(prev => ({ ...prev, address: "", lat: undefined, lng: undefined }));
+                                    return;
+                                }
                                 setFormData(prev => ({
                                     ...prev,
                                     address,
@@ -156,35 +166,6 @@ export function EditProjectDialog({ project }: { project: Project }) {
                             />
                         </div>
 
-                    </div>
-
-                    {/* Timezone — Central locked for MVP; other zones disabled with lock icon */}
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-timezone" className="text-gray-700">Timezone</Label>
-                        <Select value="America/Chicago" onValueChange={() => { }}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="America/Chicago">Central — Chicago / Minneapolis</SelectItem>
-                                <SelectItem value="America/New_York" disabled>
-                                    <span className="flex items-center justify-between w-full gap-4">
-                                        Eastern — New York <span className="text-gray-400">🔒</span>
-                                    </span>
-                                </SelectItem>
-                                <SelectItem value="America/Denver" disabled>
-                                    <span className="flex items-center justify-between w-full gap-4">
-                                        Mountain — Denver <span className="text-gray-400">🔒</span>
-                                    </span>
-                                </SelectItem>
-                                <SelectItem value="America/Los_Angeles" disabled>
-                                    <span className="flex items-center justify-between w-full gap-4">
-                                        Pacific — Los Angeles <span className="text-gray-400">🔒</span>
-                                    </span>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-400">Other timezones coming soon.</p>
                     </div>
 
                     <div className="space-y-2">
