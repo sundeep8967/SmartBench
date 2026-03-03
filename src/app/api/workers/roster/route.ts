@@ -60,6 +60,15 @@ export async function GET(request: NextRequest) {
 
     const deployedWorkerIds = new Set((bookings || []).map(b => b.worker_id));
 
+    // Get worker availability to determine listed status
+    const { data: availability } = await supabase
+        .from('worker_availability')
+        .select('worker_id')
+        .eq('company_id', member.company_id)
+        .eq('is_active', true);
+
+    const listedWorkerIds = new Set((availability || []).map(a => a.worker_id));
+
     // Get pending invitations
     const { data: invitations } = await supabase
         .from('company_invitations')
@@ -67,10 +76,26 @@ export async function GET(request: NextRequest) {
         .eq('company_id', member.company_id)
         .eq('status', 'pending');
 
+    // Get company settings
+    const { data: companyDetails } = await supabase
+        .from('companies')
+        .select('minimum_shift_length_hours')
+        .eq('id', member.company_id)
+        .maybeSingle();
+
+    const companySettings = {
+        minimum_shift_length_hours: companyDetails?.minimum_shift_length_hours ?? 8
+    };
+
     // Build roster items
     const rosterItems = (members || []).map(m => {
         const isDeployed = deployedWorkerIds.has(m.user_id);
+        const isListed = listedWorkerIds.has(m.user_id);
         const workerProfile = profilesMap.get(m.user_id);
+
+        let deploymentStatus = 'Bench';
+        if (isDeployed) deploymentStatus = 'Deployed';
+        else if (isListed) deploymentStatus = 'Listed';
 
         return {
             id: m.id,
@@ -79,7 +104,7 @@ export async function GET(request: NextRequest) {
             email: (m.user as any)?.email || '',
             roles: m.roles,
             status: m.status,
-            deployment_status: isDeployed ? 'Deployed' : 'Bench',
+            deployment_status: deploymentStatus,
             trade: workerProfile?.trade || null,
             skills: workerProfile?.skills || [],
             photo_url: workerProfile?.photo_url || null,
@@ -90,11 +115,13 @@ export async function GET(request: NextRequest) {
     // Compute metrics
     const totalWorkers = rosterItems.length;
     const deployed = rosterItems.filter(r => r.deployment_status === 'Deployed').length;
-    const bench = totalWorkers - deployed;
+    const listed = rosterItems.filter(r => r.deployment_status === 'Listed').length;
+    const bench = rosterItems.filter(r => r.deployment_status === 'Bench').length;
 
     return NextResponse.json({
         roster: rosterItems,
         invitations: invitations || [],
-        metrics: { totalWorkers, deployed, bench },
+        companySettings: companySettings,
+        metrics: { totalWorkers, deployed, listed, bench },
     });
 }

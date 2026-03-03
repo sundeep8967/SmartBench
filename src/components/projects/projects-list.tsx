@@ -168,7 +168,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
             Earliest_Start: p.daily_start_time || "",
             Meeting_Point: p.meeting_location_type || "",
             Instructions: p.meeting_instructions || "",
-            Timezone: p.timezone || "America/Los_Angeles"
+            Timezone: p.timezone || "America/Chicago"
         }));
 
         const csv = Papa.unparse(dataToExport);
@@ -200,7 +200,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                         daily_start_time: row.Earliest_Start || row.daily_start_time || null,
                         meeting_location_type: row.Meeting_Point || row.meeting_location_type || null,
                         meeting_instructions: row.Instructions || row.meeting_instructions || null,
-                        timezone: row.Timezone || row.timezone || "America/Los_Angeles",
+                        timezone: row.Timezone || row.timezone || "America/Chicago",
                         lat: 0,
                         lng: 0, // Should be geocoded ideally
                     })).filter(p => p.name && p.address); // Basic validation

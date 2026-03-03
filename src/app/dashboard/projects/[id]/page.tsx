@@ -132,13 +132,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                                     </p>
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Min. Shift</h4>
-                                    <p className="text-sm font-medium flex items-center">
-                                        <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                                        {project.minimum_shift_length_hours ? `${project.minimum_shift_length_hours} Hours` : `${company?.minimum_shift_length_hours ?? 8} Hours (Firm Default)`}
-                                    </p>
-                                </div>
-                                <div>
                                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Meeting Point</h4>
                                     <p className="text-sm font-medium flex items-center">
                                         <Users className="w-4 h-4 mr-2 text-green-600" />
