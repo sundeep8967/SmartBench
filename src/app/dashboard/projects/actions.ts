@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import tzlookup from "tz-lookup";
 
 export async function createProjectAction(formData: any) {
     const supabase = await createClient();
@@ -24,6 +25,11 @@ export async function createProjectAction(formData: any) {
         throw new Error("Insufficient permissions");
     }
 
+    // Auto-derive timezone from project coordinates
+    const timezone = (formData.lat && formData.lng)
+        ? tzlookup(formData.lat, formData.lng)
+        : "America/Chicago"; // fallback for MVP
+
     const { data, error } = await supabase
         .from('projects')
         .insert({
@@ -33,7 +39,7 @@ export async function createProjectAction(formData: any) {
             address: formData.address,
             lat: formData.lat,
             lng: formData.lng,
-            timezone: formData.timezone,
+            timezone,
             daily_start_time: formData.daily_start_time,
             meeting_location_type: formData.meeting_location_type,
             meeting_instructions: formData.meeting_instructions,
@@ -44,48 +50,6 @@ export async function createProjectAction(formData: any) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/projects");
-    return data;
-}
-
-export async function createWorkOrderAction(projectId: string, formData: any) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) throw new Error("Unauthorized");
-
-    // Verify company relation
-    const { data: member } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .eq('status', 'Active')
-        .single();
-
-    if (!member) throw new Error("Forbidden");
-
-    // Verify Project belongs to Company
-    const { data: project } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('id', projectId)
-        .eq('company_id', member.company_id)
-        .single();
-
-    if (!project) throw new Error("Project not found");
-
-    const { data, error } = await supabase
-        .from('work_orders')
-        .insert({
-            project_id: projectId,
-            ...formData,
-            status: 'Open'
-        })
-        .select()
-        .single();
-
-    if (error) throw new Error(error.message);
-
-    revalidatePath(`/dashboard/projects/${projectId}`);
     return data;
 }
 
@@ -143,6 +107,11 @@ export async function updateProjectAction(projectId: string, formData: any) {
         throw new Error("Insufficient permissions");
     }
 
+    // Auto-derive timezone from project coordinates
+    const timezone = (formData.lat && formData.lng)
+        ? tzlookup(formData.lat, formData.lng)
+        : "America/Chicago"; // fallback for MVP
+
     const { data, error } = await supabase
         .from('projects')
         .update({
@@ -151,7 +120,7 @@ export async function updateProjectAction(projectId: string, formData: any) {
             address: formData.address,
             lat: formData.lat,
             lng: formData.lng,
-            timezone: formData.timezone,
+            timezone,
             daily_start_time: formData.daily_start_time,
             meeting_location_type: formData.meeting_location_type,
             meeting_instructions: formData.meeting_instructions,
