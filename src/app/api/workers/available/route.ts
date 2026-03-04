@@ -40,13 +40,13 @@ export async function GET(request: NextRequest) {
     // Exclude workers listed by the same company (you can't hire your own workers from the marketplace)
     const { data: availabilityRecords } = await supabase
         .from('worker_availability')
-        .select('worker_id, minimum_shift_length_hours')
+        .select('worker_id, minimum_shift_length_hours, company_id')
         .eq('is_active', true)
         .neq('company_id', member.company_id);
 
-    // Build a map: worker_id -> minimum_shift_length_hours
-    const availabilityMap = new Map(
-        (availabilityRecords || []).map(a => [a.worker_id, a.minimum_shift_length_hours])
+    // Build maps: worker_id -> minimum_shift_length_hours & worker_id -> lender_company_id
+    const availabilityMap = new Map<string, { min_shift: number | null; company_id: string }>(
+        (availabilityRecords || []).map(a => [a.worker_id, { min_shift: a.minimum_shift_length_hours, company_id: a.company_id }])
     );
 
     // Only worker IDs that are actively listed
@@ -115,12 +115,14 @@ export async function GET(request: NextRequest) {
     // e.g. if a worker requires 8-hour minimum and the borrower wants 6 hours, exclude that worker
     if (requestedShiftHours !== null) {
         filteredWorkers = filteredWorkers.filter(w => {
-            const workerMin = availabilityMap.get(w.user_id);
+            const workerMin = availabilityMap.get(w.user_id)?.min_shift;
             // If worker has no minimum set, they accept any shift length
             if (workerMin === null || workerMin === undefined) return true;
             return workerMin <= requestedShiftHours;
         });
     }
+
+    const distanceMap = new Map<string, number>();
 
     // Apply Project constraints if a project is selected
     if (projectId && projectId !== "All") {
@@ -151,6 +153,7 @@ export async function GET(request: NextRequest) {
                     if (distance > workerRadius) {
                         return false;
                     }
+                    distanceMap.set(w.user_id, Math.round(distance));
                 }
 
                 return true;
@@ -158,14 +161,68 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    // Attach rates and minimum shift length to each worker result
+    // Compute On-Time Reliability % per worker
+    // Formula (PRD Story 3.1): (clock-ins within 5 min of scheduled start) / total verified shifts * 100
+    // Gracefully returns null if time_log table not yet created (Epic 5 pending)
+    const workerIds = filteredWorkers.map(w => w.user_id);
+    const onTimePctMap = new Map<string, number | null>();
+
+    if (workerIds.length > 0) {
+        try {
+            const { data: onTimeData } = await (supabase as any).rpc('get_worker_on_time_pct', {
+                worker_ids: workerIds
+            });
+            if (Array.isArray(onTimeData)) {
+                for (const row of onTimeData) {
+                    onTimePctMap.set(row.worker_id, row.on_time_pct);
+                }
+            }
+        } catch {
+            // time_log table not yet created — silently skip (Epic 5 pending)
+        }
+    }
+
+    // Compute Lender Company Metrics per company (PRD Story 3.1)
+    // Fulfillment Score = (1 - lender-cancelled / total confirmed+) * 100
+    // "Reliable Partner" badge = fulfillment > 95%
+    const lenderCompanyIds = [...new Set(
+        filteredWorkers.map(w => availabilityMap.get(w.user_id)?.company_id).filter(Boolean) as string[]
+    )];
+    const companyMetricsMap = new Map<string, { fulfillment_score: number | null; reliable_partner: boolean }>();
+
+    if (lenderCompanyIds.length > 0) {
+        try {
+            const { data: companyData } = await (supabase as any).rpc('get_lender_company_metrics', {
+                company_ids: lenderCompanyIds
+            });
+            if (Array.isArray(companyData)) {
+                for (const row of companyData) {
+                    companyMetricsMap.set(row.company_id, {
+                        fulfillment_score: row.fulfillment_score,
+                        reliable_partner: row.reliable_partner,
+                    });
+                }
+            }
+        } catch {
+            // Silently skip if RPC unavailable
+        }
+    }
+
+    // Attach rates, minimum shift length, on-time %, and company metrics to each worker
     const workersWithRates = filteredWorkers.map(w => {
         const rate = ratesMap.get(w.user_id);
+        const avail = availabilityMap.get(w.user_id);
+        const companyMetrics = companyMetricsMap.get(avail?.company_id || '') || null;
         return {
             ...w,
             hourly_rate: rate?.hourly_rate || 45.00,
             overtime_rate: rate?.overtime_rate || null,
-            minimum_shift_length_hours: availabilityMap.get(w.user_id) ?? null,
+            minimum_shift_length_hours: avail?.min_shift ?? null,
+            lender_company_id: avail?.company_id ?? null,
+            on_time_pct: onTimePctMap.get(w.user_id) ?? null,
+            fulfillment_score: companyMetrics?.fulfillment_score ?? null,
+            reliable_partner: companyMetrics?.reliable_partner ?? false,
+            distance: distanceMap.get(w.user_id) ?? null,
         };
     });
 

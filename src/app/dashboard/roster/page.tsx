@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
 import { ListWorkerDialog } from "@/components/workers/list-worker-dialog";
+import { UnlistWorkerButton } from "@/components/workers/unlist-button";
 import { useSWRConfig } from "swr";
 
 interface RosterMember {
@@ -33,6 +34,7 @@ interface RosterMember {
     skills: string[];
     photo_url: string | null;
     hourly_rate: number | null;
+    home_zip_code: string | null;
 }
 
 interface Invitation {
@@ -245,8 +247,16 @@ export default function RosterPage() {
                                                 workerName={worker.name}
                                                 trade={worker.trade}
                                                 rate={worker.hourly_rate}
+                                                homeZipCode={worker.home_zip_code}
                                                 defaultMinShiftLength={companySettings.minimum_shift_length_hours}
                                                 onListSuccess={handleListSuccess}
+                                            />
+                                        )}
+                                        {worker.deployment_status === "Listed" && (
+                                            <UnlistWorkerButton
+                                                workerId={worker.user_id}
+                                                workerName={worker.name}
+                                                onUnlistSuccess={handleListSuccess}
                                             />
                                         )}
                                         <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600 h-8 w-8 p-0">
@@ -326,8 +336,16 @@ export default function RosterPage() {
                                                         workerName={worker.name}
                                                         trade={worker.trade}
                                                         rate={worker.hourly_rate}
+                                                        homeZipCode={worker.home_zip_code}
                                                         defaultMinShiftLength={companySettings.minimum_shift_length_hours}
                                                         onListSuccess={handleListSuccess}
+                                                    />
+                                                )}
+                                                {worker.deployment_status === "Listed" && (
+                                                    <UnlistWorkerButton
+                                                        workerId={worker.user_id}
+                                                        workerName={worker.name}
+                                                        onUnlistSuccess={handleListSuccess}
                                                     />
                                                 )}
                                                 <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">

@@ -13,11 +13,12 @@ interface ListWorkerDialogProps {
     workerName: string;
     trade: string | null;
     rate: number | null;
+    homeZipCode: string | null;
     defaultMinShiftLength?: number;
     onListSuccess?: () => void;
 }
 
-export function ListWorkerDialog({ workerId, workerName, trade, rate, defaultMinShiftLength = 8, onListSuccess }: ListWorkerDialogProps) {
+export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCode, defaultMinShiftLength = 8, onListSuccess }: ListWorkerDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [minShiftLength, setMinShiftLength] = useState(String(defaultMinShiftLength));
@@ -90,7 +91,17 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, defaultMin
                                 <span className="text-gray-500">Current Rate:</span>
                                 <span className="font-medium text-gray-900">{rate ? `$${rate}/hr` : 'N/A'}</span>
                             </div>
+                            <div className="flex justify-between items-center text-sm mt-1">
+                                <span className="text-gray-500">Home Zip Code:</span>
+                                <span className="font-medium text-gray-900">{homeZipCode || 'N/A'}</span>
+                            </div>
                         </div>
+
+                        {(!trade || !homeZipCode) && (
+                            <div className="bg-red-50 border border-red-100 text-red-700 text-sm p-3 rounded-md mb-4">
+                                <strong>Incomplete Profile:</strong> Workers must have a Trade and a Home Zip Code assigned before they can be listed on the Marketplace. Please edit their profile first.
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="shift_length">Minimum Shift Length (Hours)</Label>
@@ -116,7 +127,7 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, defaultMin
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading} className="bg-blue-900 hover:bg-blue-800 text-white">
+                        <Button type="submit" disabled={loading || !trade || !homeZipCode} className="bg-blue-900 hover:bg-blue-800 text-white">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             List Worker
                         </Button>

@@ -43,6 +43,7 @@ const mainNav = [
 ];
 
 const dropdownNav = [
+    { name: "My Profile", href: "/dashboard/profile", icon: Users },
     { name: "Insurance", href: "/dashboard/insurance", icon: Shield },
     { name: "Policies", href: "/dashboard/settings/policies", icon: BookOpen },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
