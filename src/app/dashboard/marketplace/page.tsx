@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, BadgeCheck, Star, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2, Save } from "lucide-react";
+import { Search, BadgeCheck, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2, Save, Shield, MapPin } from "lucide-react";
 import { useCart } from "@/lib/contexts/CartContext";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -41,7 +41,11 @@ interface WorkerData {
     home_zip_code: string | null;
     photo_url: string | null;
     hourly_rate: number;
+    on_time_pct: number | null;
+    fulfillment_score: number | null;
+    reliable_partner: boolean;
     user: { full_name: string; email: string } | null;
+    distance?: number | null;
 }
 
 interface WorkOrder {
@@ -405,17 +409,51 @@ export default function MarketplacePage() {
                                                         <h3 className="font-bold text-gray-900 mr-1 group-hover:text-blue-900 transition-colors">{name}</h3>
                                                         <BadgeCheck size={16} className="text-green-500 fill-green-100" />
                                                     </div>
-                                                    <p className="text-xs text-gray-500">{worker.trade || "General"}</p>
+                                                    <div className="flex items-center text-xs text-gray-500 mt-0.5">
+                                                        <span>{worker.trade || "General"}</span>
+                                                        {worker.distance != null && (
+                                                            <>
+                                                                <span className="mx-1.5 text-gray-300">•</span>
+                                                                <span className="flex items-center text-gray-600">
+                                                                    <MapPin size={12} className="mr-0.5" />
+                                                                    {worker.distance} {worker.distance === 1 ? 'mile' : 'miles'} away
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center bg-orange-50 px-2 py-0.5 rounded text-orange-600 font-bold text-xs">
-                                                <Star size={12} className="fill-current mr-1" />
-                                                4.8
-                                            </div>
+                                            {/* On-Time Reliability Badge (PRD Story 3.1) */}
+                                            {(() => {
+                                                const pct = (worker as any).on_time_pct;
+                                                if (pct === null || pct === undefined) {
+                                                    return (
+                                                        <div className="flex items-center bg-gray-50 border border-gray-200 px-2 py-0.5 rounded text-gray-400 font-medium text-xs gap-1" title="On-Time Reliability: No shift data yet">
+                                                            <Clock size={11} />
+                                                            New
+                                                        </div>
+                                                    );
+                                                }
+                                                const pctNum = Math.round(pct);
+                                                const colorClass = pctNum >= 90
+                                                    ? "bg-green-50 border-green-200 text-green-700"
+                                                    : pctNum >= 75
+                                                        ? "bg-amber-50 border-amber-200 text-amber-700"
+                                                        : "bg-red-50 border-red-200 text-red-700";
+                                                return (
+                                                    <div
+                                                        className={`flex items-center border px-2 py-0.5 rounded font-bold text-xs gap-1 ${colorClass}`}
+                                                        title={`On-Time Reliability: ${pctNum}% of clock-ins within 5 min of scheduled start`}
+                                                    >
+                                                        <Clock size={11} className="shrink-0" />
+                                                        {pctNum}%
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Skills */}
-                                        <div className="flex flex-wrap gap-2 mt-4 mb-6">
+                                        <div className="flex flex-wrap gap-2 mt-4 mb-4">
                                             {skills.slice(0, 4).map((skill) => (
                                                 <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium border border-gray-200">
                                                     {skill}
@@ -425,6 +463,27 @@ export default function MarketplacePage() {
                                                 <span className="px-2 py-1 text-gray-400 text-xs">+{skills.length - 4} more</span>
                                             )}
                                         </div>
+
+                                        {/* Lender Company Metrics (PRD Story 3.1) */}
+                                        {worker.fulfillment_score !== null && (
+                                            <div className="flex items-center gap-3 mb-6 mt-2">
+                                                {worker.reliable_partner && (
+                                                    <div
+                                                        className="flex items-center text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded font-bold text-xs gap-1 shadow-sm"
+                                                        title="Top-tier lender with >95% fulfillment score"
+                                                    >
+                                                        <Shield size={12} className="fill-current" />
+                                                        Reliable Partner
+                                                    </div>
+                                                )}
+                                                <div
+                                                    className="text-xs text-gray-600 flex items-center bg-gray-50 border border-gray-200 px-2 py-1 rounded"
+                                                    title="Percentage of confirmed bookings successfully fulfilled without lender cancellation"
+                                                >
+                                                    Fulfillment: <span className="font-semibold text-gray-900 ml-1">{Math.round(worker.fulfillment_score)}%</span>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Footer */}
                                         <div className="flex items-center justify-between pt-4 border-t border-gray-100">

@@ -13,6 +13,7 @@ import { Plus } from "lucide-react";
 import { AddressInput } from "@/components/ui/address-input";
 import { LocationPickerMap } from "@/components/ui/location-picker-map";
 import { createProjectAction } from "@/app/dashboard/projects/actions";
+import tzlookup from "tz-lookup";
 
 export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: () => void } = {}) {
     const router = useRouter();
@@ -34,6 +35,9 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
         name: "",
         project_description: "",
         address: "",
+        city: "",
+        state: "",
+        zip: "",
         lat: undefined as number | undefined,
         lng: undefined as number | undefined,
         timezone: "America/Chicago",
@@ -72,6 +76,9 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                 name: "",
                 project_description: "",
                 address: "",
+                city: "",
+                state: "",
+                zip: "",
                 lat: undefined,
                 lng: undefined,
                 timezone: "America/Chicago",
@@ -136,13 +143,54 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                                 setFormData(prev => ({
                                     ...prev,
                                     address,
+                                    city: components?.city || "",
+                                    state: components?.state || "",
+                                    zip: components?.zipCode || "",
                                     lat: components?.lat,
-                                    lng: components?.lng
+                                    lng: components?.lng,
+                                    timezone: (components?.lat && components?.lng) ? tzlookup(components.lat, components.lng) : "America/Chicago"
                                 }));
                             }}
                             required
                         />
                     </div>
+
+                    {formData.city !== "" && formData.state !== "" && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">City</Label>
+                                <Input
+                                    value={formData.city}
+                                    onChange={(e) => handleChange('city', e.target.value)}
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">State</Label>
+                                <Input
+                                    value={formData.state}
+                                    onChange={(e) => handleChange('state', e.target.value)}
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Zip Code</Label>
+                                <Input
+                                    value={formData.zip}
+                                    onChange={(e) => handleChange('zip', e.target.value)}
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                <Input
+                                    value={formData.timezone}
+                                    disabled
+                                    className="h-8 text-sm bg-gray-50"
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {formData.lat !== undefined && formData.lng !== undefined && (
                         <div className="space-y-2">
@@ -162,14 +210,18 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                             <LocationPickerMap
                                 lat={formData.lat}
                                 lng={formData.lng}
-                                onChange={(lat, lng, address) => {
+                                onChange={(lat, lng, address, components) => {
                                     setIsPinMoved(true);
                                     setIsPinConfirmed(false);
                                     setFormData(prev => ({
                                         ...prev,
                                         lat,
                                         lng,
-                                        ...(address ? { address } : {})
+                                        ...(address ? { address } : {}),
+                                        ...(components?.city ? { city: components.city } : {}),
+                                        ...(components?.state ? { state: components.state } : {}),
+                                        ...(components?.zipCode ? { zip: components.zipCode } : {}),
+                                        timezone: (lat && lng) ? tzlookup(lat, lng) : "America/Chicago"
                                     }))
                                 }}
                             />
@@ -184,6 +236,11 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                                 type="time"
                                 value={formData.daily_start_time}
                                 onChange={(e) => handleChange('daily_start_time', e.target.value)}
+                                onClick={(e) => {
+                                    if ('showPicker' in e.currentTarget) {
+                                        (e.currentTarget as any).showPicker();
+                                    }
+                                }}
                                 required
                             />
                         </div>

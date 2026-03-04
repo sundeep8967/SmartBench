@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const { data: profiles } = userIds.length > 0
         ? await supabase
             .from('worker_profiles')
-            .select('user_id, trade, skills, photo_url')
+            .select('user_id, trade, skills, photo_url, home_zip_code')
             .in('user_id', userIds)
         : { data: [] };
 
@@ -109,6 +109,7 @@ export async function GET(request: NextRequest) {
             skills: workerProfile?.skills || [],
             photo_url: workerProfile?.photo_url || null,
             hourly_rate: ratesMap.get(m.user_id) || null,
+            home_zip_code: workerProfile?.home_zip_code || null,
         };
     });
 

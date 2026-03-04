@@ -8,6 +8,9 @@ export async function updateWorkerProfileAction(formData: {
     earliest_start_time: string;
     latest_start_time: string;
     home_zip_code: string;
+    home_city?: string;
+    home_state?: string;
+    home_timezone?: string;
     lat?: number;
     lng?: number;
 }) {
@@ -24,6 +27,9 @@ export async function updateWorkerProfileAction(formData: {
             earliest_start_time: formData.earliest_start_time,
             latest_start_time: formData.latest_start_time,
             home_zip_code: formData.home_zip_code,
+            home_city: formData.home_city || null,
+            home_state: formData.home_state || null,
+            home_timezone: formData.home_timezone || null,
             lat: formData.lat || null,
             lng: formData.lng || null,
             updated_at: new Date().toISOString()

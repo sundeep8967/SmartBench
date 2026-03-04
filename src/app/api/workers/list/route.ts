@@ -65,3 +65,62 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { workerId } = body;
+
+        if (!workerId) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        // Verify the current user belongs to a company that this worker also belongs to
+        const { data: companyMember } = await supabase
+            .from('company_members')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .eq('status', 'Active')
+            .maybeSingle();
+
+        if (!companyMember) {
+            return NextResponse.json({ error: "No active company found for user" }, { status: 403 });
+        }
+
+        const { data: workerMember } = await supabase
+            .from('company_members')
+            .select('id')
+            .eq('user_id', workerId)
+            .eq('company_id', companyMember.company_id)
+            .maybeSingle();
+
+        if (!workerMember) {
+            return NextResponse.json({ error: "Worker does not belong to your company" }, { status: 403 });
+        }
+
+        // Update worker availability to inactive
+        const { error: availabilityError } = await supabase
+            .from('worker_availability')
+            .update({ is_active: false })
+            .eq('worker_id', workerId)
+            .eq('company_id', companyMember.company_id);
+
+        if (availabilityError) {
+            console.error("Error unlisting worker availability:", availabilityError);
+            return NextResponse.json({ error: "Failed to update availability" }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error("Unlisting error:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+}
