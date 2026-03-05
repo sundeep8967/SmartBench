@@ -13,6 +13,7 @@ export async function updateWorkerProfileAction(formData: {
     home_timezone?: string;
     lat?: number;
     lng?: number;
+    allow_public_testimonials?: boolean;
 }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -38,6 +39,16 @@ export async function updateWorkerProfileAction(formData: {
         });
 
     if (error) throw new Error(error.message);
+
+    if (formData.allow_public_testimonials !== undefined) {
+        const { error: userError } = await supabase
+            .from('users')
+            // @ts-ignore - Supabase type regeneration is offline locally
+            .update({ allow_public_testimonials: formData.allow_public_testimonials })
+            .eq('id', user.id);
+
+        if (userError) throw new Error(userError.message);
+    }
 
     revalidatePath("/dashboard/settings");
     return { success: true };

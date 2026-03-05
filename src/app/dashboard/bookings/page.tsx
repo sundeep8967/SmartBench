@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Calendar, Search, MapPin, Download, Plus, LayoutGrid,
-    List, X, AlertTriangle, Loader2,
+    List, X, AlertTriangle, Loader2, Star
 } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { useToast } from "@/components/ui/use-toast";
+import { LeaveReviewDialog } from "@/components/bookings/leave-review-dialog";
 
 // Cancel Confirmation Dialog
 function CancelDialog({
@@ -131,6 +132,7 @@ export default function BookingsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
     const [cancelTarget, setCancelTarget] = useState<any | null>(null);
+    const [reviewTarget, setReviewTarget] = useState<any | null>(null);
     const [cancelLoading, setCancelLoading] = useState(false);
     const { toast } = useToast();
 
@@ -194,6 +196,17 @@ export default function BookingsPage() {
                     onClose={() => setCancelTarget(null)}
                     onConfirm={handleCancelConfirm}
                     loading={cancelLoading}
+                />
+            )}
+
+            {/* Leave Review Dialog */}
+            {reviewTarget && (
+                <LeaveReviewDialog
+                    open={!!reviewTarget}
+                    onOpenChange={(open) => !open && setReviewTarget(null)}
+                    bookingId={reviewTarget.id}
+                    workerId={reviewTarget.worker_id}
+                    workerName={reviewTarget.worker?.full_name || "Unknown Worker"}
                 />
             )}
 
@@ -307,6 +320,14 @@ export default function BookingsPage() {
                                             <X size={12} /> Cancel
                                         </button>
                                     )}
+                                    {booking.status === "Completed" && (
+                                        <button
+                                            onClick={() => setReviewTarget(booking)}
+                                            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                                        >
+                                            <Star size={12} className="fill-blue-100" /> Leave Review
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </Card>
@@ -372,6 +393,15 @@ export default function BookingsPage() {
                                                     title="Cancel booking"
                                                 >
                                                     <X size={16} />
+                                                </button>
+                                            )}
+                                            {booking.status === "Completed" && (
+                                                <button
+                                                    onClick={() => setReviewTarget(booking)}
+                                                    className="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded"
+                                                    title="Leave Review"
+                                                >
+                                                    <Star size={16} />
                                                 </button>
                                             )}
                                         </td>

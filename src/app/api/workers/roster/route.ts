@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
             user_id,
             roles,
             status,
-            user:users!inner(full_name, email)
+            user:users!inner(full_name, email, user_state)
         `)
         .eq('company_id', member.company_id);
 
@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
             user_id: m.user_id,
             name: (m.user as any)?.full_name || 'Unknown',
             email: (m.user as any)?.email || '',
+            user_state: (m.user as any)?.user_state || 'Pending_Profile',
             roles: m.roles,
             status: m.status,
             deployment_status: deploymentStatus,

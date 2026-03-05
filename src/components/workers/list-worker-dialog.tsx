@@ -14,13 +14,15 @@ interface ListWorkerDialogProps {
     trade: string | null;
     rate: number | null;
     homeZipCode: string | null;
+    userState?: string;
     defaultMinShiftLength?: number;
     onListSuccess?: () => void;
 }
 
-export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCode, defaultMinShiftLength = 8, onListSuccess }: ListWorkerDialogProps) {
+export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCode, userState, defaultMinShiftLength = 8, onListSuccess }: ListWorkerDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [hourlyRate, setHourlyRate] = useState(rate ? String(rate) : "");
     const [minShiftLength, setMinShiftLength] = useState(String(defaultMinShiftLength));
     const { toast } = useToast();
 
@@ -36,7 +38,8 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
                 },
                 body: JSON.stringify({
                     workerId,
-                    minimum_shift_length_hours: parseInt(minShiftLength)
+                    minimum_shift_length_hours: parseInt(minShiftLength),
+                    hourly_rate: parseFloat(hourlyRate)
                 }),
             });
 
@@ -97,11 +100,30 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
                             </div>
                         </div>
 
-                        {(!trade || !homeZipCode) && (
+                        {(!trade || !homeZipCode || (userState && userState === 'Pending_Profile')) && (
                             <div className="bg-red-50 border border-red-100 text-red-700 text-sm p-3 rounded-md mb-4">
-                                <strong>Incomplete Profile:</strong> Workers must have a Trade and a Home Zip Code assigned before they can be listed on the Marketplace. Please edit their profile first.
+                                <strong>Incomplete Profile:</strong> Workers must fully complete their profile steps (Trade, Experience, Zip Code) before they can be listed on the Marketplace. Status: {userState || 'Incomplete'}.
                             </div>
                         )}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="hourly_rate">Lending Rate ($/hr)</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-gray-500 text-sm">$</span>
+                                <input
+                                    id="hourly_rate"
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    value={hourlyRate}
+                                    onChange={(e) => setHourlyRate(e.target.value)}
+                                    placeholder="45.00"
+                                    className="w-full flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-7"
+                                    required
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500">The hourly amount your company earns when this worker is booked.</p>
+                        </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="shift_length">Minimum Shift Length (Hours)</Label>
@@ -127,7 +149,7 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading || !trade || !homeZipCode} className="bg-blue-900 hover:bg-blue-800 text-white">
+                        <Button type="submit" disabled={loading || !trade || !homeZipCode || !hourlyRate || userState === 'Pending_Profile'} className="bg-blue-900 hover:bg-blue-800 text-white">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             List Worker
                         </Button>

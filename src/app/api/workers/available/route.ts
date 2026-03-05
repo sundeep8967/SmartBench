@@ -208,7 +208,23 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    // Attach rates, minimum shift length, on-time %, and company metrics to each worker
+    // Fetch Reviews to calculate average_rating and review_count per worker
+    const { data: reviewsData } = await (supabase as any)
+        .from('worker_reviews')
+        .select('worker_id, aggregate_rating')
+        .in('worker_id', listedWorkerIds);
+
+    const ratingsMap = new Map<string, { sum: number; count: number }>();
+    if (reviewsData && Array.isArray(reviewsData)) {
+        for (const row of reviewsData) {
+            const current = ratingsMap.get(row.worker_id) || { sum: 0, count: 0 };
+            current.sum += Number(row.aggregate_rating);
+            current.count += 1;
+            ratingsMap.set(row.worker_id, current);
+        }
+    }
+
+    // Attach rates, minimum shift length, on-time %, company metrics, and ratings to each worker
     const workersWithRates = filteredWorkers.map(w => {
         const rate = ratesMap.get(w.user_id);
         const avail = availabilityMap.get(w.user_id);
@@ -223,6 +239,8 @@ export async function GET(request: NextRequest) {
             fulfillment_score: companyMetrics?.fulfillment_score ?? null,
             reliable_partner: companyMetrics?.reliable_partner ?? false,
             distance: distanceMap.get(w.user_id) ?? null,
+            average_rating: ratingsMap.get(w.user_id) ? (ratingsMap.get(w.user_id)!.sum / ratingsMap.get(w.user_id)!.count).toFixed(1) : null,
+            review_count: ratingsMap.get(w.user_id)?.count || 0,
         };
     });
 

@@ -28,6 +28,7 @@ interface RosterMember {
     user_id: string;
     name: string;
     email: string;
+    user_state: string;
     roles: string[];
     status: string;
     deployment_status: "Deployed" | "Bench" | "Listed";
@@ -251,6 +252,7 @@ export default function RosterPage() {
                                                 trade={worker.trade}
                                                 rate={worker.hourly_rate}
                                                 homeZipCode={worker.home_zip_code}
+                                                userState={worker.user_state}
                                                 defaultMinShiftLength={companySettings.minimum_shift_length_hours}
                                                 onListSuccess={handleListSuccess}
                                             />
@@ -346,6 +348,7 @@ export default function RosterPage() {
                                                         trade={worker.trade}
                                                         rate={worker.hourly_rate}
                                                         homeZipCode={worker.home_zip_code}
+                                                        userState={worker.user_state}
                                                         defaultMinShiftLength={companySettings.minimum_shift_length_hours}
                                                         onListSuccess={handleListSuccess}
                                                     />

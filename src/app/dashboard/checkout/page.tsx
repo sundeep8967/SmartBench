@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -7,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CreditCard, FileText, CheckCircle2, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { CartItem } from "@/types";
+import { CheckoutStripeProvider } from "@/components/checkout/stripe-checkout-form";
 
 function CheckoutContent() {
     const router = useRouter();
@@ -18,6 +17,7 @@ function CheckoutContent() {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchCart();
@@ -29,10 +29,6 @@ function CheckoutContent() {
             if (res.ok) {
                 const data = await res.json();
                 setCartItems(data);
-                if (data.length === 0) {
-                    // Redirect if empty? Or just show empty state.
-                    // For now, let's just let them see empty.
-                }
             }
         } catch (error) {
             console.error("Failed to fetch cart", error);
@@ -43,9 +39,18 @@ function CheckoutContent() {
     };
 
     const handleConfirm = async () => {
+        if (!paymentMethodId) {
+            toast({ title: "Payment Required", description: "Please save a payment method first.", variant: "destructive" });
+            return;
+        }
+
         setProcessing(true);
         try {
-            const res = await fetch("/api/bookings/checkout", { method: "POST" });
+            const res = await fetch("/api/bookings/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ paymentMethodId })
+            });
             const data = await res.json();
 
             if (!res.ok) {
@@ -184,28 +189,20 @@ function CheckoutContent() {
                             <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center text-xs mr-2">2</span>
                             Payment Method
                         </h2>
-                        <div className="space-y-4">
-                            <div className="relative flex items-center space-x-3 rounded-lg border border-blue-200 bg-blue-50 px-6 py-4 shadow-sm">
-                                <input type="radio" name="payment" id="card" defaultChecked className="h-4 w-4 border-gray-300 text-blue-900 focus:ring-blue-500" />
-                                <div className="min-w-0 flex-1">
-                                    <label htmlFor="card" className="font-medium text-gray-900 flex items-center">
-                                        <CreditCard size={18} className="mr-2 text-blue-900" />
-                                        Credit Card
-                                    </label>
-                                    <p className="text-gray-500 text-xs">Visa ending in 4242</p>
-                                </div>
+
+                        {paymentMethodId ? (
+                            <div className="bg-green-50 text-green-800 p-4 rounded-md border border-green-200 flex items-center">
+                                <CheckCircle2 className="h-5 w-5 mr-2" />
+                                Payment Method Saved Successfully. You can now confirm your booking.
                             </div>
-                            <div className="relative flex items-center space-x-3 rounded-lg border border-gray-200 px-6 py-4 shadow-sm hover:bg-gray-50">
-                                <input type="radio" name="payment" id="invoice" className="h-4 w-4 border-gray-300 text-blue-900 focus:ring-blue-500" />
-                                <div className="min-w-0 flex-1">
-                                    <label htmlFor="invoice" className="font-medium text-gray-900 flex items-center">
-                                        <FileText size={18} className="mr-2 text-gray-500" />
-                                        Net-30 Invoice
-                                    </label>
-                                    <p className="text-gray-500 text-xs">Subject to credit approval</p>
-                                </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Please enter your card details. Your card will not be charged until the timesheet is approved, or according to the weekly progress payment schedule.
+                                </p>
+                                <CheckoutStripeProvider onSuccess={(id) => setPaymentMethodId(id)} />
                             </div>
-                        </div>
+                        )}
 
                         <div className="mt-6 space-y-4">
                             <div className="flex items-center space-x-2">
@@ -262,7 +259,7 @@ function CheckoutContent() {
                         <Button
                             className="w-full mt-8 bg-blue-900 hover:bg-blue-800 h-12 text-lg text-white"
                             onClick={handleConfirm}
-                            disabled={processing}
+                            disabled={processing || !paymentMethodId}
                         >
                             {processing ? (
                                 <>

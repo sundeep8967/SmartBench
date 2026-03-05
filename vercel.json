@@ -15,6 +15,10 @@
         {
             "path": "/api/cron/wednesday-payments",
             "schedule": "0 8 * * 3"
+        },
+        {
+            "path": "/api/cron/insurance-monitor",
+            "schedule": "0 0 * * *"
         }
     ]
 }

@@ -53,7 +53,7 @@ const dropdownNav = [
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { user, loading, logout } = useAuth();
+    const { user, loading, logout, isSuperAdmin } = useAuth();
     const { isOpen, close } = useSidebar();
 
     return (
@@ -93,6 +93,9 @@ export function Sidebar() {
                 <div className="flex-1 overflow-y-auto py-6 px-3 space-y-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <nav className="space-y-1">
                         {mainNav.map((item) => {
+                            if (item.name === "Super Admin" && !isSuperAdmin) {
+                                return null;
+                            }
                             const isActive = pathname === item.href;
                             return (
                                 <Link

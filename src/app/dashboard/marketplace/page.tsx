@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, BadgeCheck, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2, Save, Shield, MapPin } from "lucide-react";
+import { Search, BadgeCheck, Loader2, Users, Bookmark, Clock, Play, Edit2, Trash2, Save, Shield, MapPin, Star } from "lucide-react";
 import { useCart } from "@/lib/contexts/CartContext";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ViewReviewsDialog } from "@/components/workers/view-reviews-dialog";
 
 type SavedSearch = {
     id: string;
@@ -46,6 +47,8 @@ interface WorkerData {
     reliable_partner: boolean;
     user: { full_name: string; email: string } | null;
     distance?: number | null;
+    average_rating?: string | null;
+    review_count?: number;
 }
 
 interface WorkOrder {
@@ -62,6 +65,7 @@ export default function MarketplacePage() {
     const { user, companyId } = useAuth();
     const [activeTab, setActiveTab] = useState<"search" | "saved">("search");
     const [selectedProjectId, setSelectedProjectId] = useState<string>("All");
+    const [reviewTarget, setReviewTarget] = useState<WorkerData | null>(null);
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [newSearchName, setNewSearchName] = useState("");
@@ -227,6 +231,16 @@ export default function MarketplacePage() {
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Marketplace</h1>
                 <p className="text-gray-500">Find and hire top-rated construction professionals, or run your saved queries.</p>
             </div>
+
+            {/* View Reviews Dialog */}
+            {reviewTarget && (
+                <ViewReviewsDialog
+                    open={!!reviewTarget}
+                    onOpenChange={(open) => !open && setReviewTarget(null)}
+                    workerId={reviewTarget.user_id}
+                    workerName={reviewTarget.user?.full_name || "Unknown Worker"}
+                />
+            )}
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 gap-6">
@@ -406,10 +420,21 @@ export default function MarketplacePage() {
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center">
-                                                        <h3 className="font-bold text-gray-900 mr-1 group-hover:text-blue-900 transition-colors">{name}</h3>
+                                                        <h3 className="font-bold text-gray-900 mr-2 group-hover:text-blue-900 transition-colors">{name}</h3>
                                                         <BadgeCheck size={16} className="text-green-500 fill-green-100" />
+
+                                                        {worker.review_count ? (
+                                                            <button
+                                                                onClick={() => setReviewTarget(worker)}
+                                                                className="ml-3 flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-1.5 py-0.5 rounded text-xs font-bold transition-colors border border-yellow-200"
+                                                                title="View Reviews"
+                                                            >
+                                                                <Star size={12} className="fill-yellow-500 text-yellow-500" />
+                                                                {worker.average_rating} <span className="text-yellow-600/70 font-medium">({worker.review_count})</span>
+                                                            </button>
+                                                        ) : null}
                                                     </div>
-                                                    <div className="flex items-center text-xs text-gray-500 mt-0.5">
+                                                    <div className="flex items-center text-xs text-gray-500 mt-1">
                                                         <span>{worker.trade || "General"}</span>
                                                         {worker.distance != null && (
                                                             <>
