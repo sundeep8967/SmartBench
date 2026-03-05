@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +12,11 @@ import {
     Calendar,
     Download,
     Loader2,
+    Clock,
+    CheckCircle,
+    AlertCircle,
 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Transaction {
     id: string;
@@ -24,18 +29,65 @@ interface Transaction {
 }
 
 export default function FinancialsPage() {
+    const { toast } = useToast();
+    const [withdrawing, setWithdrawing] = useState(false);
+
     const { data, isLoading: loading } = useSWR('/api/financials', fetcher, {
         revalidateOnFocus: false,
-        dedupingInterval: 60000, // cache for 60s
+        dedupingInterval: 60000,
     });
 
-    const balance: number = data?.balance || 0;
+    // Real-time Stripe balance from connected account
+    const { data: stripeBalance, isLoading: balanceLoading, mutate: mutateBalance } = useSWR(
+        '/api/stripe/withdraw',
+        fetcher,
+        { revalidateOnFocus: false, dedupingInterval: 30000 }
+    );
+
     const moneyIn: number = data?.moneyIn || 0;
     const moneyOut: number = data?.moneyOut || 0;
     const transactions: Transaction[] = data?.transactions || [];
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+    const availableCents: number = stripeBalance?.available_cents || 0;
+    const pendingCents: number = stripeBalance?.pending_cents || 0;
+    const hasStripe: boolean = stripeBalance?.has_stripe || false;
+
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+
+    const handleWithdraw = async () => {
+        if (availableCents <= 0) {
+            toast({ title: "No funds available", description: "Your available balance is $0.00.", variant: "destructive" });
+            return;
+        }
+        if (!hasStripe) {
+            toast({ title: "Stripe not connected", description: "Please complete Stripe onboarding in Settings → Banking & Payouts.", variant: "destructive" });
+            return;
+        }
+
+        setWithdrawing(true);
+        try {
+            const res = await fetch("/api/stripe/withdraw", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}), // withdraw all available
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "Withdrawal failed");
+
+            const arrivalDate = result.estimated_arrival
+                ? new Date(result.estimated_arrival * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                : "1-2 business days";
+
+            toast({
+                title: `✅ Withdrawal Initiated — ${formatCurrency(result.amount_cents / 100)}`,
+                description: `Funds will arrive by ${arrivalDate}. Transfer ID: ${result.payout_id}`,
+            });
+            await mutateBalance();
+        } catch (err: any) {
+            toast({ title: "Withdrawal Failed", description: err.message, variant: "destructive" });
+        }
+        setWithdrawing(false);
     };
 
     if (loading) {
@@ -52,7 +104,7 @@ export default function FinancialsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Financials &amp; Payments</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Financials & Payments</h1>
                     <p className="text-gray-500 mt-1">Manage your wallet, payouts, and transaction history.</p>
                 </div>
                 <Button variant="outline" className="text-gray-700 border-gray-300 bg-white shadow-sm">
@@ -65,24 +117,54 @@ export default function FinancialsPage() {
             <Card className="!bg-blue-900 !text-white shadow-lg border-none overflow-hidden relative">
                 <CardContent className="p-8">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 h-full">
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             <div>
-                                <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-1">Available Balance</p>
-                                <div className="flex items-baseline">
-                                    <span className="text-5xl font-extrabold tracking-tight">{formatCurrency(balance)}</span>
+                                <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-1">
+                                    Stripe Available Balance
+                                </p>
+                                <div className="flex items-baseline gap-3">
+                                    {balanceLoading ? (
+                                        <Loader2 className="h-8 w-8 animate-spin text-blue-300" />
+                                    ) : (
+                                        <span className="text-5xl font-extrabold tracking-tight">
+                                            {formatCurrency(availableCents / 100)}
+                                        </span>
+                                    )}
                                 </div>
+                                {pendingCents > 0 && (
+                                    <p className="text-sm text-blue-300 mt-1 flex items-center gap-1.5">
+                                        <Clock size={13} /> {formatCurrency(pendingCents / 100)} pending (in transit)
+                                    </p>
+                                )}
                             </div>
 
-                            <div className="inline-flex items-center space-x-2 bg-blue-800 border border-blue-700 rounded-lg px-3 py-2 text-sm text-blue-100">
-                                <Calendar size={16} className="text-blue-300" />
-                                <span>Balance from confirmed bookings</span>
+                            <div className="flex items-center gap-3">
+                                {hasStripe ? (
+                                    <span className="inline-flex items-center text-xs font-medium text-green-300 bg-green-900/30 px-2.5 py-1 rounded-full border border-green-700/40">
+                                        <CheckCircle size={11} className="mr-1.5" /> Stripe Connected
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center text-xs font-medium text-yellow-300 bg-yellow-900/30 px-2.5 py-1 rounded-full border border-yellow-700/40">
+                                        <AlertCircle size={11} className="mr-1.5" /> Stripe Not Connected
+                                    </span>
+                                )}
+                                <span className="inline-flex items-center text-xs text-blue-200 bg-blue-800 border border-blue-700 rounded-lg px-2.5 py-1">
+                                    <Calendar size={12} className="mr-1.5 text-blue-300" /> From verified timesheets
+                                </span>
                             </div>
                         </div>
 
                         <div className="flex items-end">
-                            <Button className="!bg-orange-500 hover:!bg-orange-600 text-white text-base font-semibold shadow-md py-6 px-8 rounded-lg transition-all duration-200 transform hover:scale-[1.02]">
-                                <Wallet size={20} className="mr-2.5" />
-                                Withdraw Funds
+                            <Button
+                                className="!bg-orange-500 hover:!bg-orange-600 text-white text-base font-semibold shadow-md py-6 px-8 rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-60 disabled:scale-100"
+                                onClick={handleWithdraw}
+                                disabled={withdrawing || availableCents <= 0 || !hasStripe}
+                            >
+                                {withdrawing ? (
+                                    <><Loader2 size={20} className="mr-2.5 animate-spin" /> Processing...</>
+                                ) : (
+                                    <><Wallet size={20} className="mr-2.5" /> Withdraw Funds</>
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -124,6 +206,25 @@ export default function FinancialsPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {pendingCents > 0 && (
+                    <Card className="shadow-sm border border-orange-100 bg-orange-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-orange-700">Pending Payout</p>
+                                    <div className="flex items-baseline space-x-3 mt-2">
+                                        <span className="text-3xl font-bold text-orange-800">{formatCurrency(pendingCents / 100)}</span>
+                                    </div>
+                                    <p className="text-xs text-orange-500 mt-1">arriving in 1-2 business days</p>
+                                </div>
+                                <div className="h-12 w-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
+                                    <Clock size={24} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Transactions Table */}
@@ -164,21 +265,19 @@ export default function FinancialsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${tx.type === "Incoming" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
-                                                    }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${tx.type === "Incoming" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
                                                     {tx.type}
                                                 </span>
                                             </td>
-                                            <td className={`px-6 py-4 text-right font-extrabold ${tx.type === "Incoming" ? "text-green-600" : "text-gray-900"
-                                                }`}>
-                                                {tx.type === "Incoming" ? "+" : "-"}{formatCurrency(tx.amount / 100)}
+                                            <td className={`px-6 py-4 text-right font-extrabold ${tx.type === "Incoming" ? "text-green-600" : "text-gray-900"}`}>
+                                                {tx.type === "Incoming" ? "+" : "-"}{formatCurrency(tx.amount)}
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex items-center justify-center space-x-2">
                                                     <div className={`h-2 w-2 rounded-full ${tx.status === "Completed" ? "bg-green-500" :
                                                         tx.status === "Active" || tx.status === "Confirmed" ? "bg-blue-500" :
                                                             "bg-yellow-400"
-                                                        }`}></div>
+                                                        }`} />
                                                     <span className="font-medium text-gray-700">{tx.status}</span>
                                                 </div>
                                             </td>

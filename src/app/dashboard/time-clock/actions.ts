@@ -3,10 +3,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+interface GpsCoords {
+    lat: number;
+    lng: number;
+    accuracy: number;
+}
+
 export async function timeClockAction(
     action: "clock_in" | "clock_out" | "start_break" | "end_break",
     projectId?: string,
-    timeEntryId?: string
+    timeEntryId?: string,
+    gps?: GpsCoords | null
 ) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -45,6 +52,7 @@ export async function timeClockAction(
                     project_id: projectId || null,
                     clock_in: new Date().toISOString(),
                     status: 'Active',
+                    ...(gps ? { gps_clock_in: { lat: gps.lat, lng: gps.lng, accuracy: gps.accuracy } } : {}),
                 })
                 .select('*, project:projects(name)')
                 .single();
@@ -54,21 +62,25 @@ export async function timeClockAction(
             break;
         }
 
+
         case 'clock_out': {
             if (!timeEntryId) throw new Error("timeEntryId required");
 
             const clockOut = new Date();
+            // Auto-approval fires exactly 4 hours after clock-out (per PRD Story 5.9)
+            const autoApprovalAt = new Date(clockOut.getTime() + 4 * 60 * 60 * 1000);
+
             const { error } = await supabase
                 .from('time_entries')
                 .update({
                     clock_out: clockOut.toISOString(),
-                    status: 'Pending',
+                    status: 'Pending_Verification',
+                    auto_approval_at: autoApprovalAt.toISOString(),
                     updated_at: clockOut.toISOString(),
+                    ...(gps ? { gps_clock_out: { lat: gps.lat, lng: gps.lng, accuracy: gps.accuracy } } : {}),
                 })
                 .eq('id', timeEntryId)
-                .eq('user_id', user.id)
-                .select('*, project:projects(name)')
-                .single();
+                .eq('user_id', user.id);
 
             if (error) throw new Error(error.message);
             result = null; // Active shift is gone

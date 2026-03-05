@@ -25,7 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hasCompletedOnboarding = user?.user_metadata?.is_onboarded === true;
     const router = useRouter();
     const pathname = usePathname();
-    const supabase = createClient();
+
+    // Memoize the client so it doesn't change on every render
+    const [supabase] = useState(() => createClient());
 
     const fetchCompanyData = async (userId: string) => {
         try {
@@ -81,9 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, [supabase]);
-
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []); // Empty dependency array forces this to only run once on mount!
 
 
     const signInWithGoogle = async () => {

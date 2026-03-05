@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { sendWelcomeEmail } from '@/lib/services/mail'
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -111,10 +112,20 @@ export async function onboardCompany(
     if (metadataError) throw new Error(`Failed to update auth metadata: ${metadataError.message}`)
 
     // 3. Also update public.users (for DB queries that don't read JWT)
-    await supabase
+    const { data: userRow } = await supabase
         .from('users')
         .update({ is_onboarded: true })
         .eq('id', userId)
+        .select('email, full_name')
+        .single()
+
+    // 4. Send welcome email to brand-new signups only
+    if (isNew && userRow?.email) {
+        const name = userRow.full_name || userRow.email.split('@')[0]
+        sendWelcomeEmail(userRow.email, name, params.companyName).catch(() => {
+            // Non-fatal: log handled inside sendWelcomeEmail
+        })
+    }
 
     return { companyId, isNew }
 }

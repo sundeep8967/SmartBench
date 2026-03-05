@@ -14,9 +14,9 @@ import { AddressInput } from "@/components/ui/address-input";
 import tzlookup from "tz-lookup";
 
 export interface ExtendedWorkerProfile extends WorkerProfile {
-    home_city?: string;
-    home_state?: string;
-    home_timezone?: string;
+    home_city: string | null;
+    home_state: string | null;
+    home_timezone: string | null;
 }
 
 export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorkerProfile }) {

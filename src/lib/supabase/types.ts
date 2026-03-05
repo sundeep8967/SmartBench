@@ -207,6 +207,8 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          banned_at: string | null
+          banned_reason: string | null
           break_duration_minutes: number | null
           break_policy_type: string | null
           break_required_after_hours: number | null
@@ -216,6 +218,7 @@ export type Database = {
           default_currency: string
           ein: string | null
           id: string
+          is_banned: boolean | null
           kyb_status: string | null
           lat: number | null
           lng: number | null
@@ -232,6 +235,7 @@ export type Database = {
           ot_rule_weekend: boolean | null
           ot_rule_weekly: boolean | null
           state: string | null
+          strikes: number | null
           strikes_count: number | null
           stripe_account_id: string | null
           tax_exempt_status: boolean | null
@@ -242,6 +246,8 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           break_duration_minutes?: number | null
           break_policy_type?: string | null
           break_required_after_hours?: number | null
@@ -251,6 +257,7 @@ export type Database = {
           default_currency?: string
           ein?: string | null
           id?: string
+          is_banned?: boolean | null
           kyb_status?: string | null
           lat?: number | null
           lng?: number | null
@@ -267,6 +274,7 @@ export type Database = {
           ot_rule_weekend?: boolean | null
           ot_rule_weekly?: boolean | null
           state?: string | null
+          strikes?: number | null
           strikes_count?: number | null
           stripe_account_id?: string | null
           tax_exempt_status?: boolean | null
@@ -277,6 +285,8 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           break_duration_minutes?: number | null
           break_policy_type?: string | null
           break_required_after_hours?: number | null
@@ -286,6 +296,7 @@ export type Database = {
           default_currency?: string
           ein?: string | null
           id?: string
+          is_banned?: boolean | null
           kyb_status?: string | null
           lat?: number | null
           lng?: number | null
@@ -302,6 +313,7 @@ export type Database = {
           ot_rule_weekend?: boolean | null
           ot_rule_weekly?: boolean | null
           state?: string | null
+          strikes?: number | null
           strikes_count?: number | null
           stripe_account_id?: string | null
           tax_exempt_status?: boolean | null
@@ -969,42 +981,54 @@ export type Database = {
       users: {
         Row: {
           avatar_url: string | null
+          banned_at: string | null
+          banned_reason: string | null
           created_at: string | null
           email: string
           firebase_uid: string | null
           full_name: string | null
           id: string
+          is_banned: boolean | null
           is_onboarded: boolean | null
           mobile_number: string | null
           password_hash: string | null
+          strikes: number | null
           stripe_identity_id: string | null
           updated_at: string | null
           user_state: string
         }
         Insert: {
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           created_at?: string | null
           email: string
           firebase_uid?: string | null
           full_name?: string | null
           id: string
+          is_banned?: boolean | null
           is_onboarded?: boolean | null
           mobile_number?: string | null
           password_hash?: string | null
+          strikes?: number | null
           stripe_identity_id?: string | null
           updated_at?: string | null
           user_state?: string
         }
         Update: {
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           created_at?: string | null
           email?: string
           firebase_uid?: string | null
           full_name?: string | null
           id?: string
+          is_banned?: boolean | null
           is_onboarded?: boolean | null
           mobile_number?: string | null
           password_hash?: string | null
+          strikes?: number | null
           stripe_identity_id?: string | null
           updated_at?: string | null
           user_state?: string
@@ -1438,4 +1462,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

@@ -4,8 +4,25 @@ import { useState, useOptimistic, useEffect, startTransition } from "react";
 import { timeClockAction } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coffee, LogOut, History, Clock, Play, Loader2 } from "lucide-react";
+import { Coffee, LogOut, History, Clock, Play, Loader2, MapPin, MapPinOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+
+interface GpsCoords {
+    lat: number;
+    lng: number;
+    accuracy: number;
+}
+
+async function captureGps(): Promise<GpsCoords | null> {
+    if (!navigator.geolocation) return null;
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+            () => resolve(null),
+            { timeout: 8000, enableHighAccuracy: true }
+        );
+    });
+}
 
 interface TimeEntry {
     id: string;
@@ -34,6 +51,7 @@ export default function TimeClockClient({
     const { toast } = useToast();
     const [selectedProject, setSelectedProject] = useState<string>(projects[0]?.id || "");
     const [elapsed, setElapsed] = useState(0);
+    const [gpsStatus, setGpsStatus] = useState<"idle" | "capturing" | "captured" | "denied">("idle");
 
     // OPTIMISTIC UI: This gives us instant 0ms visual updates before the server responds
     const [optimisticActiveShift, addOptimisticAction] = useOptimistic<
@@ -78,21 +96,35 @@ export default function TimeClockClient({
     }, [optimisticActiveShift]);
 
     const handleAction = async (action: "clock_in" | "clock_out" | "start_break" | "end_break") => {
-        // 1. Instantly update UI without waiting for server response manually wrapped in startTransition for React 19 safety
+        // 1. Capture GPS for clock_in and clock_out
+        let gps: GpsCoords | null = null;
+        if (action === "clock_in" || action === "clock_out") {
+            setGpsStatus("capturing");
+            gps = await captureGps();
+            setGpsStatus(gps ? "captured" : "denied");
+        }
+
+        // 2. Instantly update UI without waiting for server response
         startTransition(() => {
             addOptimisticAction({ action, projectId: selectedProject });
         });
 
         try {
-            // 2. Perform the server action in the background
-            await timeClockAction(action, selectedProject, optimisticActiveShift?.id);
+            // 3. Perform the server action in the background
+            await timeClockAction(action, selectedProject, optimisticActiveShift?.id, gps);
             toast({
                 title: "Success",
-                description: action === "clock_in" ? "Clocked in!" : action === "clock_out" ? "Clocked out!" : action === "start_break" ? "Break started." : "Break ended."
+                description: action === "clock_in"
+                    ? `Clocked in!${gps ? " 📍 Location captured." : " (no GPS)"}`
+                    : action === "clock_out"
+                        ? `Clocked out!${gps ? " 📍 Location captured." : " (no GPS)"}`
+                        : action === "start_break" ? "Break started." : "Break ended."
             });
         } catch (error: any) {
             // If the server fails, useOptimistic automatically rolls the UI back to initialActiveShift
             toast({ title: "Error", description: error.message, variant: "destructive" });
+        } finally {
+            setGpsStatus("idle");
         }
     };
 
@@ -128,9 +160,26 @@ export default function TimeClockClient({
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Time Clock</h1>
                     <p className="text-gray-500">Track active shifts, breaks, and verify location status.</p>
                 </div>
-                <div className="flex items-center text-sm font-medium text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
-                    <Clock size={16} className="mr-2 text-gray-400" />
-                    {today}
+                <div className="flex items-center gap-3">
+                    {gpsStatus === "capturing" && (
+                        <span className="flex items-center text-xs text-blue-600 font-medium bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+                            <Loader2 size={12} className="mr-1.5 animate-spin" /> Getting location...
+                        </span>
+                    )}
+                    {gpsStatus === "captured" && (
+                        <span className="flex items-center text-xs text-green-600 font-medium bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                            <MapPin size={12} className="mr-1.5" /> GPS Captured
+                        </span>
+                    )}
+                    {gpsStatus === "denied" && (
+                        <span className="flex items-center text-xs text-yellow-600 font-medium bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100">
+                            <MapPinOff size={12} className="mr-1.5" /> No GPS
+                        </span>
+                    )}
+                    <div className="flex items-center text-sm font-medium text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
+                        <Clock size={16} className="mr-2 text-gray-400" />
+                        {today}
+                    </div>
                 </div>
             </div>
 

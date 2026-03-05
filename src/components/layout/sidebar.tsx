@@ -17,7 +17,8 @@ import {
     BookOpen,
     MoreVertical,
     Settings,
-    X
+    X,
+    ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useSidebar } from "@/lib/contexts/SidebarContext";
@@ -40,6 +41,7 @@ const mainNav = [
     { name: "Time Sheets", href: "/dashboard/timesheets", icon: ShieldCheck },
     { name: "Financials", href: "/dashboard/financials", icon: DollarSign },
     { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
+    { name: "Super Admin", href: "/dashboard/admin", icon: ShieldAlert },
 ];
 
 const dropdownNav = [
