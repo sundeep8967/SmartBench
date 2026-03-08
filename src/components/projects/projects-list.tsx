@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, ArrowRight, Search, LayoutGrid, List, Download, Upload, Trash2, CheckSquare, Loader2 } from "lucide-react";
+import { MapPin, Clock, ArrowRight, Search, LayoutGrid, List, Download, Upload, Trash2, CheckSquare, Loader2, MoreVertical, MoreHorizontal, Pencil } from "lucide-react";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Project } from "@/types";
 import { bulkDeleteProjectsAction, bulkImportProjectsAction } from "@/app/dashboard/projects/actions";
 import Papa from "papaparse";
@@ -29,7 +32,19 @@ function formatTime12hr(time: string): string {
 }
 
 export function ProjectsList({ projects }: { projects: Project[] }) {
-    const [view, setView] = useState<"card" | "table">("card");
+    const [viewState, setViewState] = useState<"card" | "table">("card");
+
+    useEffect(() => {
+        const saved = localStorage.getItem("smartbench_projects_view") as "card" | "table";
+        if (saved) setViewState(saved);
+    }, []);
+
+    const setView = (v: "card" | "table") => {
+        setViewState(v);
+        localStorage.setItem("smartbench_projects_view", v);
+    };
+
+    const view = viewState;
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
     const [selectionMode, setSelectionMode] = useState(false);
@@ -325,17 +340,40 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                             <Loader2 className="h-6 w-6 text-primary animate-spin" />
                                         </div>
                                     )}
+                                    {/* Action Menu (Top Right) */}
+                                    <div className="absolute top-2 right-2 z-30 opacity-0 xl:opacity-0 lg:opacity-100 md:opacity-100 sm:opacity-100 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="p-1.5 rounded-md bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm hover:bg-white text-gray-500 transition-colors">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <EditProjectDialog project={project} trigger={
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                    </DropdownMenuItem>
+                                                } />
+                                                <DeleteProjectButton projectId={project.id} trigger={
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 cursor-pointer">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                } />
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    {/* Selection Checkbox */}
                                     {selectionMode && (
-                                        <div className="absolute top-3 right-3 z-10 animate-in zoom-in spin-in-12 duration-200">
+                                        <div className="absolute top-3 left-3 z-10 animate-in zoom-in spin-in-12 duration-200">
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
-                                                onChange={() => { }} // dummy onChange since click is handled on the container
+                                                onChange={() => { }}
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer pointer-events-none transition-transform duration-200 active:scale-90"
                                             />
                                         </div>
                                     )}
-                                    <div className={`p-3 pb-2 ${selectionMode ? 'pr-9' : ''} flex-grow`}>
+                                    <div className={`p-3 pb-2 ${selectionMode ? 'pl-9' : ''} pr-9 flex-grow`}>
                                         <h3 className="text-[15px] font-bold text-blue-700 hover:text-blue-900 transition-colors truncate mb-1">
                                             {project.name}
                                         </h3>
@@ -383,23 +421,22 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b bg-gray-50/50">
-                                    {selectionMode && (
-                                        <th className="px-4 py-3 w-10">
-                                            {filteredProjects.length > 0 && (
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedProjects.size === filteredProjects.length}
-                                                    onChange={handleSelectAll}
-                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer"
-                                                />
-                                            )}
-                                        </th>
-                                    )}
-                                    <th className={`text-left ${selectionMode ? 'px-2' : 'px-4'} py-3 font-medium text-gray-500 text-xs uppercase tracking-wider`}>Project Name</th>
+                                    <th className="px-4 py-3 w-10 text-center">
+                                        {filteredProjects.length > 0 && (
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedProjects.size === filteredProjects.length && filteredProjects.length > 0}
+                                                onChange={handleSelectAll}
+                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer"
+                                            />
+                                        )}
+                                    </th>
+                                    <th className="text-left px-2 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider">Project Name</th>
                                     <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider">Address</th>
                                     <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider hidden lg:table-cell">Description</th>
                                     <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">Earliest Start</th>
                                     <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wider hidden md:table-cell">Meeting Point</th>
+                                    <th className="px-4 py-3 w-12"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -424,17 +461,15 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                                     <Loader2 className="h-5 w-5 text-primary animate-spin" />
                                                 </td>
                                             )}
-                                            {selectionMode && (
-                                                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isSelected}
-                                                        onChange={() => { }} // dummy onChange since click is handled on the tr
-                                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer pointer-events-none"
-                                                    />
-                                                </td>
-                                            )}
-                                            <td className={`${selectionMode ? 'px-2' : 'px-4'} py-3`}>
+                                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => { toggleProjectSelect(project.id); }}
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm cursor-pointer"
+                                                />
+                                            </td>
+                                            <td className="px-2 py-3">
                                                 <span className="font-medium text-blue-700 hover:text-blue-900">
                                                     {project.name}
                                                 </span>
@@ -466,6 +501,27 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                                     <span className="text-gray-400">—</span>
                                                 )}
                                             </td>
+                                            <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                        <EditProjectDialog project={project} trigger={
+                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                                                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                            </DropdownMenuItem>
+                                                        } />
+                                                        <DeleteProjectButton projectId={project.id} trigger={
+                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 cursor-pointer">
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                            </DropdownMenuItem>
+                                                        } />
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -476,7 +532,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
             )}
 
             {/* Floating Bulk Action Bar */}
-            {selectionMode && (
+            {selectedProjects.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-lg border border-gray-200 px-6 py-3 flex items-center space-x-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-200">
                     <span className="text-sm font-medium text-gray-700">
                         {selectedProjects.size} selected

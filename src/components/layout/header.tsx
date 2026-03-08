@@ -24,7 +24,12 @@ const routeConfig: Record<string, { section: string; page: string }> = {
 
 export function Header() {
   const pathname = usePathname() || "";
-  const config = routeConfig[pathname] || { section: "Dashboard", page: "Overview" };
+  let config = routeConfig[pathname] || { section: "Dashboard", page: "Overview" };
+
+  if (pathname.match(/^\/dashboard\/projects\/[a-zA-Z0-9-]+$/)) {
+    config = { section: "Projects", page: "View" };
+  }
+
   const isMarketplace = pathname.includes("/marketplace");
   const isRoster = pathname.includes("/roster");
   const { cartCount } = useCart();

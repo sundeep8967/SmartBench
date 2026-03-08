@@ -16,7 +16,7 @@ import { updateProjectAction } from "@/app/dashboard/projects/actions";
 import type { Project } from "@/types";
 import tzlookup from "tz-lookup";
 
-export function EditProjectDialog({ project }: { project: Project }) {
+export function EditProjectDialog({ project, trigger }: { project: Project, trigger?: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
@@ -92,9 +92,11 @@ export function EditProjectDialog({ project }: { project: Project }) {
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <Pencil className="mr-2 h-4 w-4" /> Edit Project
-                </Button>
+                {trigger ? trigger : (
+                    <Button variant="outline" size="sm">
+                        <Pencil className="mr-2 h-4 w-4" /> Edit Project
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent
                 className="sm:max-w-[525px]"

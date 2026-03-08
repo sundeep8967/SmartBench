@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { deleteProjectAction } from "@/app/dashboard/projects/actions";
 
-export function DeleteProjectButton({ projectId }: { projectId: string }) {
+export function DeleteProjectButton({ projectId, trigger }: { projectId: string, trigger?: React.ReactNode }) {
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
     const router = useRouter();
@@ -28,7 +28,7 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
             await deleteProjectAction(projectId);
             toast({ title: "Project Deleted", description: "The project has been successfully removed." });
             setOpen(false);
-            router.push("/dashboard/projects");
+            router.refresh();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {
@@ -39,10 +39,12 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Project
-                </Button>
+                {trigger ? trigger : (
+                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Project
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
