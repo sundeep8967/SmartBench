@@ -152,6 +152,28 @@ CREATE INDEX idx_chat_messages_sender_id ON chat_messages(sender_id);
 CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at DESC);
 CREATE INDEX idx_chat_messages_deleted ON chat_messages(channel_id, is_deleted, created_at DESC) WHERE is_deleted = false;
 
+### dispute_messages
+
+```sql
+CREATE TABLE dispute_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  time_entry_id UUID NOT NULL REFERENCES time_entries(id) ON DELETE CASCADE,
+  sender_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender_company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  evidence_url TEXT,
+  is_system_message BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX idx_dispute_messages_time_entry_id ON dispute_messages(time_entry_id);
+CREATE INDEX idx_dispute_messages_created_at ON dispute_messages(created_at);
+```
+
+**Technical Constraints:**
+- Messages tied directly to a `time_entries` row (representing the dispute thread).
+- Handled securely with RLS ensuring only Borrowing Admins and Lending Admins attached to the booking can view/insert.
+
 ---
 
 **Back to:** [Database Schema](./schema.md)

@@ -64,7 +64,7 @@ export default function CartPage() {
         const diffTime = Math.abs(end.getTime() - start.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         const hours = diffDays * 8;
-        return sum + (item.hourly_rate * hours);
+        return sum + (item.hourly_rate * 1.30 * hours);
     }, 0);
 
     return (
@@ -95,14 +95,16 @@ export default function CartPage() {
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-4">
                                         <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg border border-white shadow-sm">
-                                            {(item as any).worker?.full_name?.charAt(0) || 'W'}
+                                            {(item as any).worker_user?.full_name?.charAt(0) || 'W'}
                                         </div>
                                         <div>
-                                            <CardTitle className="text-lg">{(item as any).worker?.full_name || 'Worker'} </CardTitle>
-                                            <CardDescription className="flex items-center gap-2">
-                                                <BadgeCheck size={14} className="text-green-500" />
-                                                Verified Professional
-                                            </CardDescription>
+                                            <CardTitle className="text-xl">{(item as any).worker_user?.full_name || 'Worker'} </CardTitle>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <BadgeCheck size={16} className="text-green-500 fill-green-50" />
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    {(item as any).worker_user?.company_members?.[0]?.companies?.name || 'Independent Contractor'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <Button variant="ghost" size="sm" onClick={() => handleRemove(item.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
@@ -116,7 +118,7 @@ export default function CartPage() {
                                     <div className="space-y-1">
                                         <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Role & Rate</span>
                                         <p className="font-medium text-gray-900">{(item as any).work_order?.role || 'General Labor'}</p>
-                                        <p className="text-gray-600">${item.hourly_rate}/hr</p>
+                                        <p className="text-gray-600">${(item.hourly_rate * 1.30).toFixed(2)}/hr <span className="text-[10px] text-gray-400 font-medium">(All-inclusive)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                         <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Duration</span>
@@ -135,8 +137,8 @@ export default function CartPage() {
                     <div className="flex flex-col md:flex-row justify-between items-center bg-blue-50 p-6 rounded-lg border border-blue-100 gap-4">
                         <div>
                             <p className="text-blue-900 font-medium">Estimated Total (Weekly)</p>
-                            <p className="text-3xl font-bold text-blue-900">${totalEstimated.toLocaleString()}</p>
-                            <p className="text-blue-600 text-xs">Excludes service fees and taxes</p>
+                            <p className="text-3xl font-bold text-blue-900">${totalEstimated.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-blue-600 text-xs">Excludes applicable taxes</p>
                         </div>
                         <Button size="lg" onClick={handleCheckout} className="w-full md:w-auto bg-blue-900 hover:bg-blue-800 h-12 px-8 text-lg shadow-lg shadow-blue-900/20">
                             Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />

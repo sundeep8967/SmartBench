@@ -108,10 +108,21 @@ export async function GET(request: Request) {
             // For MVP: Insert in-app notifications
         }
 
+        await supabaseAdmin.from('system_logs').insert({
+            level: 'info',
+            service: 'cron_insurance',
+            message: `Insurance monitor completed. Suspended ${expiredPolicies ? expiredPolicies.length : 0} policies.`
+        });
         return NextResponse.json({ success: true, message: "Insurance monitor completed." });
 
     } catch (error: any) {
         console.error("[Insurance Cron] Error:", error);
+        await supabaseAdmin.from('system_logs').insert({
+            level: 'error',
+            service: 'cron_insurance',
+            message: `Insurance monitor failed: ${error.message}`,
+            metadata: { error: error.stack }
+        });
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }

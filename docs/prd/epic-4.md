@@ -1,5 +1,9 @@
 # Epic 4: Booking & Payment Processing
 
+> [!NOTE]
+> **Implementation Status**: 🟡 MOSTLY COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Implement the complete booking workflow from cart to payment, including direct Stripe payment processing, site contact selection, and booking confirmations. This epic delivers the core transaction functionality that enables Borrowing Companies to book workers and process payments securely.
 
 ## Booking Flow

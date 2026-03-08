@@ -11,6 +11,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement } from "@/components/admin/user-management";
 import { CompanyManagement } from "@/components/admin/company-management";
+import { BookingTimeline } from "@/components/admin/booking-timeline";
+import { SystemMonitoring } from "@/components/admin/system-monitoring";
+import { WednesdayControlCenter } from "@/components/admin/wednesday-control-center";
 
 function StatCard({
     title, value, sub, icon: Icon, color,
@@ -92,6 +95,9 @@ export default function SuperAdminPage() {
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="companies">Companies</TabsTrigger>
+                    <TabsTrigger value="timeline">Timeline Visualizer</TabsTrigger>
+                    <TabsTrigger value="system">System Health</TabsTrigger>
+                    <TabsTrigger value="wednesday">Wednesday Rule</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-8">
@@ -251,6 +257,18 @@ export default function SuperAdminPage() {
 
                 <TabsContent value="companies">
                     <CompanyManagement />
+                </TabsContent>
+
+                <TabsContent value="timeline">
+                    <BookingTimeline />
+                </TabsContent>
+
+                <TabsContent value="system">
+                    <SystemMonitoring />
+                </TabsContent>
+
+                <TabsContent value="wednesday">
+                    <WednesdayControlCenter />
                 </TabsContent>
             </Tabs>
         </div>

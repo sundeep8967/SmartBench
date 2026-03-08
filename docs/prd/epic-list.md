@@ -6,15 +6,15 @@
 
 2. ~~**Epic 2: Worker Onboarding & Profile Management**~~ - Enable workers to create profiles, admins to manage rosters, and system to handle insurance verification and worker listing. **(COMPLETED)**
 
-3. **Epic 3: Marketplace & Search** - Build worker search engine with filters and availability management to enable borrowers to find and evaluate workers.
+3. **Epic 3: Marketplace & Search** - Build worker search engine with filters and availability management to enable borrowers to find and evaluate workers. **(MOSTLY COMPLETE)**
 
-4. **Epic 4: Booking & Payment Processing** - Implement booking workflow, direct Stripe payment processing, and site contact selection.
+4. **Epic 4: Booking & Payment Processing** - Implement booking workflow, direct Stripe payment processing, and site contact selection. **(MOSTLY COMPLETE)**
 
-5. **Epic 5: Time Tracking & Verification** - Build time clock with GPS coordinate capture, break/lunch tracking, offline support, and supervisor verification workflows.
+5. **Epic 5: Time Tracking & Verification** - Build time clock with GPS coordinate capture, break/lunch tracking, offline support, and supervisor verification workflows. **(PARTIALLY COMPLETE)**
 
-6. **Epic 6: Financial Operations & Admin** - Complete financial operations including direct Stripe payouts, refunds, overtime calculations, and company dashboard.
+6. **Epic 6: Financial Operations & Admin** - Complete financial operations including direct Stripe payouts, refunds, overtime calculations, and company dashboard. **(MOSTLY COMPLETE)**
 
-7. **Epic 7: Super Admin Dashboard** - Enable platform owners to manage the platform globally, view system-wide statistics, manage users and companies, and handle critical platform operations.
+7. **Epic 7: Super Admin Dashboard** - Enable platform owners to manage the platform globally, view system-wide statistics, manage users and companies, and handle critical platform operations. **(IN PROGRESS)**
 
 ---
 

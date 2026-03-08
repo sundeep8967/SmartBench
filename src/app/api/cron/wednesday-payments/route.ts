@@ -34,6 +34,26 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ message: "Not Wednesday — skipped", day: now.getUTCDay() });
     }
 
+    // Check system settings for manual override
+    const { data: pauseSetting } = await adminDb
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'pause_wednesday_cutoff')
+        .maybeSingle();
+
+    const isHardCutoffPaused = pauseSetting?.value === 'true' || pauseSetting?.value === true;
+
+    if (isHardCutoffPaused) {
+        console.warn("[Wednesday Cron] Hard Cutoff paused by Super Admin.");
+        // Log to system_logs
+        await adminDb.from('system_logs').insert({
+            level: 'warn',
+            event_type: 'cron_wednesday_cutoff_paused',
+            message: 'Wednesday automated worker release skipped due to active pause setting.',
+            metadata: { timestamp: now.toISOString() }
+        });
+    }
+
     // Get current week's Mon–Sun range
     const dayOfWeek = now.getUTCDay(); // 0=Sun, 3=Wed
     const monday = new Date(now);
@@ -127,5 +147,11 @@ export async function GET(req: NextRequest) {
     }
 
     console.log("[Wednesday Cron]", results);
-    return NextResponse.json({ success: true, ...results, week_start: monday.toISOString(), timestamp: now.toISOString() });
+    return NextResponse.json({
+        success: true,
+        paused: isHardCutoffPaused,
+        ...results,
+        week_start: monday.toISOString(),
+        timestamp: now.toISOString()
+    });
 }

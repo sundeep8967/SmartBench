@@ -38,15 +38,21 @@ export async function GET(request: NextRequest) {
 
     // Get all active worker availability listings (these are the workers actually listed on the marketplace)
     // Exclude workers listed by the same company (you can't hire your own workers from the marketplace)
-    const { data: availabilityRecords } = await supabase
+    const { data: availabilityRecords } = await (supabase as any)
         .from('worker_availability')
-        .select('worker_id, minimum_shift_length_hours, company_id')
+        .select(`
+            worker_id, 
+            minimum_shift_length_hours, 
+            company_id,
+            companies!inner(is_shadow_banned)
+        `)
         .eq('is_active', true)
+        .eq('companies.is_shadow_banned', false)
         .neq('company_id', member.company_id);
 
     // Build maps: worker_id -> minimum_shift_length_hours & worker_id -> lender_company_id
     const availabilityMap = new Map<string, { min_shift: number | null; company_id: string }>(
-        (availabilityRecords || []).map(a => [a.worker_id, { min_shift: a.minimum_shift_length_hours, company_id: a.company_id }])
+        (availabilityRecords || []).map((a: any) => [a.worker_id, { min_shift: a.minimum_shift_length_hours, company_id: a.company_id }])
     );
 
     // Only worker IDs that are actively listed
@@ -62,13 +68,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get worker profiles — only listed workers
-    let profilesQuery = supabase
+    let profilesQuery = (supabase as any)
         .from('worker_profiles')
         .select(`
             *,
-            user:users!inner(full_name, email)
+            user:users!inner(full_name, email, is_shadow_banned)
         `)
         .in('user_id', listedWorkerIds)
+        .eq('users.is_shadow_banned', false)
         .limit(50);
 
     if (trade && trade !== "All") {
@@ -96,9 +103,9 @@ export async function GET(request: NextRequest) {
         .in('status', ['Open', 'Draft']);
 
     // Filter by search query (name, trade, skills)
-    let filteredWorkers = workers || [];
+    let filteredWorkers: any[] = workers || [];
     if (query) {
-        filteredWorkers = filteredWorkers.filter(w => {
+        filteredWorkers = filteredWorkers.filter((w: any) => {
             const name = (w.user?.full_name || "").toLowerCase();
             const workerTrade = (w.trade || "").toLowerCase();
             const skills = Array.isArray(w.skills)
@@ -109,12 +116,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Exclude the current user from marketplace results
-    filteredWorkers = filteredWorkers.filter(w => w.user_id !== user.id);
+    filteredWorkers = filteredWorkers.filter((w: any) => w.user_id !== user.id);
 
     // KEY FILTER: exclude workers whose minimum shift length > requested shift hours
     // e.g. if a worker requires 8-hour minimum and the borrower wants 6 hours, exclude that worker
     if (requestedShiftHours !== null) {
-        filteredWorkers = filteredWorkers.filter(w => {
+        filteredWorkers = filteredWorkers.filter((w: any) => {
             const workerMin = availabilityMap.get(w.user_id)?.min_shift;
             // If worker has no minimum set, they accept any shift length
             if (workerMin === null || workerMin === undefined) return true;
@@ -133,7 +140,7 @@ export async function GET(request: NextRequest) {
             .single();
 
         if (project) {
-            filteredWorkers = filteredWorkers.filter(w => {
+            filteredWorkers = filteredWorkers.filter((w: any) => {
                 // Time constraint
                 if (project.daily_start_time) {
                     const projectTime = project.daily_start_time.slice(0, 5);
@@ -186,7 +193,7 @@ export async function GET(request: NextRequest) {
     // Fulfillment Score = (1 - lender-cancelled / total confirmed+) * 100
     // "Reliable Partner" badge = fulfillment > 95%
     const lenderCompanyIds = [...new Set(
-        filteredWorkers.map(w => availabilityMap.get(w.user_id)?.company_id).filter(Boolean) as string[]
+        filteredWorkers.map((w: any) => availabilityMap.get(w.user_id)?.company_id).filter(Boolean) as string[]
     )];
     const companyMetricsMap = new Map<string, { fulfillment_score: number | null; reliable_partner: boolean }>();
 
@@ -225,7 +232,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Attach rates, minimum shift length, on-time %, company metrics, and ratings to each worker
-    const workersWithRates = filteredWorkers.map(w => {
+    const workersWithRates = filteredWorkers.map((w: any) => {
         const rate = ratesMap.get(w.user_id);
         const avail = availabilityMap.get(w.user_id);
         const companyMetrics = companyMetricsMap.get(avail?.company_id || '') || null;

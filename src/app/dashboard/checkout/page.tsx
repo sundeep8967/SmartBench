@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -5,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CheckCircle2, ChevronLeft, Loader2, AlertCircle, Briefcase, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { CartItem } from "@/types";
 import { CheckoutStripeProvider } from "@/components/checkout/stripe-checkout-form";
@@ -18,6 +21,7 @@ function CheckoutContent() {
     const [processing, setProcessing] = useState(false);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
+    const [bookingType, setBookingType] = useState('Short-Term');
 
     useEffect(() => {
         fetchCart();
@@ -49,7 +53,7 @@ function CheckoutContent() {
             const res = await fetch("/api/bookings/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentMethodId })
+                body: JSON.stringify({ paymentMethodId, bookingType })
             });
             const data = await res.json();
 
@@ -73,7 +77,16 @@ function CheckoutContent() {
         const diffTime = Math.abs(end.getTime() - start.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         const hours = diffDays * 8;
-        return sum + (item.hourly_rate * hours);
+        return sum + (item.hourly_rate * 1.30 * hours);
+    }, 0);
+
+    const serviceFeeEst = cartItems.reduce((sum, item) => {
+        const start = new Date(item.start_date);
+        const end = new Date(item.end_date);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const hours = diffDays * 8;
+        return sum + (item.hourly_rate * 0.30 * hours);
     }, 0);
 
     // Service Fee (Simplification: 30% overhead on top? Or included? 
@@ -99,8 +112,6 @@ function CheckoutContent() {
 
     // For this UI, let's keep it simple: Total = Rate * Hours.
     // And mentions fees are included or calculated.
-
-    const serviceFeeEst = totalWeeklyEst * 0.30;
 
 
     if (step === 3) {
@@ -183,10 +194,46 @@ function CheckoutContent() {
                         </div>
                     </Card>
 
-                    {/* Payment Method */}
+                    {/* Booking Type Selection */}
                     <Card className="p-6 border-gray-200 shadow-sm">
                         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                             <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center text-xs mr-2">2</span>
+                            Booking Type
+                        </h2>
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-600 mb-4">
+                                Select the expected duration for this booking. This helps set the correct terms and conditions.
+                            </p>
+
+                            <RadioGroup value={bookingType} onValueChange={setBookingType} className="space-y-3">
+                                <div className={`flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${bookingType === 'Short-Term' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setBookingType('Short-Term')}>
+                                    <RadioGroupItem value="Short-Term" id="short-term" className="mt-1" />
+                                    <div className="flex flex-col">
+                                        <Label htmlFor="short-term" className="font-semibold cursor-pointer text-gray-900 flex items-center">
+                                            <Calendar size={16} className="mr-2 text-blue-600" />
+                                            Short-Term (1 - 4 Weeks)
+                                        </Label>
+                                        <p className="text-xs text-gray-500 mt-1 cursor-pointer">Ideal for quick projects, fill-ins, or temporary surges in volume.</p>
+                                    </div>
+                                </div>
+                                <div className={`flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${bookingType === 'Long-Term' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setBookingType('Long-Term')}>
+                                    <RadioGroupItem value="Long-Term" id="long-term" className="mt-1" />
+                                    <div className="flex flex-col">
+                                        <Label htmlFor="long-term" className="font-semibold cursor-pointer text-gray-900 flex items-center">
+                                            <Briefcase size={16} className="mr-2 text-blue-600" />
+                                            Long-Term (4+ Weeks)
+                                        </Label>
+                                        <p className="text-xs text-gray-500 mt-1 cursor-pointer">Best for extended projects or semi-permanent placements.</p>
+                                    </div>
+                                </div>
+                            </RadioGroup>
+                        </div>
+                    </Card>
+
+                    {/* Payment Method */}
+                    <Card className="p-6 border-gray-200 shadow-sm">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center text-xs mr-2">3</span>
                             Payment Method
                         </h2>
 
@@ -231,7 +278,8 @@ function CheckoutContent() {
                                         <p className="text-xs text-gray-500">{(item as any).work_order?.role}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-medium text-gray-900">${item.hourly_rate}/hr</p>
+                                        <p className="text-sm font-medium text-gray-900">${(item.hourly_rate * 1.30).toFixed(2)}/hr</p>
+                                        <p className="text-[10px] text-gray-400 font-medium">All-inclusive</p>
                                     </div>
                                 </div>
                             ))}

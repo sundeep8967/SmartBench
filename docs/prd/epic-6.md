@@ -1,5 +1,9 @@
 # Epic 6: Financial Operations & Admin
 
+> [!NOTE]
+> **Implementation Status**: 🟡 MOSTLY COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Complete the financial operations layer including direct Stripe payments, refunds, overtime calculations, and comprehensive company dashboard. This epic delivers the financial operations that enable daily payouts and complete financial transparency through direct Stripe-native processing.
 
 ## Payment Flow

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     const body = await request.json();
-    const { paymentMethodId } = body;
+    const { paymentMethodId, bookingType = 'Short-Term' } = body;
 
     if (!paymentMethodId) {
         return NextResponse.json({ error: "paymentMethodId is required" }, { status: 400 });
@@ -23,10 +23,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Get Borrower Company
+    // 1. Get Borrower Company & OT Terms
     const { data: member } = await supabase
         .from('company_members')
-        .select('company_id')
+        .select(`
+            company_id,
+            company:companies(
+                ot_rate_type,
+                ot_rule_daily,
+                ot_rule_weekend,
+                ot_rule_weekly
+            )
+        `)
         .eq('user_id', user.id)
         .eq('status', 'Active')
         .maybeSingle();
@@ -112,6 +120,13 @@ export async function POST(request: NextRequest) {
 
             totalCartAmountCents += fees.totalAmount;
 
+            const otTermsSnapshot = {
+                ot_rate_type: (member as any).company?.ot_rate_type || '1.5x',
+                ot_rule_daily: (member as any).company?.ot_rule_daily || false,
+                ot_rule_weekend: (member as any).company?.ot_rule_weekend || false,
+                ot_rule_weekly: (member as any).company?.ot_rule_weekly !== false, // default true
+            };
+
             const booking: any = {
                 project_id: item.work_order?.project_id,
                 worker_id: item.worker_id,
@@ -126,6 +141,8 @@ export async function POST(request: NextRequest) {
                 service_fee_amount: fees.serviceFee,
                 worker_payout_amount: fees.workerPayout,
                 work_order_id: item.work_order_id,
+                booking_type: bookingType,
+                ot_terms_snapshot: otTermsSnapshot,
             };
 
             bookingsToInsert.push(booking);

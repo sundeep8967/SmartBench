@@ -1,5 +1,9 @@
 # Epic 2: Worker Onboarding & Profile Management
 
+> [!NOTE]
+> **Implementation Status**: ✅ COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Enable workers to create comprehensive profiles, allow admins to manage company rosters, implement insurance verification workflows, and enable workers to be listed in the marketplace. This epic delivers the complete worker lifecycle from invitation to marketplace listing.
 
 ## Worker State Machine

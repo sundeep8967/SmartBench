@@ -241,6 +241,12 @@ export async function GET(req: NextRequest) {
         results.postShift3h++;
     }
 
+    await adminDb.from('system_logs').insert({
+        level: 'info',
+        service: 'cron_notifications',
+        message: `Notifications cron completed. Pre-16h: ${results.preShift16h}, Pre-1h: ${results.preShift1h}, Post-1h: ${results.postShift1h}, Post-3h: ${results.postShift3h}.`
+    });
+
     console.log("[Notifications Cron]", results);
     return NextResponse.json({ success: true, ...results, timestamp: now.toISOString() });
 }

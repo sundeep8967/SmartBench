@@ -513,8 +513,9 @@ export default function MarketplacePage() {
                                         {/* Footer */}
                                         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                                             <div>
-                                                <span className="text-xl font-bold text-gray-900">${worker.hourly_rate}</span>
+                                                <span className="text-xl font-bold text-gray-900">${(worker.hourly_rate * 1.30).toFixed(2)}</span>
                                                 <span className="text-xs text-gray-500">/hr</span>
+                                                <p className="text-[10px] text-gray-400 font-medium">All-inclusive rate</p>
                                             </div>
                                             <Button
                                                 variant="outline"

@@ -1,5 +1,9 @@
 # Epic 3: Marketplace & Search
 
+> [!NOTE]
+> **Implementation Status**: 🟡 MOSTLY COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Build a comprehensive worker search and discovery system that enables borrowers to find qualified workers based on multiple criteria, view availability calendars, and manage saved searches. This epic delivers the core marketplace functionality that connects borrowers with available workers.
 
 ## Story 3.1: Worker Search Engine {#story-31-worker-search-engine}

@@ -92,6 +92,13 @@ export async function PATCH(request: NextRequest) {
             .eq("id", userId);
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else if (action === "shadow_ban") {
+        const { error } = await supabaseServer
+            .from("users")
+            .update({ is_shadow_banned: value.isShadowBanned })
+            .eq("id", userId);
+
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     } else {
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }

@@ -1,5 +1,9 @@
 # Epic 5: Time Tracking & Verification
 
+> [!NOTE]
+> **Implementation Status**: ⏳ PARTIALLY COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Build a comprehensive time tracking system with GPS coordinate capture, break/lunch tracking, offline support, and supervisor verification workflows. This epic delivers the operational layer that ensures accurate time recording and trust between borrowers and lenders.
 
 ## Time Tracking Flow
