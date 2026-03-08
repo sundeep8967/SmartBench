@@ -2,6 +2,7 @@
 
 import { useState, useOptimistic, useEffect, startTransition, useRef } from "react";
 import { timeClockAction, manualTimeEntryAction } from "./actions";
+import { savePendingAction, getPendingActions, clearPendingActions, removePendingAction } from "@/lib/offline-sync";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,8 @@ interface TimeEntry {
     clock_out: string | null;
     break_start: string | null;
     total_break_minutes: number;
+    travel_start: string | null;
+    travel_duration_minutes: number;
     status: string;
     project?: { name: string } | null;
 }
@@ -72,7 +75,83 @@ export default function TimeClockClient({
     const [draftClockIn, setDraftClockIn] = useState("");
     const [draftClockOut, setDraftClockOut] = useState("");
     const [draftBreakMins, setDraftBreakMins] = useState<number>(0);
+    const [draftTravelMins, setDraftTravelMins] = useState<number>(0);
     const [draftSubmitting, setDraftSubmitting] = useState(false);
+
+    // Offline Sync State
+    const [isOnline, setIsOnline] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    useEffect(() => {
+        setIsOnline(navigator.onLine);
+
+        const syncQueue = async () => {
+            if (isSyncing) return;
+            setIsSyncing(true);
+            try {
+                const actions = await getPendingActions();
+                if (actions.length === 0) return;
+
+                toast({ title: "Syncing", description: `Syncing ${actions.length} offline punches...` });
+
+                let currentShiftId = initialActiveShift?.id;
+
+                for (const item of actions) {
+                    try {
+                        // Attempt the action. If it's a clock_in, the server returns the new entry with an ID.
+                        const res = await timeClockAction(
+                            item.action as any,
+                            item.projectId,
+                            currentShiftId,
+                            undefined, // GPS accuracy is lost in simple offline MVP, or we could add to pending actions
+                            item.photoUrl,
+                            item.draftData
+                        );
+
+                        // If we just clocked in, store the real server ID for subsequent queue items
+                        if (res && res.id) {
+                            currentShiftId = res.id;
+                        }
+
+                        await removePendingAction(item.id!);
+                    } catch (e: any) {
+                        console.error("Failed to sync action", item, e);
+                        toast({ title: "Sync Error", description: `Failed to sync ${item.action}: ${e.message}`, variant: "destructive" });
+                        // Depending on strategy, we can break or continue. MVP: continue.
+                    }
+                }
+
+                if (actions.length > 0) {
+                    toast({ title: "Sync Complete", description: "Your offline punches have been synced." });
+                    // Give server actions a moment to revalidate
+                }
+            } finally {
+                setIsSyncing(false);
+            }
+        };
+
+        const handleOnline = () => {
+            setIsOnline(true);
+            syncQueue();
+        };
+
+        const handleOffline = () => {
+            setIsOnline(false);
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Initial check on mount
+        if (navigator.onLine) {
+            syncQueue();
+        }
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [initialActiveShift, isSyncing, toast]);
 
     // OPTIMISTIC UI: This gives us instant 0ms visual updates before the server responds
     const [optimisticActiveShift, addOptimisticAction] = useOptimistic<
@@ -88,7 +167,9 @@ export default function TimeClockClient({
                     clock_in: new Date().toISOString(),
                     clock_out: null,
                     break_start: null,
+                    travel_start: null,
                     total_break_minutes: 0,
+                    travel_duration_minutes: 0,
                     status: "Active",
                     project: { name: pName }
                 };
@@ -99,6 +180,12 @@ export default function TimeClockClient({
             }
             if (action === "end_break" && state) {
                 return { ...state, break_start: null }; // We won't calculate minutes on the client optimistically
+            }
+            if (action === "start_travel" && state) {
+                return { ...state, travel_start: new Date().toISOString() };
+            }
+            if (action === "end_travel" && state) {
+                return { ...state, travel_start: null };
             }
             return state;
         }
@@ -117,11 +204,11 @@ export default function TimeClockClient({
     }, [optimisticActiveShift]);
 
     const handleAction = async (
-        action: "clock_in" | "clock_out" | "start_break" | "end_break",
+        action: "clock_in" | "clock_out" | "start_break" | "end_break" | "start_travel" | "end_travel",
         photoUrl?: string,
-        draftData?: { clock_in?: string; clock_out?: string; total_break_minutes?: number }
+        draftData?: { clock_in?: string; clock_out?: string; total_break_minutes?: number, travel_duration_minutes?: number }
     ) => {
-        // 1. Capture GPS for clock_in and clock_out
+        // 1. Capture GPS for clock_in and clock_out (if online, or attempt if offline)
         let gps: GpsCoords | null = null;
         if (action === "clock_in" || action === "clock_out") {
             setGpsStatus("capturing");
@@ -134,6 +221,22 @@ export default function TimeClockClient({
             addOptimisticAction({ action, projectId: selectedProject });
         });
 
+        if (!isOnline) {
+            // OFFLINE MODE: Save to local IndexedDB and return immediately 
+            await savePendingAction({
+                action,
+                projectId: selectedProject,
+                photoUrl: photoUrl || undefined,
+                draftData
+            });
+            toast({
+                title: "Saved Offline",
+                description: "Your action was saved locally and will sync when you return online.",
+            });
+            setGpsStatus("idle");
+            return;
+        }
+
         try {
             // 3. Perform the server action in the background
             await timeClockAction(action, selectedProject, optimisticActiveShift?.id, gps, photoUrl, draftData);
@@ -143,7 +246,9 @@ export default function TimeClockClient({
                     ? `Clocked in!${gps ? " 📍 Location captured." : " (no GPS)"}`
                     : action === "clock_out"
                         ? `Clocked out!${gps ? " 📍 Location captured." : " (no GPS)"}`
-                        : action === "start_break" ? "Break started." : "Break ended."
+                        : action === "start_break" ? "Break started."
+                            : action === "end_break" ? "Break ended."
+                                : action === "start_travel" ? "Travel time started." : "Travel time ended."
             });
         } catch (error: any) {
             // If the server fails, useOptimistic automatically rolls the UI back to initialActiveShift
@@ -189,6 +294,13 @@ export default function TimeClockClient({
             currentBreakMins += Math.round((Date.now() - new Date(optimisticActiveShift.break_start).getTime()) / 60000);
         }
         setDraftBreakMins(currentBreakMins);
+
+        let currentTravelMins = optimisticActiveShift.travel_duration_minutes || 0;
+        if (optimisticActiveShift.travel_start) {
+            currentTravelMins += Math.round((Date.now() - new Date(optimisticActiveShift.travel_start).getTime()) / 60000);
+        }
+        setDraftTravelMins(currentTravelMins);
+
         setIsDraftModeOpen(true);
     };
 
@@ -209,7 +321,8 @@ export default function TimeClockClient({
             await handleAction("clock_out", undefined, {
                 clock_in: clockInIso,
                 clock_out: clockOutIso.toISOString(),
-                total_break_minutes: draftBreakMins
+                total_break_minutes: draftBreakMins,
+                travel_duration_minutes: draftTravelMins
             });
             setIsDraftModeOpen(false);
         } catch (error: any) {
@@ -302,6 +415,11 @@ export default function TimeClockClient({
                             <MapPinOff size={12} className="mr-1.5" /> No GPS
                         </span>
                     )}
+                    {!isOnline && (
+                        <span className="flex items-center text-xs text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-full border border-red-200 shadow-sm animate-pulse">
+                            Offline Mode
+                        </span>
+                    )}
                     <div className="flex items-center text-sm font-medium text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
                         <Clock size={16} className="mr-2 text-gray-400" />
                         {today}
@@ -323,7 +441,7 @@ export default function TimeClockClient({
                                     </div>
                                     <div className="px-3 py-1 bg-green-50 text-green-700 text-sm font-medium rounded-full flex items-center border border-green-100">
                                         <span className="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                                        {optimisticActiveShift.break_start ? "On Break" : "Clocked In"}
+                                        {optimisticActiveShift.break_start ? "On Break" : optimisticActiveShift.travel_start ? "Traveling" : "Clocked In"}
                                     </div>
                                 </div>
 
@@ -336,32 +454,54 @@ export default function TimeClockClient({
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 mt-8">
-                                    {optimisticActiveShift.break_start ? (
+                                <div className="grid grid-cols-3 gap-4 mt-8">
+                                    {optimisticActiveShift.travel_start ? (
+                                        <Button
+                                            variant="outline"
+                                            className="h-14 text-base font-medium border-gray-300 hover:bg-gray-50 flex flex-col justify-center items-center py-2 relative"
+                                            onClick={() => handleAction("end_travel")}
+                                            disabled={!!optimisticActiveShift.break_start}
+                                        >
+                                            <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                            <div className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-blue-500" /> End Travel</div>
+                                        </Button>
+                                    ) : (
                                         <Button
                                             variant="outline"
                                             className="h-14 text-base font-medium border-gray-300 hover:bg-gray-50"
-                                            onClick={() => handleAction("end_break")}
+                                            onClick={() => handleAction("start_travel")}
+                                            disabled={!!optimisticActiveShift.break_start}
                                         >
-                                            <Coffee size={20} className="mr-2 text-gray-500" />
-                                            End Break
+                                            <MapPin className="h-4 w-4 mr-2 text-gray-500" /> Start Travel
+                                        </Button>
+                                    )}
+
+                                    {optimisticActiveShift.break_start ? (
+                                        <Button
+                                            variant="outline"
+                                            className="h-14 text-base font-medium border-gray-300 hover:bg-gray-50 flex flex-col justify-center items-center py-2 relative"
+                                            onClick={() => handleAction("end_break")}
+                                            disabled={!!optimisticActiveShift.travel_start}
+                                        >
+                                            <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                                            <div className="flex items-center"><Coffee className="h-4 w-4 mr-1 text-orange-500" /> End Break</div>
                                         </Button>
                                     ) : (
                                         <Button
                                             variant="outline"
                                             className="h-14 text-base font-medium border-gray-300 hover:bg-gray-50"
                                             onClick={() => handleAction("start_break")}
+                                            disabled={!!optimisticActiveShift.travel_start}
                                         >
-                                            <Coffee size={20} className="mr-2 text-gray-500" />
-                                            Start Break
+                                            <Coffee className="h-4 w-4 mr-2 text-gray-500" /> Start Break
                                         </Button>
                                     )}
+
                                     <Button
                                         className="h-14 text-base font-medium bg-red-600 hover:bg-red-700 text-white shadow-sm"
                                         onClick={openDraftMode}
                                     >
-                                        <LogOut size={20} className="mr-2" />
-                                        Clock Out
+                                        <LogOut className="h-4 w-4 mr-2" /> Clock Out
                                     </Button>
                                 </div>
 
@@ -381,15 +521,27 @@ export default function TimeClockClient({
                                                     <Input type="time" required value={draftClockOut} onChange={(e) => setDraftClockOut(e.target.value)} />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Total Break Time (Minutes)</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    value={draftBreakMins}
-                                                    onChange={(e) => setDraftBreakMins(parseInt(e.target.value) || 0)}
-                                                    required
-                                                />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>Total Break Time (Minutes)</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        value={draftBreakMins}
+                                                        onChange={(e) => setDraftBreakMins(parseInt(e.target.value) || 0)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Total Travel Time (Minutes)</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        value={draftTravelMins}
+                                                        onChange={(e) => setDraftTravelMins(parseInt(e.target.value) || 0)}
+                                                        required
+                                                    />
+                                                </div>
                                             </div>
                                             <DialogFooter className="pt-4">
                                                 <Button type="button" variant="outline" onClick={() => setIsDraftModeOpen(false)}>Cancel</Button>

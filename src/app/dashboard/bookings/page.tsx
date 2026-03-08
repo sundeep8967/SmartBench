@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { useToast } from "@/components/ui/use-toast";
 import { LeaveReviewDialog } from "@/components/bookings/leave-review-dialog";
+import { EndBookingModal } from "@/components/dashboard/bookings/end-booking-modal";
 
 // Cancel Confirmation Dialog
 function CancelDialog({
@@ -133,8 +134,12 @@ export default function BookingsPage() {
     const [statusFilter, setStatusFilter] = useState("All");
     const [cancelTarget, setCancelTarget] = useState<any | null>(null);
     const [reviewTarget, setReviewTarget] = useState<any | null>(null);
+    const [endBookingTarget, setEndBookingTarget] = useState<any | null>(null);
     const [cancelLoading, setCancelLoading] = useState(false);
     const { toast } = useToast();
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
 
     const { data, isLoading: loading, mutate } = useSWR('/api/bookings', fetcher, {
         revalidateOnFocus: false,
@@ -154,6 +159,11 @@ export default function BookingsPage() {
             return matchesSearch && matchesStatus;
         });
     }, [bookings, searchTerm, statusFilter]);
+
+    useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, view]);
+
+    const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+    const currentBookings = filteredBookings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleCancelConfirm = async (fault: "borrower" | "lender", reason: string) => {
         if (!cancelTarget) return;
@@ -207,6 +217,16 @@ export default function BookingsPage() {
                     bookingId={reviewTarget.id}
                     workerId={reviewTarget.worker_id}
                     workerName={reviewTarget.worker?.full_name || "Unknown Worker"}
+                />
+            )}
+
+            {/* End Booking Dialog */}
+            {endBookingTarget && (
+                <EndBookingModal
+                    open={!!endBookingTarget}
+                    onOpenChange={(open) => !open && setEndBookingTarget(null)}
+                    booking={endBookingTarget}
+                    onSuccess={() => { mutate(); setEndBookingTarget(null); }}
                 />
             )}
 
@@ -272,20 +292,29 @@ export default function BookingsPage() {
                 </div>
             </div>
 
-            {searchTerm || statusFilter !== "All" ? (
-                <p className="text-xs text-gray-500">{filteredBookings.length} of {bookings.length} bookings</p>
-            ) : null}
+            <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                    Showing {currentBookings.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} bookings
+                </p>
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" className="h-7 text-xs px-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</Button>
+                        <span className="text-xs font-medium px-2">Page {currentPage} of {totalPages}</span>
+                        <Button variant="outline" size="sm" className="h-7 text-xs px-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</Button>
+                    </div>
+                )}
+            </div>
 
             {/* Card View */}
             {view === "card" ? (
                 <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {loading ? (
                         <div className="col-span-full text-center py-12 text-gray-500">Loading...</div>
-                    ) : filteredBookings.length === 0 ? (
+                    ) : currentBookings.length === 0 ? (
                         <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border border-dashed">
                             <p className="text-muted-foreground">{bookings.length === 0 ? "No bookings found." : "No matches."}</p>
                         </div>
-                    ) : filteredBookings.map((booking) => (
+                    ) : currentBookings.map((booking) => (
                         <Card key={booking.id} className="p-[25px] border border-gray-200 hover:shadow-md transition-all">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
@@ -312,7 +341,15 @@ export default function BookingsPage() {
                                 </div>
                                 <div className="flex justify-between items-center pt-3 border-t mt-3">
                                     <span className="font-bold text-gray-900">${(booking.total_amount / 100).toFixed(2)}</span>
-                                    {booking.status !== "Cancelled" && booking.status !== "Completed" && (
+                                    {booking.status === "Active" && (
+                                        <button
+                                            onClick={() => setEndBookingTarget(booking)}
+                                            className="text-xs text-orange-600 hover:text-orange-800 font-medium flex items-center gap-1 bg-orange-50 px-2 py-1 rounded"
+                                        >
+                                            <AlertTriangle size={12} /> End Booking
+                                        </button>
+                                    )}
+                                    {booking.status !== "Cancelled" && booking.status !== "Completed" && booking.status !== "Active" && (
                                         <button
                                             onClick={() => setCancelTarget(booking)}
                                             className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
@@ -352,9 +389,9 @@ export default function BookingsPage() {
                             <tbody className="divide-y divide-gray-100 bg-white">
                                 {loading ? (
                                     <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-500">Loading...</td></tr>
-                                ) : filteredBookings.length === 0 ? (
+                                ) : currentBookings.length === 0 ? (
                                     <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-500">{bookings.length === 0 ? "No bookings found." : "No matches."}</td></tr>
-                                ) : filteredBookings.map((booking) => (
+                                ) : currentBookings.map((booking) => (
                                     <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <span className="font-medium text-blue-700">#{booking.id.slice(0, 8)}</span>
@@ -386,7 +423,16 @@ export default function BookingsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {booking.status !== "Cancelled" && booking.status !== "Completed" && (
+                                            {booking.status === "Active" && (
+                                                <button
+                                                    onClick={() => setEndBookingTarget(booking)}
+                                                    className="text-orange-500 hover:text-orange-700 transition-colors p-1 rounded bg-orange-50 mr-2"
+                                                    title="End Active Booking"
+                                                >
+                                                    <AlertTriangle size={16} />
+                                                </button>
+                                            )}
+                                            {booking.status !== "Cancelled" && booking.status !== "Completed" && booking.status !== "Active" && (
                                                 <button
                                                     onClick={() => setCancelTarget(booking)}
                                                     className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded"

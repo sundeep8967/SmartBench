@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, AlertTriangle, ShieldCheck, Loader2, CheckCircle2, Clock, CheckSquare, Square, MessageSquare } from "lucide-react";
+import { MapPin, AlertTriangle, ShieldCheck, Loader2, CheckCircle2, Clock, CheckSquare, Square, MessageSquare, GitCompare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { DisputeChatModal } from "@/components/dashboard/dispute-chat-modal";
 import { useAuth } from "@/lib/contexts/AuthContext";
@@ -20,6 +20,9 @@ interface TimeEntry {
     gps_clock_out: { lat: number; lng: number; accuracy: number } | null;
     auto_approval_at: string | null;
     payout_released: boolean;
+    // Story 5.8: original device-recorded times (frozen at first write)
+    system_clock_in: string | null;
+    system_clock_out: string | null;
     worker?: { full_name: string; email: string } | null;
     project?: { name: string; address: string } | null;
 }
@@ -57,6 +60,9 @@ export default function TimesheetsPage() {
     const [batchLoading, setBatchLoading] = useState(false);
     const [chatModalEntryId, setChatModalEntryId] = useState<string | null>(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
+
     const { data, isLoading: loading, mutate } = useSWR(
         `/api/timesheets?status=${activeTab === "Pending_Verification" ? "Pending_Verification" : activeTab}`,
         fetcher,
@@ -66,8 +72,14 @@ export default function TimesheetsPage() {
     const entries: TimeEntry[] = data?.entries || [];
     const counts: Record<string, number> = data?.counts || { Pending: 0, Disputed: 0, Verified: 0 };
 
-    // Reset selection when tab changes
-    useEffect(() => { setSelectedIds(new Set()); }, [activeTab]);
+    // Reset selection and page when tab changes
+    useEffect(() => {
+        setSelectedIds(new Set());
+        setCurrentPage(1);
+    }, [activeTab]);
+
+    const totalPages = Math.ceil(entries.length / itemsPerPage);
+    const currentEntries = entries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleAction = async (entryId: string, action: "approve" | "dispute") => {
         setActionLoading(entryId);
@@ -130,10 +142,10 @@ export default function TimesheetsPage() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.size === entries.length) {
+        if (selectedIds.size === currentEntries.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(entries.map(e => e.id)));
+            setSelectedIds(new Set(currentEntries.map(e => e.id)));
         }
     };
 
@@ -174,25 +186,43 @@ export default function TimesheetsPage() {
                 )}
             </div>
 
-            {/* Tabs */}
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-full w-fit">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${activeTab === tab.key
-                            ? "bg-blue-900 text-white shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
-                            }`}
-                    >
-                        {tab.label}
-                        {tab.count > 0 && (
-                            <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${activeTab === tab.key ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}>
-                                {tab.count}
-                            </span>
+            {/* Tabs & Pagination wrapper */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-full w-fit">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${activeTab === tab.key
+                                ? "bg-blue-900 text-white shadow-sm"
+                                : "text-gray-600 hover:text-gray-900"
+                                }`}
+                        >
+                            {tab.label}
+                            {tab.count > 0 && (
+                                <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${activeTab === tab.key ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}>
+                                    {tab.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {!loading && entries.length > 0 && (
+                    <div className="flex items-center gap-4">
+                        <span className="text-xs text-gray-500">
+                            Showing {currentEntries.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-{Math.min(currentPage * itemsPerPage, entries.length)} of {entries.length}
+                        </span>
+                        {totalPages > 1 && (
+                            <div className="flex items-center gap-1.5 bg-white border rounded-lg p-1 shadow-sm">
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</Button>
+                                <span className="text-xs font-semibold px-2">Pg {currentPage}</span>
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</Button>
+                            </div>
                         )}
-                    </button>
-                ))}
+                    </div>
+                )}
             </div>
 
             {/* Loading */}
@@ -223,10 +253,10 @@ export default function TimesheetsPage() {
                         onClick={toggleSelectAll}
                         className="flex items-center gap-2 text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
                     >
-                        {selectedIds.size === entries.length && entries.length > 0
+                        {selectedIds.size === currentEntries.length && currentEntries.length > 0
                             ? <CheckSquare size={16} className="text-blue-900" />
                             : <Square size={16} />}
-                        {selectedIds.size === entries.length ? "Deselect All" : "Select All"}
+                        {selectedIds.size === currentEntries.length ? "Deselect Page" : "Select Page"}
                     </button>
                     {selectedIds.size > 0 && (
                         <span className="text-xs text-gray-500">{selectedIds.size} selected</span>
@@ -237,7 +267,7 @@ export default function TimesheetsPage() {
             {/* List */}
             {!loading && entries.length > 0 && (
                 <div className="space-y-3">
-                    {entries.map((item) => {
+                    {currentEntries.map((item) => {
                         const workerName = (item.worker as any)?.full_name || "Unknown";
                         const initials = workerName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
                         const date = new Date(item.clock_in).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -248,10 +278,27 @@ export default function TimesheetsPage() {
                         const hasGpsOut = !!item.gps_clock_out;
                         const isSelected = selectedIds.has(item.id);
 
+                        // Story 5.8: compute system vs submitted time deltas
+                        const sysIn = item.system_clock_in ? new Date(item.system_clock_in) : null;
+                        const sysOut = item.system_clock_out ? new Date(item.system_clock_out) : null;
+                        const subIn = new Date(item.clock_in);
+                        const subOut = item.clock_out ? new Date(item.clock_out) : null;
+                        const inDeltaMin = sysIn ? Math.round((subIn.getTime() - sysIn.getTime()) / 60000) : null;
+                        const outDeltaMin = (sysOut && subOut) ? Math.round((subOut.getTime() - sysOut.getTime()) / 60000) : null;
+                        const hasDiff = (inDeltaMin !== null && inDeltaMin !== 0) || (outDeltaMin !== null && outDeltaMin !== 0);
+
+                        const fmtTime = (d: Date) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+                        const deltaLabel = (d: number) => d === 0 ? "No change" : d > 0 ? `+${d} min later` : `${d} min earlier`;
+                        const deltaBadge = (d: number) => d === 0
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : Math.abs(d) <= 5
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-red-50 text-red-700 border-red-200";
+
                         return (
                             <Card
                                 key={item.id}
-                                className={`p-0 shadow-sm border overflow-hidden hover:shadow-md transition-all ${isSelected ? "border-blue-500 ring-1 ring-blue-400" : "border-gray-200"}`}
+                                className={`p-0 shadow-sm border overflow-hidden hover:shadow-md transition-all ${isSelected ? "border-blue-500 ring-1 ring-blue-400" : hasDiff ? "border-amber-300" : "border-gray-200"}`}
                             >
                                 <div className="p-5 flex items-center justify-between gap-4 flex-wrap">
                                     {/* Checkbox + Worker */}
@@ -370,6 +417,51 @@ export default function TimesheetsPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Story 5.8: Visual Diff Strip — shown only when draft edits changed the time */}
+                                {hasDiff && sysIn && (
+                                    <div className="border-t border-amber-200 bg-amber-50/60 px-5 py-3">
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <GitCompare size={13} className="text-amber-600" />
+                                            <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">Time Edit Detected</span>
+                                            <span className="text-[10px] text-amber-500 ml-1">Worker adjusted times in Draft Mode</span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {/* Header */}
+                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Field</span>
+                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">System (Device)</span>
+                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Submitted</span>
+
+                                            {/* Clock-In row */}
+                                            <span className="text-xs text-gray-600 font-medium">Clock-In</span>
+                                            <span className="text-xs font-mono text-gray-700">{fmtTime(sysIn)}</span>
+                                            <span className={`text-xs font-mono flex items-center gap-1`}>
+                                                {fmtTime(subIn)}
+                                                {inDeltaMin !== null && (
+                                                    <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${deltaBadge(inDeltaMin)}`}>
+                                                        {deltaLabel(inDeltaMin)}
+                                                    </span>
+                                                )}
+                                            </span>
+
+                                            {/* Clock-Out row */}
+                                            {sysOut && subOut && (
+                                                <>
+                                                    <span className="text-xs text-gray-600 font-medium">Clock-Out</span>
+                                                    <span className="text-xs font-mono text-gray-700">{fmtTime(sysOut)}</span>
+                                                    <span className="text-xs font-mono flex items-center gap-1">
+                                                        {fmtTime(subOut)}
+                                                        {outDeltaMin !== null && (
+                                                            <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${deltaBadge(outDeltaMin)}`}>
+                                                                {deltaLabel(outDeltaMin)}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </Card>
                         );
                     })}

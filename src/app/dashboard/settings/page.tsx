@@ -15,6 +15,7 @@ import {
     UserCircle,
     FileText,
     Loader2,
+    CreditCard,
 } from "lucide-react";
 import { WorkerProfileForm } from "./worker-profile-form";
 import { WorkerSkillsForm } from "./worker-skills-form";
@@ -23,6 +24,7 @@ import { LenderPoliciesForm } from "./lender-policies-form";
 import { NotificationPreferencesForm } from "./notification-preferences";
 import WorkerAvailabilityCalendar from "./worker-availability-calendar";
 import { DeleteAccountModal } from "./delete-account-modal";
+import { SubscriptionManagement } from "@/components/dashboard/settings/subscription-management";
 import { createClient } from "@/lib/supabase/client";
 import { updateCompanyProfileAction } from "./actions";
 import type { WorkerProfile } from "@/types";
@@ -51,6 +53,7 @@ export default function SettingsPage() {
         { name: "Insurance", icon: Shield },
         { name: "Policies", icon: FileText },
         { name: "Banking & Payouts", icon: Wallet },
+        { name: "Subscription", icon: CreditCard },
         { name: "Team Members", icon: Users },
         { name: "Notifications", icon: Bell },
     ];
@@ -423,6 +426,11 @@ export default function SettingsPage() {
                         )}
                     </CardContent>
                 </Card>
+            )}
+
+            {/* ─── Subscription Tab ─── */}
+            {activeTab === "Subscription" && (
+                <SubscriptionManagement />
             )}
 
             {/* ─── Notifications Tab ─── */}

@@ -19,6 +19,7 @@ import {
     Settings,
     X,
     ShieldAlert,
+    BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useSidebar } from "@/lib/contexts/SidebarContext";
@@ -40,6 +41,7 @@ const mainNav = [
     { name: "Time Clock", href: "/dashboard/time-clock", icon: Clock },
     { name: "Time Sheets", href: "/dashboard/timesheets", icon: ShieldCheck },
     { name: "Financials", href: "/dashboard/financials", icon: DollarSign },
+    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
     { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
     { name: "Super Admin", href: "/dashboard/admin", icon: ShieldAlert },
 ];

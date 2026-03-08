@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, UserMinus, UserCheck, ShieldAlert, Shield, EyeOff, Eye } from "lucide-react";
+import { Loader2, UserMinus, UserCheck, ShieldAlert, Shield, EyeOff, Eye, UserSquare } from "lucide-react";
 import { useSWRConfig } from "swr";
 
 export function UserManagement() {
@@ -78,6 +78,37 @@ export function UserManagement() {
                 mutate("/api/admin/users");
             }
         } finally {
+            setUpdating(null);
+        }
+    };
+
+    const handleImpersonate = async (userId: string, userName: string) => {
+        if (!confirm(`Are you sure you want to enter God Mode as ${userName || "this user"}?\n\nThis will log you out of your Admin session and log you in as them in READ-ONLY mode.`)) {
+            return;
+        }
+
+        setUpdating(userId);
+        try {
+            // 1. Ask API to generate a magic link for target user
+            const res = await fetch("/api/admin/impersonate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ targetUserId: userId }),
+            });
+
+            if (!res.ok) throw new Error("Failed to generate impersonation link");
+            const data = await res.json();
+
+            // 2. Set Read-Only cookie instructing middleware to block writes
+            document.cookie = `sb-impersonation-mode=true; path=/; max-age=1800; samesite=lax`;
+            document.cookie = `sb-impersonation-target=${encodeURIComponent(data.targetName)}; path=/; max-age=1800; samesite=lax`;
+
+            // 3. Hard redirect to the action link which logs them in
+            window.location.href = data.actionLink;
+
+        } catch (e: any) {
+            console.error(e);
+            alert("Impersonation failed: " + e.message);
             setUpdating(null);
         }
     };
@@ -165,6 +196,16 @@ export function UserManagement() {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                            disabled={updating === u.id}
+                                            onClick={() => handleImpersonate(u.id, u.full_name)}
+                                            title="View platform as this user"
+                                        >
+                                            {updating === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserSquare className="h-4 w-4 mr-1.5" /> View As</>}
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="sm"

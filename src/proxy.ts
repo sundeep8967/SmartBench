@@ -21,6 +21,22 @@ export async function proxy(request: NextRequest) {
     const isApiRoute = pathname.startsWith('/api')
     const isRootPage = pathname === '/'
 
+    // 2.5 God Mode (Impersonation) Read-Only Guard
+    const isImpersonating = request.cookies.get('sb-impersonation-mode')?.value === 'true'
+    if (isImpersonating) {
+        // Block all mutative requests except auth (to allow logout/exit)
+        const isMutative = !['GET', 'HEAD', 'OPTIONS'].includes(request.method)
+        if (isMutative && !isAuthRoute && !isLoginPage) {
+            return new NextResponse(
+                JSON.stringify({
+                    error: "Forbidden",
+                    message: "You are currently in God Mode (Read-Only). Writing or saving data is disabled."
+                }),
+                { status: 403, headers: { 'content-type': 'application/json' } }
+            )
+        }
+    }
+
     // 3. Route guards
 
     // Unauthenticated → protected routes → redirect to login

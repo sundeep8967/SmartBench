@@ -23,7 +23,7 @@ flowchart LR
     style Payout fill:#fce4ec
 ```
 
-## Story 6.1: Direct Stripe Payout Processing {#story-61-direct-stripe-payout-processing}
+## Story 6.1: Direct Stripe Payout Processing {#story-61-direct-stripe-payout-processing} — ✅ IMPLEMENTED
 
 As a system,
 I want to process payouts directly to Lender's Stripe Connected Account upon verification,
@@ -41,7 +41,7 @@ so that lenders receive daily payouts as promised.
 
 **Technical Implementation:** See [Financial Architecture](../architecture/financial-architecture.md) for Stripe Connect payout implementation details.
 
-## Story 6.2: Payment Processing and Service Fee Calculation {#story-62-payment-processing-service-fee}
+## Story 6.2: Payment Processing and Service Fee Calculation {#story-62-payment-processing-service-fee} — ✅ IMPLEMENTED
 
 As a Borrower,
 I want to pay for bookings with clear pricing that includes the Service Fee,
@@ -81,7 +81,7 @@ so that I understand the total cost upfront.
 - **Service Fee (30%):** $1,400.00 × 0.30 = $420.00
 - **Weekly Total Charge:** $1,400.00 + $420.00 = $1,820.00
 
-## Story 6.3: Withdrawals and Payouts {#story-63-withdrawals-and-payouts}
+## Story 6.3: Withdrawals and Payouts {#story-63-withdrawals-and-payouts} — ✅ IMPLEMENTED
 
 As a lender admin,
 I want to withdraw funds from my Stripe Connected Account to my bank account,
@@ -120,7 +120,7 @@ User-facing error messages for withdrawal scenarios are defined in the [Error Me
 
 **Technical Reference:** See [Error Message Catalog](../architecture/error-message-catalog.md) for complete user-facing error messages and [Error Handling Blueprint](../architecture/blueprints/system/error-handling.md) for technical error handling implementation details.
 
-## Story 6.4: Refund Logic (Stripe-Native Processing) {#story-64-refund-logic-stripe-native-processing}
+## Story 6.4: Refund Logic (Stripe-Native Processing) {#story-64-refund-logic-stripe-native-processing} — ✅ IMPLEMENTED
 
 As a Borrowing Admin,
 I want refunds processed directly to my payment method via Stripe,
@@ -334,7 +334,7 @@ The following examples demonstrate the simplified two-scenario refund logic usin
 
 **Technical Implementation:** See [Financial Architecture](../architecture/financial-architecture.md) for Stripe-native refund processing implementation details.
 
-## Story 6.5: Overtime Rules and Calculations {#story-65-overtime-rules-and-calculations}
+## Story 6.5: Overtime Rules and Calculations {#story-65-overtime-rules-and-calculations} — ✅ IMPLEMENTED
 
 As a system,
 I want to calculate overtime based on pre-authorized contract terms stored at booking creation,
@@ -355,7 +355,7 @@ so that Borrowers agree to OT rates upfront and calculations are transparent and
 8. **Travel Time Overtime Calculation:** Travel hours are treated the same as labor hours for overtime calculation within the booking. Travel hours count toward daily and weekly thresholds. If travel time satisfies OT rules (daily > 8h, weekly > 40h, or weekend), it is billed at `overtime_rate`. **Travel Time Eligibility:** Travel time is ONLY paid when a worker is assigned to two different projects for the same borrower company. See [Epic 5: Story 5.3](./epic-5.md#story-53-travel-time-tracking) for complete travel time eligibility rules.
 9. **Rate Validation:** At checkout, if `company.ot_rate_type = 'Custom_Rate'`, system validates that `worker_rates.overtime_rate` is not null. If validation fails, booking creation is blocked with error message: "Worker must have overtime rate configured for this company." **Explicit Rule:** Lenders configure custom OT rates per worker in the `worker_rates` table. These are specific dollar amounts (e.g., $52.50), not multipliers or calculated percentages. The system does NOT calculate OT rates as a percentage of the hourly rate.
 
-## Story 6.5: Overtime Rules and Calculations {#story-65-overtime-rules-and-calculations}
+## Story 6.5: Overtime Rules and Calculations {#story-65-overtime-rules-and-calculations} — ✅ IMPLEMENTED
 - **Verification:** The per-day allocation ensures that fees are properly distributed: $252 ÷ 7 days = $36.00/day, and the sum of all daily fees equals the weekly total.
 
 **Total Refund Breakdown:**
@@ -762,7 +762,7 @@ flowchart TD
 - Week resets Sunday 12:01 AM (Project Timezone)
 - **No Multiplier Calculation:** The system does NOT use a 1.5x multiplier or any platform-calculated multiplier. OT rates are specific dollar amounts defined by lenders in `worker_rates.overtime_rate`, not calculated percentages.
 
-## Story 6.7: Pricing Display and Sales Tax {#story-67-pricing-display-and-sales-tax}
+## Story 6.7: Pricing Display and Sales Tax {#story-67-pricing-display-and-sales-tax} — ✅ IMPLEMENTED
 
 As a system,
 I want to display pricing transparently while handling sales tax appropriately,
@@ -778,7 +778,7 @@ so that users understand costs and tax obligations.
 7. Invoice explicitly states Rate is for "Labor Services" and any tax liability rests with parties involved
 8. **Tax Exemption Certification:** Tax exemption declaration functionality is deferred to post-MVP. Minnesota does not charge sales tax for temporary labor services, and MVP is limited to Minnesota. Tax exemption declaration will be implemented when expanding to states that require tax collection.
 
-## Story 6.8: Lien Waivers {#story-68-lien-waivers}
+## Story 6.8: Lien Waivers {#story-68-lien-waivers} — ✅ IMPLEMENTED
 
 As a system,
 I want to generate lien waivers upon payout,
@@ -791,7 +791,7 @@ so that borrowers receive proper documentation.
 4. Lien waiver includes: Company information, Amount, Dates, Booking reference
 5. PDF stored in system for audit purposes
 
-## Story 6.9: Company Dashboard {#story-69-company-dashboard}
+## Story 6.9: Company Dashboard {#story-69-company-dashboard} — ✅ IMPLEMENTED
 
 As a company admin,
 I want a comprehensive dashboard with metrics and alerts,

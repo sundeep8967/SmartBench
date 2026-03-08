@@ -14,6 +14,8 @@ import { CompanyManagement } from "@/components/admin/company-management";
 import { BookingTimeline } from "@/components/admin/booking-timeline";
 import { SystemMonitoring } from "@/components/admin/system-monitoring";
 import { WednesdayControlCenter } from "@/components/admin/wednesday-control-center";
+import { DisputeManagement } from "@/components/admin/dispute-management";
+import { DataRetention } from "@/components/admin/data-retention";
 
 function StatCard({
     title, value, sub, icon: Icon, color,
@@ -96,8 +98,9 @@ export default function SuperAdminPage() {
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="companies">Companies</TabsTrigger>
                     <TabsTrigger value="timeline">Timeline Visualizer</TabsTrigger>
-                    <TabsTrigger value="system">System Health</TabsTrigger>
+                    <TabsTrigger value="disputes">Evidence View</TabsTrigger>
                     <TabsTrigger value="wednesday">Wednesday Rule</TabsTrigger>
+                    <TabsTrigger value="retention">Data Retention</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-8">
@@ -263,12 +266,20 @@ export default function SuperAdminPage() {
                     <BookingTimeline />
                 </TabsContent>
 
+                <TabsContent value="disputes">
+                    <DisputeManagement />
+                </TabsContent>
+
                 <TabsContent value="system">
                     <SystemMonitoring />
                 </TabsContent>
 
                 <TabsContent value="wednesday">
                     <WednesdayControlCenter />
+                </TabsContent>
+
+                <TabsContent value="retention">
+                    <DataRetention />
                 </TabsContent>
             </Tabs>
         </div>

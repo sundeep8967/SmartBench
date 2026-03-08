@@ -160,7 +160,7 @@ journey
       Worker Paid: 5: System
 ```
 
-## Story 4.1: Booking Cart Management {#story-41-booking-cart-management}
+## Story 4.1: Booking Cart Management {#story-41-booking-cart-management} — ✅ IMPLEMENTED
 
 As a Borrowing Admin or Manager,
 I want to add workers to a cart and manage my selections,
@@ -183,7 +183,7 @@ so that I can book multiple workers in a single transaction.
 - **Concurrent Booking Conflict:** If two borrowers attempt to book the same worker simultaneously, the first to complete payment succeeds. The second receives error: "Worker no longer available" and must select a different worker.
 - **Invalid Cart State:** If cart contains invalid data (e.g., invalid booking dates, unavailable workers), show inline validation error: "Cart contains invalid items. Please remove and try again."
 
-## Story 4.2: Site Contact & Verification {#story-42-site-contact-verification}
+## Story 4.2: Site Contact & Verification {#story-42-site-contact-verification} — ✅ IMPLEMENTED
 
 As a Borrowing Admin or Manager,
 I want to designate a primary site contact for each booking,
@@ -269,7 +269,7 @@ sequenceDiagram
 
 **Technical Reference:** See [Data Dictionary](../architecture/data-dictionary.md) and [Database Schema](../architecture/schema-booking.md) for Site Contact data model and verification query logic.
 
-## Story 4.3: Checkout and Payment Processing
+## Story 4.3: Checkout and Payment Processing — ✅ IMPLEMENTED
 
 As a Borrowing Admin or Manager,
 I want to complete booking checkout with payment,
@@ -341,7 +341,7 @@ User-facing error messages for booking and payment scenarios are defined in the 
 
 **Technical Reference:** See [Error Message Catalog](../architecture/error-message-catalog.md) for complete user-facing error messages and [Error Handling Blueprint](../architecture/blueprints/system/error-handling.md) for technical error handling implementation details.
 
-## Story 4.4: Direct Stripe Payment Processing {#story-44-direct-stripe-payment-processing}
+## Story 4.4: Direct Stripe Payment Processing {#story-44-direct-stripe-payment-processing} — ✅ IMPLEMENTED
 
 As a system,
 I want to process payments directly through Stripe,
@@ -356,7 +356,7 @@ so that financial transactions are handled securely and efficiently.
 6. Payment history tracked via Stripe API and `bookings` table records
 7. All refunds processed directly to customer's payment method via Stripe API
 
-## Story 4.5: Weekly Progress Payment System {#story-45-weekly-progress-payment-system}
+## Story 4.5: Weekly Progress Payment System {#story-45-weekly-progress-payment-system} — ✅ IMPLEMENTED
 
 As a Borrowing Admin,
 I want to use weekly progress payments for long-term bookings,
@@ -556,7 +556,7 @@ sequenceDiagram
 
 **Technical Handling:** For detailed timing logic, edge cases (e.g., system clock drift, race conditions), and exact cutoff behavior, see [Weekly Payments Blueprint](../architecture/blueprints/booking/weekly-payments.md#the-wednesday-rule-timeline-pay-or-release-model).
 
-## Story 4.6: Booking Confirmation
+## Story 4.6: Booking Confirmation — ✅ IMPLEMENTED
 
 As a Borrowing Admin and worker,
 I want to receive booking confirmation details,
@@ -569,7 +569,7 @@ so that I know the booking is confirmed and have all necessary information.
 4. Confirmation includes: Booking ID, Dates, Worker details, Supervisor contact, Site address, Rate, Total cost
 5. Confirmation sent immediately upon successful payment
 
-## Story 4.7: Shift Notification {#story-47-shift-notification}
+## Story 4.7: Shift Notification {#story-47-shift-notification} — ✅ IMPLEMENTED
 
 As a worker,
 I want to be notified when I'm booked for a shift,
@@ -582,7 +582,7 @@ so that I know where to report and when.
 4. Worker can view full booking details in app
 5. Notification sent within 1 minute of payment confirmation
 
-## Story 4.8: Lender Recall Workflow
+## Story 4.8: Lender Recall Workflow — ✅ IMPLEMENTED
 
 As a lender admin,
 I want to recall a worker from a long-term booking with proper notice,
@@ -610,7 +610,7 @@ so that I can bring my worker back when needed while maintaining contractual obl
 - **Multiple Option A Disputes During Recall Notice Period:** If multiple Option A disputes are filed during notice period, the first dispute holds notice period pay. Subsequent disputes do NOT affect already-held notice period pay - each dispute tracks its own disputed shift funds independently. All disputes must resolve before booking status transitions from `Payment_Paused_Dispute` to `Active`. **Explicit Rule:** Multiple disputes during notice period hold funds independently. Notice period pay held by first dispute remains held until all disputes are resolved.
 - **Dispute Resolution Before Notice Period Ends:** If Option A dispute resolves before recall notice period ends, the booking continues normally with remaining notice period days. The recall end date remains unchanged - worker continues until recall end date. Dispute resolution does NOT cancel the recall. **Explicit Rule:** Dispute resolution does not cancel recall. If dispute resolves before notice period ends, booking continues until recall end date. Recall end date is not affected by dispute resolution timing.
 
-## Story 4.9: Incident Reporting & Termination (Fast-Track Dispute) {#story-49-incident-reporting-termination}
+## Story 4.9: Incident Reporting & Termination — ✅ IMPLEMENTED (Fast-Track Dispute) {#story-49-incident-reporting-termination}
 
 As a Borrowing Admin or Manager,
 I want to terminate a booking immediately for cause (safety/performance),

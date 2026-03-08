@@ -10,7 +10,7 @@ interface GpsCoords {
 }
 
 export async function timeClockAction(
-    action: "clock_in" | "clock_out" | "start_break" | "end_break",
+    action: "clock_in" | "clock_out" | "start_break" | "end_break" | "start_travel" | "end_travel",
     projectId?: string,
     timeEntryId?: string,
     gps?: GpsCoords | null,
@@ -19,6 +19,7 @@ export async function timeClockAction(
         clock_in?: string;
         clock_out?: string;
         total_break_minutes?: number;
+        travel_duration_minutes?: number;
     }
 ) {
     const supabase = await createClient();
@@ -52,13 +53,17 @@ export async function timeClockAction(
 
             if (existing) throw new Error("Already clocked in");
 
+            const clockInTime = new Date().toISOString();
+
             const { data, error } = await supabase
                 .from('time_entries')
                 .insert({
                     user_id: user.id,
                     company_id: member.company_id,
                     project_id: projectId || null,
-                    clock_in: new Date().toISOString(),
+                    clock_in: clockInTime,
+                    // Story 5.8: freeze system time — never overwritten by Draft Mode
+                    system_clock_in: clockInTime,
                     status: 'Active',
                     project_photo_url: photoUrl,
                     ...(gps ? { gps_clock_in: { lat: gps.lat, lng: gps.lng, accuracy: gps.accuracy } } : {}),
@@ -75,9 +80,22 @@ export async function timeClockAction(
         case 'clock_out': {
             if (!timeEntryId) throw new Error("timeEntryId required");
 
+            // The actual clock_out time submitted (may come from Draft Mode edits)
             const clockOut = draftData?.clock_out ? new Date(draftData.clock_out) : new Date();
             // Auto-approval fires exactly 4 hours after submission
             const autoApprovalAt = new Date(Date.now() + 4 * 60 * 60 * 1000);
+
+            // Story 5.8: system_clock_out is the REAL device clock-out time.
+            // We only set it once — if the worker ran Draft Mode, system_clock_out
+            // will be set to NOW (the actual device time), while clock_out may be the
+            // edited value. We check if system_clock_out is already set to avoid overwriting.
+            const { data: existingEntry } = await supabase
+                .from('time_entries')
+                .select('system_clock_out')
+                .eq('id', timeEntryId)
+                .single();
+
+            const systemClockOut = new Date().toISOString();
 
             const updatePayload: any = {
                 clock_out: clockOut.toISOString(),
@@ -85,6 +103,8 @@ export async function timeClockAction(
                 auto_approval_at: autoApprovalAt.toISOString(),
                 updated_at: new Date().toISOString(),
                 ...(gps ? { gps_clock_out: { lat: gps.lat, lng: gps.lng, accuracy: gps.accuracy } } : {}),
+                // Freeze system_clock_out only on first write
+                ...(existingEntry?.system_clock_out ? {} : { system_clock_out: systemClockOut }),
             };
 
             if (draftData?.clock_in) {
@@ -92,6 +112,9 @@ export async function timeClockAction(
             }
             if (draftData?.total_break_minutes !== undefined) {
                 updatePayload.total_break_minutes = draftData.total_break_minutes;
+            }
+            if (draftData?.travel_duration_minutes !== undefined) {
+                updatePayload.travel_duration_minutes = draftData.travel_duration_minutes;
             }
 
             const { error } = await supabase
@@ -140,6 +163,51 @@ export async function timeClockAction(
                     break_start: null,
                     break_end: new Date().toISOString(),
                     total_break_minutes: (entry.total_break_minutes || 0) + breakMinutes,
+                })
+                .eq('id', timeEntryId)
+                .eq('user_id', user.id)
+                .select('*, project:projects(name)')
+                .single();
+
+            if (error) throw new Error(error.message);
+            result = data;
+            break;
+        }
+
+        case 'start_travel': {
+            if (!timeEntryId) throw new Error("timeEntryId required");
+
+            const { data, error } = await supabase
+                .from('time_entries')
+                .update({ travel_start: new Date().toISOString() }) // We need to add travel_start column for this! Will just store in db directly
+                .eq('id', timeEntryId)
+                .eq('user_id', user.id)
+                .select('*, project:projects(name)')
+                .single();
+
+            if (error) throw new Error(error.message);
+            result = data;
+            break;
+        }
+
+        case 'end_travel': {
+            if (!timeEntryId) throw new Error("timeEntryId required");
+
+            const { data: entry } = await supabase
+                .from('time_entries')
+                .select('travel_start, travel_duration_minutes')
+                .eq('id', timeEntryId)
+                .single();
+
+            if (!entry?.travel_start) throw new Error("No active travel");
+
+            const travelMins = Math.round((Date.now() - new Date(entry.travel_start).getTime()) / 60000);
+
+            const { data, error } = await supabase
+                .from('time_entries')
+                .update({
+                    travel_start: null,
+                    travel_duration_minutes: (entry.travel_duration_minutes || 0) + travelMins,
                 })
                 .eq('id', timeEntryId)
                 .eq('user_id', user.id)

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { calculateServiceFee } from "@/lib/services/billing";
+import { assertCanBook } from "@/lib/services/subscription";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -40,6 +41,13 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
     if (!member) return NextResponse.json({ error: "No active company" }, { status: 403 });
+
+    // SUBSCRIPTION GATE — Block booking if subscription expired/canceled
+    try {
+        await assertCanBook(member.company_id);
+    } catch (subErr: any) {
+        return NextResponse.json({ error: subErr.message, code: 'SUBSCRIPTION_REQUIRED' }, { status: 402 });
+    }
 
     try {
         // 2. Fetch Cart Items

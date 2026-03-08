@@ -18,6 +18,7 @@ import {
     Loader2
 } from "lucide-react";
 import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
+import { BulkInviteWorkerDialog } from "@/components/workers/bulk-invite-dialog";
 import { ListWorkerDialog } from "@/components/workers/list-worker-dialog";
 import { UnlistWorkerButton } from "@/components/workers/unlist-button";
 import { ManageAvailabilityDialog } from "@/components/workers/manage-availability-dialog";
@@ -199,8 +200,9 @@ export default function RosterPage() {
                 {/* Divider */}
                 <div className="w-px bg-gray-200 self-stretch" />
 
-                {/* Invite Button */}
-                <div className="flex items-center px-2">
+                {/* Invite Actions */}
+                <div className="flex items-center gap-2 px-3 py-2">
+                    <BulkInviteWorkerDialog onInvitesSent={() => mutate("/api/workers/roster")} />
                     <InviteWorkerDialog />
                 </div>
             </div>

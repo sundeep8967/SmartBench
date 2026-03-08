@@ -243,7 +243,13 @@ export type Database = {
           strikes_count: number | null
           stripe_account_id: string | null
           stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_current_period_end: string | null
+          subscription_expiry_notified_at: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
           tax_exempt_status: boolean | null
+          trial_ends_at: string | null
           trial_policy: string | null
           type: string | null
           updated_at: string | null
@@ -284,7 +290,13 @@ export type Database = {
           strikes_count?: number | null
           stripe_account_id?: string | null
           stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_expiry_notified_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           tax_exempt_status?: boolean | null
+          trial_ends_at?: string | null
           trial_policy?: string | null
           type?: string | null
           updated_at?: string | null
@@ -325,7 +337,13 @@ export type Database = {
           strikes_count?: number | null
           stripe_account_id?: string | null
           stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_expiry_notified_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           tax_exempt_status?: boolean | null
+          trial_ends_at?: string | null
           trial_policy?: string | null
           type?: string | null
           updated_at?: string | null
@@ -530,6 +548,67 @@ export type Database = {
             columns: ["time_entry_id"]
             isOneToOne: false
             referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_reports: {
+        Row: {
+          booking_id: string
+          company_id: string
+          created_at: string
+          id: string
+          notes: string
+          photo_urls: string[] | null
+          reported_by: string
+          severity: Database["public"]["Enums"]["incident_severity"]
+          type: Database["public"]["Enums"]["incident_type"]
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          notes: string
+          photo_urls?: string[] | null
+          reported_by: string
+          severity: Database["public"]["Enums"]["incident_severity"]
+          type: Database["public"]["Enums"]["incident_type"]
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string
+          photo_urls?: string[] | null
+          reported_by?: string
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          type?: Database["public"]["Enums"]["incident_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_reports_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -880,6 +959,7 @@ export type Database = {
           gps_clock_in: Json | null
           gps_clock_out: Json | null
           id: string
+          is_draft: boolean
           notes: string | null
           payout_amount: number | null
           payout_released: boolean
@@ -887,7 +967,10 @@ export type Database = {
           project_photo_url: string | null
           status: string
           stripe_transfer_id: string | null
+          submitted_at: string | null
           total_break_minutes: number | null
+          travel_duration_minutes: number
+          travel_start: string | null
           updated_at: string | null
           user_id: string
           verified_at: string | null
@@ -905,6 +988,7 @@ export type Database = {
           gps_clock_in?: Json | null
           gps_clock_out?: Json | null
           id?: string
+          is_draft?: boolean
           notes?: string | null
           payout_amount?: number | null
           payout_released?: boolean
@@ -912,7 +996,10 @@ export type Database = {
           project_photo_url?: string | null
           status?: string
           stripe_transfer_id?: string | null
+          submitted_at?: string | null
           total_break_minutes?: number | null
+          travel_duration_minutes?: number
+          travel_start?: string | null
           updated_at?: string | null
           user_id: string
           verified_at?: string | null
@@ -930,6 +1017,7 @@ export type Database = {
           gps_clock_in?: Json | null
           gps_clock_out?: Json | null
           id?: string
+          is_draft?: boolean
           notes?: string | null
           payout_amount?: number | null
           payout_released?: boolean
@@ -937,7 +1025,10 @@ export type Database = {
           project_photo_url?: string | null
           status?: string
           stripe_transfer_id?: string | null
+          submitted_at?: string | null
           total_break_minutes?: number | null
+          travel_duration_minutes?: number
+          travel_start?: string | null
           updated_at?: string | null
           user_id?: string
           verified_at?: string | null
@@ -1406,7 +1497,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      incident_severity: "Warning" | "Critical"
+      incident_type:
+        | "Injury"
+        | "Property_Damage"
+        | "Tardiness"
+        | "Workmanship"
+        | "Conduct"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1533,6 +1630,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      incident_severity: ["Warning", "Critical"],
+      incident_type: [
+        "Injury",
+        "Property_Damage",
+        "Tardiness",
+        "Workmanship",
+        "Conduct",
+      ],
+    },
   },
 } as const
+

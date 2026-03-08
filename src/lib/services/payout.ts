@@ -1,6 +1,7 @@
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { calculateServiceFee } from './billing';
+import { generateAndSendLienWaiver } from './lien-waiver';
 
 /**
  * Triggered when a timesheet is approved (manually or via auto-approval).
@@ -132,6 +133,35 @@ export async function releasePayoutForTimeEntry(timeEntryId: string): Promise<{
             .eq('id', timeEntryId);
 
         console.log(`✅ Payout released: $${(payoutCents / 100).toFixed(2)} to ${lenderCompany.name} (${stripeAccountId}) — Transfer: ${transferId}`);
+
+        // 7. Generate and send Partial Lien Waiver (story 6.8) asynchronously
+        const { data: borrowerInfo } = await supabaseAdmin
+            .from('companies')
+            .select('name')
+            .eq('id', booking.borrower_company_id)
+            .single();
+
+        const { data: workerUser } = await supabaseAdmin
+            .from('users')
+            .select('full_name')
+            .eq('id', entry.user_id)
+            .single();
+
+        // Fire-and-forget: do not await to avoid delaying the response
+        generateAndSendLienWaiver({
+            timeEntryId,
+            bookingId: booking.id,
+            transferId,
+            payoutAmountCents: payoutCents,
+            lenderCompanyName: lenderCompany.name,
+            borrowerCompanyId: booking.borrower_company_id,
+            borrowerCompanyName: borrowerInfo?.name || 'Borrower Company',
+            workerName: workerUser?.full_name || 'Worker',
+            shiftDate: entry.clock_in,
+            clockIn: entry.clock_in,
+            clockOut: entry.clock_out!,
+            hoursWorked,
+        });
 
         return { success: true, transferId, payoutAmountCents: payoutCents };
 

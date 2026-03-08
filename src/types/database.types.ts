@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          booking_type: string | null
           borrower_company_id: string
           cancelled_at: string | null
           cancelled_by: string | null
@@ -41,6 +42,7 @@ export type Database = {
           worker_payout_amount: number
         }
         Insert: {
+          booking_type?: string | null
           borrower_company_id: string
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           worker_payout_amount?: number
         }
         Update: {
+          booking_type?: string | null
           borrower_company_id?: string
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -207,6 +210,8 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          banned_at: string | null
+          banned_reason: string | null
           break_duration_minutes: number | null
           break_policy_type: string | null
           break_required_after_hours: number | null
@@ -216,6 +221,8 @@ export type Database = {
           default_currency: string
           ein: string | null
           id: string
+          is_banned: boolean | null
+          is_shadow_banned: boolean | null
           kyb_status: string | null
           lat: number | null
           lng: number | null
@@ -232,9 +239,17 @@ export type Database = {
           ot_rule_weekend: boolean | null
           ot_rule_weekly: boolean | null
           state: string | null
+          strikes: number | null
           strikes_count: number | null
           stripe_account_id: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_current_period_end: string | null
+          subscription_expiry_notified_at: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
           tax_exempt_status: boolean | null
+          trial_ends_at: string | null
           trial_policy: string | null
           type: string | null
           updated_at: string | null
@@ -242,6 +257,8 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           break_duration_minutes?: number | null
           break_policy_type?: string | null
           break_required_after_hours?: number | null
@@ -251,6 +268,8 @@ export type Database = {
           default_currency?: string
           ein?: string | null
           id?: string
+          is_banned?: boolean | null
+          is_shadow_banned?: boolean | null
           kyb_status?: string | null
           lat?: number | null
           lng?: number | null
@@ -267,9 +286,17 @@ export type Database = {
           ot_rule_weekend?: boolean | null
           ot_rule_weekly?: boolean | null
           state?: string | null
+          strikes?: number | null
           strikes_count?: number | null
           stripe_account_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_expiry_notified_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           tax_exempt_status?: boolean | null
+          trial_ends_at?: string | null
           trial_policy?: string | null
           type?: string | null
           updated_at?: string | null
@@ -277,6 +304,8 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           break_duration_minutes?: number | null
           break_policy_type?: string | null
           break_required_after_hours?: number | null
@@ -286,6 +315,8 @@ export type Database = {
           default_currency?: string
           ein?: string | null
           id?: string
+          is_banned?: boolean | null
+          is_shadow_banned?: boolean | null
           kyb_status?: string | null
           lat?: number | null
           lng?: number | null
@@ -302,9 +333,17 @@ export type Database = {
           ot_rule_weekend?: boolean | null
           ot_rule_weekly?: boolean | null
           state?: string | null
+          strikes?: number | null
           strikes_count?: number | null
           stripe_account_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_expiry_notified_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           tax_exempt_status?: boolean | null
+          trial_ends_at?: string | null
           trial_policy?: string | null
           type?: string | null
           updated_at?: string | null
@@ -509,6 +548,67 @@ export type Database = {
             columns: ["time_entry_id"]
             isOneToOne: false
             referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_reports: {
+        Row: {
+          booking_id: string
+          company_id: string
+          created_at: string
+          id: string
+          notes: string
+          photo_urls: string[] | null
+          reported_by: string
+          severity: Database["public"]["Enums"]["incident_severity"]
+          type: Database["public"]["Enums"]["incident_type"]
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          notes: string
+          photo_urls?: string[] | null
+          reported_by: string
+          severity: Database["public"]["Enums"]["incident_severity"]
+          type: Database["public"]["Enums"]["incident_type"]
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string
+          photo_urls?: string[] | null
+          reported_by?: string
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          type?: Database["public"]["Enums"]["incident_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_reports_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -787,6 +887,65 @@ export type Database = {
           },
         ]
       }
+      system_logs: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          message: string
+          metadata: Json | null
+          resolved: boolean | null
+          service: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          message: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          service: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          service?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           auto_approval_at: string | null
@@ -800,13 +959,20 @@ export type Database = {
           gps_clock_in: Json | null
           gps_clock_out: Json | null
           id: string
+          is_draft: boolean
           notes: string | null
           payout_amount: number | null
           payout_released: boolean
           project_id: string | null
+          project_photo_url: string | null
           status: string
           stripe_transfer_id: string | null
+          submitted_at: string | null
+          system_clock_in: string | null
+          system_clock_out: string | null
           total_break_minutes: number | null
+          travel_duration_minutes: number
+          travel_start: string | null
           updated_at: string | null
           user_id: string
           verified_at: string | null
@@ -824,13 +990,20 @@ export type Database = {
           gps_clock_in?: Json | null
           gps_clock_out?: Json | null
           id?: string
+          is_draft?: boolean
           notes?: string | null
           payout_amount?: number | null
           payout_released?: boolean
           project_id?: string | null
+          project_photo_url?: string | null
           status?: string
           stripe_transfer_id?: string | null
+          submitted_at?: string | null
+          system_clock_in?: string | null
+          system_clock_out?: string | null
           total_break_minutes?: number | null
+          travel_duration_minutes?: number
+          travel_start?: string | null
           updated_at?: string | null
           user_id: string
           verified_at?: string | null
@@ -848,13 +1021,20 @@ export type Database = {
           gps_clock_in?: Json | null
           gps_clock_out?: Json | null
           id?: string
+          is_draft?: boolean
           notes?: string | null
           payout_amount?: number | null
           payout_released?: boolean
           project_id?: string | null
+          project_photo_url?: string | null
           status?: string
           stripe_transfer_id?: string | null
+          submitted_at?: string | null
+          system_clock_in?: string | null
+          system_clock_out?: string | null
           total_break_minutes?: number | null
+          travel_duration_minutes?: number
+          travel_start?: string | null
           updated_at?: string | null
           user_id?: string
           verified_at?: string | null
@@ -969,42 +1149,57 @@ export type Database = {
       users: {
         Row: {
           avatar_url: string | null
+          banned_at: string | null
+          banned_reason: string | null
           created_at: string | null
           email: string
           firebase_uid: string | null
           full_name: string | null
           id: string
+          is_banned: boolean | null
           is_onboarded: boolean | null
+          is_shadow_banned: boolean | null
           mobile_number: string | null
           password_hash: string | null
+          strikes: number | null
           stripe_identity_id: string | null
           updated_at: string | null
           user_state: string
         }
         Insert: {
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           created_at?: string | null
           email: string
           firebase_uid?: string | null
           full_name?: string | null
           id: string
+          is_banned?: boolean | null
           is_onboarded?: boolean | null
+          is_shadow_banned?: boolean | null
           mobile_number?: string | null
           password_hash?: string | null
+          strikes?: number | null
           stripe_identity_id?: string | null
           updated_at?: string | null
           user_state?: string
         }
         Update: {
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           created_at?: string | null
           email?: string
           firebase_uid?: string | null
           full_name?: string | null
           id?: string
+          is_banned?: boolean | null
           is_onboarded?: boolean | null
+          is_shadow_banned?: boolean | null
           mobile_number?: string | null
           password_hash?: string | null
+          strikes?: number | null
           stripe_identity_id?: string | null
           updated_at?: string | null
           user_state?: string
@@ -1288,6 +1483,14 @@ export type Database = {
     }
     Functions: {
       firebase_uid: { Args: never; Returns: string }
+      get_company_analytics_kpis: {
+        Args: { p_company_id: string; p_weeks: number }
+        Returns: Json
+      }
+      get_company_top_workers: {
+        Args: { p_company_id: string; p_weeks: number }
+        Returns: Json
+      }
       get_lender_company_metrics: {
         Args: { company_ids: string[] }
         Returns: {
@@ -1308,7 +1511,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      incident_severity: "Warning" | "Critical"
+      incident_type:
+        | "Injury"
+        | "Property_Damage"
+        | "Tardiness"
+        | "Workmanship"
+        | "Conduct"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1435,7 +1644,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      incident_severity: ["Warning", "Critical"],
+      incident_type: [
+        "Injury",
+        "Property_Damage",
+        "Tardiness",
+        "Workmanship",
+        "Conduct",
+      ],
+    },
   },
 } as const
-
