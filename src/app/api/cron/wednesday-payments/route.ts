@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     if (isHardCutoffPaused) {
         console.warn("[Wednesday Cron] Hard Cutoff paused by Super Admin.");
         // Log to system_logs
-        await adminDb.from('system_logs').insert({
+        await adminDb.from('system_logs' as any).insert({
             level: 'warn',
             event_type: 'cron_wednesday_cutoff_paused',
             message: 'Wednesday automated worker release skipped due to active pause setting.',

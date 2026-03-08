@@ -341,6 +341,21 @@ CREATE INDEX idx_system_logs_created_at ON system_logs(created_at DESC);
 - Used for application-level event sourcing and error tracking (e.g., Stripe webhook failures, cron job successes).
 - Only SuperAdmins can view and update.
 
+### system_settings
+
+```sql
+CREATE TABLE public.system_settings (
+  key VARCHAR(255) PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_by UUID REFERENCES public.users(id)
+);
+```
+
+**Technical Constraints:**
+- Global key-value store for platform configurations (e.g., `pause_wednesday_cutoff`).
+- RLS restricted so only SuperAdmins can view, insert, or update.
+
 ---
 
 **Back to:** [Database Schema](./schema.md)

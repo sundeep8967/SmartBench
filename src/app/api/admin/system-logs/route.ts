@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const service = searchParams.get("service");
 
     let query = supabase
-        .from('system_logs')
+        .from('system_logs' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest) {
         }
 
         const { error } = await supabase
-            .from('system_logs')
+            .from('system_logs' as any)
             .update({ resolved })
             .eq('id', id);
 

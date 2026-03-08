@@ -27,18 +27,18 @@ export async function POST(request: NextRequest) {
 
         const { data: company } = await supabase
             .from('companies')
-            .select('stripe_customer_id, name, contact_email')
+            .select('*')
             .eq('id', member.company_id)
             .single();
 
         if (!company) return NextResponse.json({ error: "Company not found" }, { status: 404 });
 
-        let customerId = company.stripe_customer_id;
+        let customerId = (company as any).stripe_customer_id;
 
         // 2. Create Stripe Customer if one doesn't exist
         if (!customerId) {
             const customer = await stripe.customers.create({
-                email: company.contact_email || user.email,
+                email: (company as any).contact_email || user.email,
                 name: company.name,
                 metadata: {
                     company_id: member.company_id
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
             // Save back to DB
             await supabase
                 .from('companies')
-                .update({ stripe_customer_id: customerId })
+                .update({ stripe_customer_id: customerId } as any)
                 .eq('id', member.company_id);
         }
 
