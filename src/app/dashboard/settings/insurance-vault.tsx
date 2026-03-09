@@ -125,46 +125,62 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
                 <CardContent className="p-6">
                     {loading ? (
                         <p className="text-sm text-gray-400">Loading policies...</p>
-                    ) : policies.length === 0 ? (
-                        <div className="text-center py-8">
-                            <Shield className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                            <p className="text-sm font-medium text-gray-600">No active insurance policies</p>
-                            <p className="text-xs text-gray-400 mt-1">Upload your General Liability and Workers' Compensation policies below to list workers on the marketplace.</p>
-                        </div>
                     ) : (
-                        <div className="space-y-3">
-                            {POLICY_TYPES.map(ptype => {
-                                const policy = policies.find(p => p.insurance_type === ptype.value);
-                                const status = policy ? getPolicyStatus(policy.expiration_date) : null;
-                                const StatusIcon = status?.icon;
-                                return (
-                                    <div key={ptype.value} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50/30">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${policy ? "bg-blue-100" : "bg-gray-100"}`}>
-                                                <Shield className={`h-5 w-5 ${policy ? "text-blue-600" : "text-gray-400"}`} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-gray-900">{ptype.label}</p>
-                                                {policy ? (
-                                                    <p className="text-xs text-gray-500">
-                                                        Expires: {new Date(policy.expiration_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-xs text-red-500">Not uploaded</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        {policy && status ? (
-                                            <Badge className={`${status.color} border flex items-center gap-1`}>
-                                                {StatusIcon && <StatusIcon className="h-3 w-3" />}
-                                                {status.label}
-                                            </Badge>
-                                        ) : (
-                                            <Badge className="bg-gray-100 text-gray-500 border border-gray-200">Missing</Badge>
-                                        )}
+                        <div className="space-y-6">
+                            {policies.length === 0 && (
+                                <div className="text-center py-6 bg-blue-50/50 rounded-xl border border-blue-100 mb-2">
+                                    <Shield className="h-10 w-10 text-blue-300 mx-auto mb-3" />
+                                    <p className="text-sm font-semibold text-blue-900">Compliance Required</p>
+                                    <p className="text-xs text-blue-600 mt-1 max-w-[280px] mx-auto">Upload your policies below. All lender companies must have active General Liability and Workers' Comp.</p>
+
+                                    <div className="mt-4 pt-4 border-t border-blue-100/50">
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-blue-400 mb-2">Don't have insurance?</p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-white text-blue-700 border-blue-200 hover:bg-blue-50 hover:text-blue-800"
+                                            onClick={() => window.open('https://www.nextinsurance.com/', '_blank')}
+                                        >
+                                            Get Instant Coverage
+                                        </Button>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            )}
+
+                            <div className="space-y-3">
+                                {POLICY_TYPES.map(ptype => {
+                                    const policy = policies.find(p => p.insurance_type === ptype.value);
+                                    const status = policy ? getPolicyStatus(policy.expiration_date) : null;
+                                    const StatusIcon = status?.icon;
+                                    return (
+                                        <div key={ptype.value} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50/30">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${policy ? "bg-blue-100" : "bg-gray-100"}`}>
+                                                    <Shield className={`h-5 w-5 ${policy ? "text-blue-600" : "text-gray-400"}`} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-gray-900">{ptype.label}</p>
+                                                    {policy ? (
+                                                        <p className="text-xs text-gray-500">
+                                                            Expires: {new Date(policy.expiration_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-xs text-red-500">Not uploaded</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {policy && status ? (
+                                                <Badge className={`${status.color} border flex items-center gap-1`}>
+                                                    {StatusIcon && <StatusIcon className="h-3 w-3" />}
+                                                    {status.label}
+                                                </Badge>
+                                            ) : (
+                                                <Badge className="bg-gray-100 text-gray-500 border border-gray-200">Missing</Badge>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </CardContent>

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Store, Loader2 } from "lucide-react";
+import { Store, Loader2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ListWorkerDialogProps {
@@ -24,11 +24,13 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
     const [loading, setLoading] = useState(false);
     const [hourlyRate, setHourlyRate] = useState(rate ? String(rate) : "");
     const [minShiftLength, setMinShiftLength] = useState(String(defaultMinShiftLength));
+    const [insuranceError, setInsuranceError] = useState<string | null>(null);
     const { toast } = useToast();
 
     const handleList = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setInsuranceError(null);
 
         try {
             const response = await fetch('/api/workers/list', {
@@ -45,7 +47,13 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to list worker');
+                const errorMessage = errorData.error || 'Failed to list worker';
+
+                if (errorMessage.toLowerCase().includes('insurance')) {
+                    setInsuranceError(errorMessage);
+                }
+
+                throw new Error(errorMessage);
             }
 
             toast({
@@ -125,6 +133,29 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
                             <p className="text-xs text-gray-500">The hourly amount your company earns when this worker is booked.</p>
                         </div>
 
+                        {insuranceError && (
+                            <div className="bg-red-50 border border-red-100 p-4 rounded-lg space-y-3">
+                                <div className="flex gap-3">
+                                    <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-red-900">Insurance Required</p>
+                                        <p className="text-xs text-red-700 mt-0.5">
+                                            {insuranceError}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full bg-white text-red-700 border-red-200 hover:bg-red-50"
+                                    onClick={() => window.location.href = '/dashboard/settings?tab=Insurance'}
+                                >
+                                    Go to Insurance Settings
+                                </Button>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <Label htmlFor="shift_length">Minimum Shift Length (Hours)</Label>
                             <Select value={minShiftLength} onValueChange={setMinShiftLength}>
@@ -149,7 +180,11 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading || !trade || !homeZipCode || !hourlyRate || userState === 'Pending_Profile'} className="bg-blue-900 hover:bg-blue-800 text-white">
+                        <Button
+                            type="submit"
+                            disabled={loading || !trade || !homeZipCode || !hourlyRate || userState === 'Pending_Profile' || !!insuranceError}
+                            className="bg-blue-900 hover:bg-blue-800 text-white"
+                        >
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             List Worker
                         </Button>

@@ -260,7 +260,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
         <div className="space-y-4 relative">
             {/* Unified Filter Bar & Actions */}
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                <div className="flex flex-wrap items-stretch bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex-1 max-w-2xl">
+                <div className="flex flex-wrap items-stretch bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex-1">
                     {/* Search */}
                     <div className="flex items-center flex-1 min-w-[200px] px-3">
                         <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />

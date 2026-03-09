@@ -27,12 +27,18 @@ import { DeleteAccountModal } from "./delete-account-modal";
 import { SubscriptionManagement } from "@/components/dashboard/settings/subscription-management";
 import { createClient } from "@/lib/supabase/client";
 import { updateCompanyProfileAction } from "./actions";
-import type { WorkerProfile } from "@/types";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import type { WorkerProfile } from "@/types";
 
 export default function SettingsPage() {
-    const [activeTab, setActiveTab] = useState("Company Profile");
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const tabParam = searchParams.get("tab");
+
+    // Initial tab based on URL or default
+    const [activeTab, setActiveTab] = useState(tabParam || "Company Profile");
     const [profile, setProfile] = useState<any>(null);
     const [company, setCompany] = useState<any>(null);
     const [userPrefs, setUserPrefs] = useState<any>(null);
@@ -45,6 +51,14 @@ export default function SettingsPage() {
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [loadingPage, setLoadingPage] = useState(true);
     const { toast } = useToast();
+
+    // Update URL when tab changes
+    const handleTabChange = (tabName: string) => {
+        setActiveTab(tabName);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", tabName);
+        router.push(`?${params.toString()}`, { scroll: false });
+    };
 
     const tabs = [
         { name: "Company Profile", icon: Building2 },
@@ -91,9 +105,11 @@ export default function SettingsPage() {
                         try {
                             const statusRes = await fetch('/api/stripe/status');
                             if (statusRes.ok) {
-                                const statusData = await statusRes.json();
-                                setIsStripeFullyOnboarded(statusData.is_fully_onboarded);
-                                if (statusData.last4) setBankDetails({ last4: statusData.last4, bankName: statusData.bank_name || 'Bank Account' });
+                                const statusData = await statusRes.ok ? await statusRes.json() : null;
+                                if (statusData) {
+                                    setIsStripeFullyOnboarded(statusData.is_fully_onboarded);
+                                    if (statusData.last4) setBankDetails({ last4: statusData.last4, bankName: statusData.bank_name || 'Bank Account' });
+                                }
                             }
                         } catch { /* ignore */ }
                     }
@@ -104,6 +120,13 @@ export default function SettingsPage() {
         };
         fetchAll();
     }, []);
+
+    // Also handle browser back button/direct URL navigation
+    useEffect(() => {
+        if (tabParam && tabParam !== activeTab) {
+            setActiveTab(tabParam);
+        }
+    }, [tabParam]);
 
     const handleConnectStripe = async () => {
         setIsConnectingStripe(true);

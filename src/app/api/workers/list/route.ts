@@ -59,8 +59,15 @@ export async function POST(request: NextRequest) {
             .eq('is_active', true);
 
         const now = new Date();
-        const hasValidGL = policies?.some(p => p.insurance_type === 'General Liability' && new Date(p.expiration_date) > now);
-        const hasValidWC = policies?.some(p => p.insurance_type === 'Workers Compensation' && new Date(p.expiration_date) > now);
+        // Handle both underscored and spaced versions for backward/forward compatibility
+        const hasValidGL = policies?.some(p =>
+            (p.insurance_type === 'General Liability' || p.insurance_type === 'General_Liability') &&
+            new Date(p.expiration_date) > now
+        );
+        const hasValidWC = policies?.some(p =>
+            (p.insurance_type === 'Workers Compensation' || p.insurance_type === 'Workers_Compensation') &&
+            new Date(p.expiration_date) > now
+        );
 
         if (!hasValidGL || !hasValidWC) {
             return NextResponse.json({ error: "Cannot list worker. Lender company must have valid, active General Liability and Workers Compensation insurance." }, { status: 403 });
