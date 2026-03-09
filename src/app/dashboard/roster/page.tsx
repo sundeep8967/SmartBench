@@ -18,8 +18,10 @@ import {
     Loader2
 } from "lucide-react";
 import { InviteWorkerDialog } from "@/components/workers/invite-dialog";
+import { BulkInviteWorkerDialog } from "@/components/workers/bulk-invite-dialog";
 import { ListWorkerDialog } from "@/components/workers/list-worker-dialog";
 import { UnlistWorkerButton } from "@/components/workers/unlist-button";
+import { ManageAvailabilityDialog } from "@/components/workers/manage-availability-dialog";
 import { useSWRConfig } from "swr";
 
 interface RosterMember {
@@ -27,6 +29,7 @@ interface RosterMember {
     user_id: string;
     name: string;
     email: string;
+    user_state: string;
     roles: string[];
     status: string;
     deployment_status: "Deployed" | "Bench" | "Listed";
@@ -197,8 +200,9 @@ export default function RosterPage() {
                 {/* Divider */}
                 <div className="w-px bg-gray-200 self-stretch" />
 
-                {/* Invite Button */}
-                <div className="flex items-center px-2">
+                {/* Invite Actions */}
+                <div className="flex items-center gap-2 px-3 py-2">
+                    <BulkInviteWorkerDialog onInvitesSent={() => mutate("/api/workers/roster")} />
                     <InviteWorkerDialog />
                 </div>
             </div>
@@ -234,12 +238,14 @@ export default function RosterPage() {
                                     <span className="text-gray-600">{Array.isArray(worker.roles) ? worker.roles.join(", ") : "—"}</span>
                                 </div>
                                 <div className="flex justify-between items-center pt-4 border-t mt-4">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
-                                        ? "bg-green-50 text-green-600 border border-green-100"
-                                        : worker.deployment_status === "Listed"
-                                            ? "bg-blue-50 text-blue-600 border border-blue-100"
-                                            : "bg-orange-50 text-orange-500 border border-orange-100"
-                                        }`}>{worker.deployment_status}</span>
+                                    <div className="flex flex-col gap-1 items-start">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${worker.deployment_status === "Deployed"
+                                            ? "bg-green-50 text-green-600 border border-green-100"
+                                            : worker.deployment_status === "Listed"
+                                                ? "bg-blue-50 text-blue-600 border border-blue-100"
+                                                : "bg-orange-50 text-orange-500 border border-orange-100"
+                                            }`}>{worker.deployment_status}</span>
+                                    </div>
                                     <div className="flex items-center space-x-2">
                                         {worker.deployment_status === "Bench" && (
                                             <ListWorkerDialog
@@ -248,16 +254,23 @@ export default function RosterPage() {
                                                 trade={worker.trade}
                                                 rate={worker.hourly_rate}
                                                 homeZipCode={worker.home_zip_code}
+                                                userState={worker.user_state}
                                                 defaultMinShiftLength={companySettings.minimum_shift_length_hours}
                                                 onListSuccess={handleListSuccess}
                                             />
                                         )}
                                         {worker.deployment_status === "Listed" && (
-                                            <UnlistWorkerButton
-                                                workerId={worker.user_id}
-                                                workerName={worker.name}
-                                                onUnlistSuccess={handleListSuccess}
-                                            />
+                                            <>
+                                                <ManageAvailabilityDialog
+                                                    workerId={worker.user_id}
+                                                    workerName={worker.name}
+                                                />
+                                                <UnlistWorkerButton
+                                                    workerId={worker.user_id}
+                                                    workerName={worker.name}
+                                                    onUnlistSuccess={handleListSuccess}
+                                                />
+                                            </>
                                         )}
                                         <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600 h-8 w-8 p-0">
                                             <PenSquare size={16} />
@@ -337,16 +350,23 @@ export default function RosterPage() {
                                                         trade={worker.trade}
                                                         rate={worker.hourly_rate}
                                                         homeZipCode={worker.home_zip_code}
+                                                        userState={worker.user_state}
                                                         defaultMinShiftLength={companySettings.minimum_shift_length_hours}
                                                         onListSuccess={handleListSuccess}
                                                     />
                                                 )}
                                                 {worker.deployment_status === "Listed" && (
-                                                    <UnlistWorkerButton
-                                                        workerId={worker.user_id}
-                                                        workerName={worker.name}
-                                                        onUnlistSuccess={handleListSuccess}
-                                                    />
+                                                    <>
+                                                        <ManageAvailabilityDialog
+                                                            workerId={worker.user_id}
+                                                            workerName={worker.name}
+                                                        />
+                                                        <UnlistWorkerButton
+                                                            workerId={worker.user_id}
+                                                            workerName={worker.name}
+                                                            onUnlistSuccess={handleListSuccess}
+                                                        />
+                                                    </>
                                                 )}
                                                 <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600">
                                                     <PenSquare size={16} />

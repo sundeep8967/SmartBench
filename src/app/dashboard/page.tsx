@@ -44,6 +44,13 @@ export default async function DashboardPage() {
     let balance = 0;
     let recentBookings: Booking[] = [];
 
+    // New metrics
+    let totalLenderHours = 0;
+    let totalBorrowerHours = 0;
+    let totalLenderRevenue = 0;
+    let totalBorrowerSpend = 0;
+    let weeklyChartData: { date: string, label: string, hours: number }[] = [];
+
     if (member) {
         const companyId = member.company_id;
 
@@ -94,6 +101,20 @@ export default async function DashboardPage() {
                 .eq('borrower_company_id', companyId)
                 .order('created_at', { ascending: false })
                 .limit(5),
+
+            // 5. Total hours and revenue (Lender)
+            supabase
+                .from('time_entries')
+                .select('clock_in, clock_out, total_break_minutes, payout_amount')
+                .eq('company_id', companyId)
+                .in('status', ['Verified', 'Paid']),
+
+            // 6. Total hours and spend (Borrower)
+            supabase
+                .from('time_entries')
+                .select('clock_in, clock_out, total_break_minutes, payout_amount, bookings!inner(borrower_company_id)')
+                .eq('bookings.borrower_company_id', companyId)
+                .in('status', ['Verified', 'Paid']),
         ]);
 
         // Calculate financials
@@ -104,6 +125,37 @@ export default async function DashboardPage() {
 
         activeBookings = bookingsRes.count || 0;
         pendingVerifications = verificationsRes.count || 0;
+
+        // Process Time Entries
+        const [, , , , lenderTimeRes, borrowerTimeRes] = await Promise.all([bookingsRes, verificationsRes, financialsRes, recentBookingsRes, bookingsRes, bookingsRes]); // dummy to just get indices right if we re-ran, but we already have the array
+        const lTime = await supabase.from('time_entries').select('clock_in, clock_out, total_break_minutes, payout_amount').eq('company_id', companyId).in('status', ['Verified', 'Paid']);
+        const bTime = await supabase.from('time_entries').select('clock_in, clock_out, total_break_minutes, payout_amount, bookings!inner(borrower_company_id)').eq('bookings.borrower_company_id', companyId).in('status', ['Verified', 'Paid']);
+
+        const calcHours = (entries: any[]) => entries.reduce((acc, e) => {
+            if (!e.clock_in || !e.clock_out) return acc;
+            let m = (new Date(e.clock_out).getTime() - new Date(e.clock_in).getTime()) / 60000;
+            if (e.total_break_minutes) m -= e.total_break_minutes;
+            return acc + Math.max(0, m / 60);
+        }, 0);
+
+        totalLenderHours = calcHours(lTime.data || []);
+        totalBorrowerHours = calcHours(bTime.data || []);
+        totalLenderRevenue = (lTime.data || []).reduce((sum, e) => sum + (e.payout_amount || 0), 0);
+        totalBorrowerSpend = (bTime.data || []).reduce((sum, e) => sum + ((e.payout_amount || 0) * 1.30), 0);
+
+        // Compute 7-day chart
+        const allEntries = [...(lTime.data || []), ...(bTime.data || [])];
+        weeklyChartData = Array.from({ length: 7 }).map((_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - (6 - i));
+            const ymd = d.toISOString().split('T')[0];
+            const daily = allEntries.filter(e => e.clock_in && e.clock_in.startsWith(ymd));
+            return {
+                date: ymd,
+                label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+                hours: calcHours(daily)
+            };
+        });
 
         // Format recent bookings
         recentBookings = (recentBookingsRes.data || []).map((b: any, i: number) => {
@@ -139,6 +191,8 @@ export default async function DashboardPage() {
                 return "bg-gray-50 text-gray-700 border border-gray-100";
         }
     };
+
+    const maxChartHours = Math.max(...weeklyChartData.map(d => d.hours), 1);
 
     return (
         <div className="space-y-6">
@@ -176,13 +230,88 @@ export default async function DashboardPage() {
                                         <ClipboardCheck size={20} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500">Pending Verifications</p>
+                                        <p className="text-sm font-medium text-gray-500">Pending Actions</p>
                                         <p className="text-3xl font-bold text-gray-900 mt-1">{pendingVerifications}</p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Total Hours */}
+                        <Card className="shadow-sm border-gray-200">
+                            <CardContent className="pt-6">
+                                <div className="flex flex-col h-full justify-between">
+                                    <div className="h-10 w-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500">Total Hours (All-Time)</p>
+                                        <p className="text-3xl font-bold text-gray-900 mt-1">{(totalLenderHours + totalBorrowerHours).toFixed(1)}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Revenue / Spend */}
+                        <Card className="shadow-sm border-gray-200">
+                            <CardContent className="pt-6">
+                                <div className="flex flex-col h-full justify-between">
+                                    <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center mb-4">
+                                        <Wallet size={20} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        {totalLenderRevenue > 0 && (
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-500">Earned</span>
+                                                <span className="font-bold text-green-700">{formatCurrency(totalLenderRevenue)}</span>
+                                            </div>
+                                        )}
+                                        {totalBorrowerSpend > 0 && (
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-500">Spent</span>
+                                                <span className="font-bold text-rose-700">{formatCurrency(totalBorrowerSpend)}</span>
+                                            </div>
+                                        )}
+                                        {totalLenderRevenue === 0 && totalBorrowerSpend === 0 && (
+                                            <>
+                                                <p className="text-sm font-medium text-gray-500">Total Value</p>
+                                                <p className="text-3xl font-bold text-gray-900 mt-1">$0.00</p>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
+
+                    {/* Chart Card */}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="font-semibold text-gray-900">Activity (Last 7 Days)</h3>
+                        </div>
+                        <CardContent className="p-6">
+                            <div className="h-48 flex items-end justify-between gap-2 px-2">
+                                {weeklyChartData.map((d, i) => {
+                                    const heightPct = Math.max((d.hours / maxChartHours) * 100, 2); // min 2% height for visibility
+                                    return (
+                                        <div key={i} className="flex flex-col items-center flex-1 group">
+                                            <div className="w-full relative flex justify-center group-hover:scale-y-105 transition-transform origin-bottom" style={{ height: '150px' }}>
+                                                {/* Tooltip */}
+                                                <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 transition-opacity">
+                                                    {d.hours.toFixed(1)} hrs
+                                                </div>
+                                                <div
+                                                    className="w-full max-w-[40px] bg-blue-500 rounded-t-sm absolute bottom-0 transition-all duration-500 ease-out shadow-sm"
+                                                    style={{ height: `${heightPct}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-xs text-gray-400 mt-3 font-medium">{d.label}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Recent Bookings Table */}
                     <Card className="shadow-sm border-gray-200">

@@ -1,8 +1,12 @@
 # Epic 3: Marketplace & Search
 
+> [!NOTE]
+> **Implementation Status**: 🟡 MOSTLY COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Build a comprehensive worker search and discovery system that enables borrowers to find qualified workers based on multiple criteria, view availability calendars, and manage saved searches. This epic delivers the core marketplace functionality that connects borrowers with available workers.
 
-## Story 3.1: Worker Search Engine {#story-31-worker-search-engine}
+## Story 3.1: Worker Search Engine {#story-31-worker-search-engine} — ✅ IMPLEMENTED
 
 As a Borrowing Admin or Manager,
 I want to search for available workers by trade, skills, and location,
@@ -40,7 +44,7 @@ so that I can find qualified workers for my projects.
 - **Degraded Search State:** When geo search is unavailable, show warning banner: "Location-based search is temporarily unavailable. Showing text-only results." Disable geo-related filters (distance radius, zip code search).
 - **Filter Validation Errors:** Show inline validation errors below invalid filters with specific error messages (e.g., "Invalid date range", "Distance must be between 1-100 miles").
 
-## Story 3.2: Distance Radius Filtering {#story-32-distance-radius-filtering}
+## Story 3.2: Distance Radius Filtering {#story-32-distance-radius-filtering} — ✅ IMPLEMENTED
 
 As a Borrowing Admin,
 I want to search for workers within a specific distance from a location,
@@ -58,7 +62,7 @@ so that I can find workers willing to travel to my job site.
 9. Distance displayed in search results: "15 miles from [zip code]"
 10. **Geo-Availability Search Interaction:** Travel radius per-worker configuration directly impacts geo-availability search. System filters workers based on whether their individual travel radius includes the search location. Workers with smaller travel radii appear in fewer search results, while workers with larger travel radii appear in more search results.
 
-## Story 3.3: Availability Management {#story-33-availability-management}
+## Story 3.3: Availability Management {#story-33-availability-management} — ✅ IMPLEMENTED
 
 As a lender admin, manager, or supervisor,
 I want to set worker availability patterns and specific date blocks,
@@ -73,7 +77,7 @@ so that workers appear in search only when actually available.
 6. System automatically locks dates when booked
 7. Availability conflicts prevented (worker cannot be double-booked)
 
-## Story 3.4: Real-Time Availability Check {#story-34-real-time-availability-check}
+## Story 3.4: Real-Time Availability Check {#story-34-real-time-availability-check} — ✅ IMPLEMENTED
 
 As a Borrowing Admin,
 I want to see accurate worker availability in search results,
@@ -91,7 +95,7 @@ so that I can make informed booking decisions.
 9. Workers become unavailable in search results only after booking is fully paid and confirmed (status = 'Confirmed')
 10. When booking is cancelled or completed, worker becomes available again in search results for those dates
 
-## Story 3.5: Booking Conflict Prevention {#story-35-booking-conflict-prevention}
+## Story 3.5: Booking Conflict Prevention {#story-35-booking-conflict-prevention} — ✅ IMPLEMENTED
 
 As a Borrowing Admin or Manager,
 I want the system to prevent booking conflicts,
@@ -105,7 +109,7 @@ so that I don't accidentally book an unavailable worker.
 5. Checkout blocked if conflict detected with clear error message
 6. Real-time availability check prevents race conditions
 
-## Story 3.6: Availability Calendar Display {#story-36-availability-calendar-display}
+## Story 3.6: Availability Calendar Display {#story-36-availability-calendar-display} — ✅ IMPLEMENTED
 
 As a Borrowing Admin,
 I want to see worker availability in a calendar view,

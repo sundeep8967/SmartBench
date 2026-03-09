@@ -8,6 +8,7 @@ import { useRouter, usePathname } from "next/navigation";
 interface AuthContextType {
     user: User | null;
     companyId: string | null;
+    isSuperAdmin: boolean;
     loading: boolean;
     hasCompletedOnboarding: boolean;
     signInWithGoogle: () => Promise<void>;
@@ -21,29 +22,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [companyId, setCompanyId] = useState<string | null>(null);
+    const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
     const hasCompletedOnboarding = user?.user_metadata?.is_onboarded === true;
     const router = useRouter();
     const pathname = usePathname();
-    const supabase = createClient();
 
-    const fetchCompanyData = async (userId: string) => {
+    // Memoize the client so it doesn't change on every render
+    const [supabase] = useState(() => createClient());
+
+    const fetchCompanyData = async (userId: string, userEmail?: string) => {
         try {
             const { data, error } = await supabase
                 .from('company_members')
-                .select('company_id')
+                .select('company_id, roles')
                 .eq('user_id', userId)
                 .eq('status', 'Active')
                 .maybeSingle();
 
             if (data && !error) {
                 setCompanyId(data.company_id);
+                const roles: string[] = (data as any).roles || [];
+                const hasAdminRole = roles.some(r => ["SuperAdmin", "super_admin"].includes(r));
+                const isDevAdmin = userEmail?.endsWith("@smartbench.com") || false;
+                setIsSuperAdmin(hasAdminRole || isDevAdmin);
             } else {
                 setCompanyId(null);
+                const isDevAdmin = userEmail?.endsWith("@smartbench.com") || false;
+                setIsSuperAdmin(isDevAdmin);
             }
         } catch (error) {
             console.error("AuthContext: Error fetching company data", error);
             setCompanyId(null);
+            setIsSuperAdmin(false);
         }
     };
 
@@ -54,9 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const currentUser = session?.user ?? null;
             setUser(currentUser);
             if (currentUser) {
-                fetchCompanyData(currentUser.id).finally(() => setLoading(false));
+                fetchCompanyData(currentUser.id, currentUser.email).finally(() => setLoading(false));
             } else {
                 setCompanyId(null);
+                setIsSuperAdmin(false);
                 setLoading(false);
             }
         });
@@ -70,9 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(currentUser);
 
             if (currentUser) {
-                fetchCompanyData(currentUser.id);
+                fetchCompanyData(currentUser.id, currentUser.email);
             } else {
                 setCompanyId(null);
+                setIsSuperAdmin(false);
             }
 
             // Session is handled generically
@@ -81,9 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, [supabase]);
-
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []); // Empty dependency array forces this to only run once on mount!
 
 
     const signInWithGoogle = async () => {
@@ -112,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, companyId, loading, hasCompletedOnboarding, signInWithGoogle, logout }}>
+        <AuthContext.Provider value={{ user, companyId, isSuperAdmin, loading, hasCompletedOnboarding, signInWithGoogle, logout }}>
             {children}
         </AuthContext.Provider>
     );

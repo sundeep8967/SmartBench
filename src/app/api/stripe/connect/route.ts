@@ -97,9 +97,17 @@ export async function POST(req: Request) {
             }
         }
 
-        // 5. Create an Account Link for onboarding
-        // Wrap in try-catch to handle stale/disconnected Stripe accounts gracefully
+        // 5. Create an Account Link or Login Link
+        // If the account is already fully onboarded, we give them a dashboard login link
+        // instead of an onboarding setup link.
         try {
+            const account = await stripe.accounts.retrieve(accountId);
+
+            if (account.charges_enabled && account.details_submitted) {
+                const loginLink = await stripe.accounts.createLoginLink(accountId);
+                return NextResponse.json({ url: loginLink.url });
+            }
+
             const accountLink = await stripe.accountLinks.create({
                 account: accountId,
                 refresh_url: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding/step-2`,

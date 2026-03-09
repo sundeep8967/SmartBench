@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
                 ot_rule_daily: body.ot_rule_daily,
                 ot_rule_weekly: body.ot_rule_weekly,
                 ot_rule_weekend: body.ot_rule_weekend,
+                trial_policy: body.trial_policy ?? '4_Hours',
+                no_show_fee_hours: body.no_show_fee_hours ?? 4.0,
                 updated_at: new Date().toISOString()
             })
             .eq("id", member.company_id);

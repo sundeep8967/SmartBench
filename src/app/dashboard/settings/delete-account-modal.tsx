@@ -107,7 +107,7 @@ export function DeleteAccountModal() {
                         variant="destructive"
                         onClick={handleDelete}
                         disabled={!isConfirmed || isLoading}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                     >
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         {isLoading ? "Deleting..." : "Permanently Delete"}

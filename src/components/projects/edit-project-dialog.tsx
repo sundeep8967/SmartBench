@@ -16,7 +16,7 @@ import { updateProjectAction } from "@/app/dashboard/projects/actions";
 import type { Project } from "@/types";
 import tzlookup from "tz-lookup";
 
-export function EditProjectDialog({ project }: { project: Project }) {
+export function EditProjectDialog({ project, trigger }: { project: Project, trigger?: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
@@ -92,9 +92,11 @@ export function EditProjectDialog({ project }: { project: Project }) {
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <Pencil className="mr-2 h-4 w-4" /> Edit Project
-                </Button>
+                {trigger ? trigger : (
+                    <Button variant="outline" size="sm">
+                        <Pencil className="mr-2 h-4 w-4" /> Edit Project
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent
                 className="sm:max-w-[525px]"
@@ -123,7 +125,8 @@ export function EditProjectDialog({ project }: { project: Project }) {
                             value={formData.address}
                             onChange={(address, components) => {
                                 // MVP geo-restriction: Minnesota only
-                                if (components?.state && components.state !== "Minnesota") {
+                                const state = (components?.state || "").toLowerCase();
+                                if (state && state !== "minnesota" && state !== "mn") {
                                     toast({
                                         title: "📍 Currently Available in Minnesota Only",
                                         description: "SmartBench is currently available in Minnesota, USA. We're expanding soon — stay tuned!",
@@ -147,24 +150,6 @@ export function EditProjectDialog({ project }: { project: Project }) {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">City</Label>
-                            <Input value={formData.city} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">State</Label>
-                            <Input value={formData.state} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Zip</Label>
-                            <Input value={formData.zip} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Timezone</Label>
-                            <Input value={formData.timezone} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                    </div>
 
                     {formData.lat !== undefined && formData.lng !== undefined && (
                         <div className="space-y-2">
@@ -185,6 +170,25 @@ export function EditProjectDialog({ project }: { project: Project }) {
                                     }))
                                 }}
                             />
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">City</Label>
+                                    <Input value={formData.city} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">State</Label>
+                                    <Input value={formData.state} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Zip</Label>
+                                    <Input value={formData.zip} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                    <Input value={formData.timezone} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                            </div>
                         </div>
                     )}
 

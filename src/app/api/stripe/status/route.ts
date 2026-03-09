@@ -23,21 +23,30 @@ export async function GET(req: Request) {
             return NextResponse.json({ is_fully_onboarded: false });
         }
 
-        // 2. RBAC Check: Must be Admin to view Stripe Status
+        // 2. RBAC Check: We'll return basic status to everyone in company, 
+        // but withhold sensitive bank details from non-admins.
         const roles = (memberRecord.roles as unknown as string[]) || [];
-        if (!roles.some(r => r.toLowerCase() === 'admin')) {
-            return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
-        }
+        const isAdmin = roles.some(r => r.toLowerCase() === 'admin');
 
         // 2. Get company's stripe_account_id
         const { data: company, error: companyError } = await supabase
             .from('companies')
-            .select('stripe_account_id')
+            .select('stripe_account_id, name')
             .eq('id', memberRecord.company_id)
             .maybeSingle();
 
-        if (companyError || !company?.stripe_account_id) {
-            return NextResponse.json({ is_fully_onboarded: false });
+        if (companyError) {
+            console.error('Database error fetching company:', companyError);
+            return NextResponse.json({ error: 'Database error' }, { status: 500 });
+        }
+
+        if (!company?.stripe_account_id) {
+            return NextResponse.json({
+                is_fully_onboarded: false,
+                has_account: false,
+                is_admin: isAdmin,
+                company_name: company?.name
+            });
         }
 
         // 3. Retrieve account details from Stripe
@@ -51,24 +60,33 @@ export async function GET(req: Request) {
         let bankName = null;
 
         if (isFullyOnboarded) {
-            const externalAccounts = await stripe.accounts.listExternalAccounts(
-                company.stripe_account_id,
-                { object: 'bank_account', limit: 1 }
-            );
+            try {
+                const externalAccounts = await stripe.accounts.listExternalAccounts(
+                    company.stripe_account_id,
+                    { object: 'bank_account', limit: 1 }
+                );
 
-            if (externalAccounts.data.length > 0) {
-                const bankAccount = externalAccounts.data[0] as any;
-                last4 = bankAccount.last4;
-                bankName = bankAccount.bank_name;
+                if (externalAccounts.data.length > 0) {
+                    const bankAccount = externalAccounts.data[0] as any;
+                    last4 = bankAccount.last4;
+                    bankName = bankAccount.bank_name;
+                }
+            } catch (err) {
+                console.error('Error fetching bank details:', err);
+                // Non-fatal, just don't return bank info
             }
         }
 
         return NextResponse.json({
             is_fully_onboarded: isFullyOnboarded,
+            has_account: true,
             details_submitted: account.details_submitted,
             charges_enabled: account.charges_enabled,
-            last4: last4,
-            bank_name: bankName
+            requirements: account.requirements,
+            last4: isAdmin ? last4 : null,
+            bank_name: isAdmin ? bankName : null,
+            is_admin: isAdmin,
+            company_name: company.name
         });
 
     } catch (error: any) {

@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_shadow_banned BOOLEAN DEFAULT false;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_shadow_banned BOOLEAN DEFAULT false;

@@ -67,7 +67,6 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
 
             await createProjectAction({
                 ...formData,
-                // Optional format standardizer if needed
             });
 
             toast({ title: "Success", description: "Project created successfully." });
@@ -86,7 +85,7 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                 meeting_location_type: "Front of House",
                 meeting_instructions: ""
             });
-            // router.refresh() is handled automatically by revalidatePath in the server action
+            if (onProjectCreated) onProjectCreated();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {
@@ -126,13 +125,13 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                             value={formData.address}
                             onChange={(address, components) => {
                                 // MVP geo-restriction: Minnesota only
-                                if (components?.state && components.state !== "Minnesota") {
+                                const state = (components?.state || "").toLowerCase();
+                                if (state && state !== "minnesota" && state !== "mn") {
                                     toast({
                                         title: "📍 Currently Available in Minnesota Only",
                                         description: "SmartBench is currently available in Minnesota, USA. We're expanding soon — stay tuned!",
                                         variant: "destructive",
                                     });
-                                    // Clear the selection so they can't proceed
                                     setFormData(prev => ({ ...prev, address: "", lat: undefined, lng: undefined }));
                                     setIsPinMoved(false);
                                     setIsPinConfirmed(false);
@@ -155,76 +154,78 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                         />
                     </div>
 
-                    {formData.city !== "" && formData.state !== "" && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <div className="space-y-1">
-                                <Label className="text-xs text-muted-foreground">City</Label>
-                                <Input
-                                    value={formData.city}
-                                    onChange={(e) => handleChange('city', e.target.value)}
-                                    className="h-8 text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs text-muted-foreground">State</Label>
-                                <Input
-                                    value={formData.state}
-                                    onChange={(e) => handleChange('state', e.target.value)}
-                                    className="h-8 text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs text-muted-foreground">Zip Code</Label>
-                                <Input
-                                    value={formData.zip}
-                                    onChange={(e) => handleChange('zip', e.target.value)}
-                                    className="h-8 text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs text-muted-foreground">Timezone</Label>
-                                <Input
-                                    value={formData.timezone}
-                                    disabled
-                                    className="h-8 text-sm bg-gray-50"
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     {formData.lat !== undefined && formData.lng !== undefined && (
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label>Confirm Pin Location</Label>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={isPinConfirmed ? "outline" : "default"}
-                                    className={isPinConfirmed ? "border-green-500 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800" : ""}
-                                    disabled={!isPinMoved || isPinConfirmed}
-                                    onClick={() => setIsPinConfirmed(true)}
-                                >
-                                    {isPinConfirmed ? "Confirmed ✓" : "Confirm Pin"}
-                                </Button>
+                        <div className="space-y-4 mt-4">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label>Confirm Pin Location</Label>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={isPinConfirmed ? "outline" : "default"}
+                                        className={isPinConfirmed ? "border-green-500 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800" : ""}
+                                        disabled={!isPinMoved || isPinConfirmed}
+                                        onClick={() => setIsPinConfirmed(true)}
+                                    >
+                                        {isPinConfirmed ? "Confirmed ✓" : "Confirm Pin"}
+                                    </Button>
+                                </div>
+                                <LocationPickerMap
+                                    lat={formData.lat}
+                                    lng={formData.lng}
+                                    onChange={(lat, lng, address, components) => {
+                                        setIsPinMoved(true);
+                                        setIsPinConfirmed(false);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            lat,
+                                            lng,
+                                            ...(address ? { address } : {}),
+                                            ...(components?.city ? { city: components.city } : {}),
+                                            ...(components?.state ? { state: components.state } : {}),
+                                            ...(components?.zipCode ? { zip: components.zipCode } : {}),
+                                            timezone: (lat && lng) ? tzlookup(lat, lng) : "America/Chicago"
+                                        }))
+                                    }}
+                                />
                             </div>
-                            <LocationPickerMap
-                                lat={formData.lat}
-                                lng={formData.lng}
-                                onChange={(lat, lng, address, components) => {
-                                    setIsPinMoved(true);
-                                    setIsPinConfirmed(false);
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        lat,
-                                        lng,
-                                        ...(address ? { address } : {}),
-                                        ...(components?.city ? { city: components.city } : {}),
-                                        ...(components?.state ? { state: components.state } : {}),
-                                        ...(components?.zipCode ? { zip: components.zipCode } : {}),
-                                        timezone: (lat && lng) ? tzlookup(lat, lng) : "America/Chicago"
-                                    }))
-                                }}
-                            />
+
+                            {formData.city !== "" && formData.state !== "" && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">City</Label>
+                                        <Input
+                                            value={formData.city}
+                                            onChange={(e) => handleChange('city', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">State</Label>
+                                        <Input
+                                            value={formData.state}
+                                            onChange={(e) => handleChange('state', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Zip Code</Label>
+                                        <Input
+                                            value={formData.zip}
+                                            onChange={(e) => handleChange('zip', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                        <Input
+                                            value={formData.timezone}
+                                            disabled
+                                            className="h-8 text-sm bg-gray-50"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -245,17 +246,16 @@ export function CreateProjectDialog({ onProjectCreated }: { onProjectCreated?: (
                             />
                         </div>
 
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="meeting_location_type">Meeting Point</Label>
-                        <Select value={formData.meeting_location_type} onValueChange={(v) => handleChange('meeting_location_type', v)}>
-                            <SelectTrigger> <SelectValue /> </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Front of House">Front of House</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                            <Label htmlFor="meeting_location_type">Meeting Point</Label>
+                            <Select value={formData.meeting_location_type} onValueChange={(v) => handleChange('meeting_location_type', v)}>
+                                <SelectTrigger> <SelectValue /> </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Front of House">Front of House</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     {formData.meeting_location_type === 'Other' && (

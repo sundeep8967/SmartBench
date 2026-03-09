@@ -12,11 +12,13 @@ import { LocationPickerMap } from "@/components/ui/location-picker-map";
 import { WorkerProfile } from "@/types";
 import { AddressInput } from "@/components/ui/address-input";
 import tzlookup from "tz-lookup";
+import { Switch } from "@/components/ui/switch";
 
 export interface ExtendedWorkerProfile extends WorkerProfile {
-    home_city?: string;
-    home_state?: string;
-    home_timezone?: string;
+    home_city: string | null;
+    home_state: string | null;
+    home_timezone: string | null;
+    allow_public_testimonials: boolean;
 }
 
 export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorkerProfile }) {
@@ -33,7 +35,8 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
         state: initialData?.home_state || "",
         timezone: initialData?.home_timezone || "America/Chicago",
         lat: initialData?.lat ?? undefined,
-        lng: initialData?.lng ?? undefined
+        lng: initialData?.lng ?? undefined,
+        allow_public_testimonials: initialData?.allow_public_testimonials ?? false
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -41,10 +44,16 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
         setLoading(true);
         try {
             await updateWorkerProfileAction({
-                ...formData,
+                travel_radius_miles: formData.travel_radius_miles,
+                earliest_start_time: formData.earliest_start_time,
+                latest_start_time: formData.latest_start_time,
+                home_zip_code: formData.home_zip_code,
+                lat: formData.lat,
+                lng: formData.lng,
                 home_city: formData.city,
                 home_state: formData.state,
                 home_timezone: formData.timezone,
+                allow_public_testimonials: formData.allow_public_testimonials
             });
             toast({ title: "Success", description: "Worker profile updated successfully." });
         } catch (error: any) {
@@ -72,6 +81,17 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                 <AddressInput
                                     value={formData.home_zip_code}
                                     onChange={(address, components) => {
+                                        // MVP geo-restriction: Minnesota only
+                                        const state = (components?.state || "").toLowerCase();
+                                        if (state && state !== "minnesota" && state !== "mn") {
+                                            toast({
+                                                title: "📍 Minnesota Only",
+                                                description: "Worker profiles are currently restricted to Minnesota.",
+                                                variant: "destructive",
+                                            });
+                                            setFormData(prev => ({ ...prev, home_zip_code: "", lat: undefined, lng: undefined }));
+                                            return;
+                                        }
                                         setIsPinMoved(false);
                                         setIsPinConfirmed(false);
                                         setFormData({
@@ -88,40 +108,6 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">City</Label>
-                                    <Input
-                                        value={formData.city}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">State</Label>
-                                    <Input
-                                        value={formData.state}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">Zip Code</Label>
-                                    <Input
-                                        value={formData.home_zip_code}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, home_zip_code: e.target.value }))}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">Timezone</Label>
-                                    <Input
-                                        value={formData.timezone}
-                                        disabled
-                                        className="h-8 text-sm bg-gray-50"
-                                    />
-                                </div>
-                            </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="travel_radius_miles">Travel Radius (miles)</Label>
@@ -172,6 +158,41 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                         }}
                                     />
                                 </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">City</Label>
+                                        <Input
+                                            value={formData.city}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">State</Label>
+                                        <Input
+                                            value={formData.state}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Zip Code</Label>
+                                        <Input
+                                            value={formData.home_zip_code}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, home_zip_code: e.target.value }))}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                        <Input
+                                            value={formData.timezone}
+                                            disabled
+                                            className="h-8 text-sm bg-gray-50"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -211,6 +232,22 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                 required
                             />
                         </div>
+                    </div>
+
+                    <div className="flex items-center justify-between space-x-2 py-4 border-t border-gray-100">
+                        <div className="flex flex-col space-y-1">
+                            <Label htmlFor="allow_public_testimonials" className="font-semibold text-gray-900">
+                                Allow Testimonials on Public Profile
+                            </Label>
+                            <span className="text-sm text-gray-500">
+                                If enabled, borrowers can see written feedback from your past completed jobs on your marketplace profile.
+                            </span>
+                        </div>
+                        <Switch
+                            id="allow_public_testimonials"
+                            checked={formData.allow_public_testimonials}
+                            onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, allow_public_testimonials: checked }))}
+                        />
                     </div>
 
                     <div className="flex justify-end pt-4">

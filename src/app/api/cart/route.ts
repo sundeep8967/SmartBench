@@ -24,7 +24,13 @@ export async function GET(request: NextRequest) {
         .select(`
             *,
             work_order:work_orders(*, project:projects(*)),
-            worker_profile:worker_profiles(*)
+            worker_profile:worker_profiles(*),
+            worker_user:users!cart_items_worker_id_fkey(
+                full_name,
+                company_members!inner(
+                    companies(name)
+                )
+            )
         `)
         .eq('borrower_company_id', member.company_id)
         .order('created_at', { ascending: false });

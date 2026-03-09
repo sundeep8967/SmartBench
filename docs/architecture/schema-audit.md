@@ -318,6 +318,44 @@ This provides a chronological audit trail of all state transitions for the entit
 
 **Note:** Policy validation logging has been removed as part of the self-attestation model. Break/lunch policy compliance is now tracked via Terms of Service acceptance in the `user_agreements` table (see [schema-identity.md](./schema-identity.md#user_agreements) for details).
 
+### system_logs
+
+```sql
+CREATE TABLE system_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  level VARCHAR(20) NOT NULL, -- ENUM: 'info', 'warning', 'error', 'critical'
+  service VARCHAR(50) NOT NULL, -- ENUM: 'stripe_webhook', 'cron_insurance', 'cron_notifications', 'system'
+  message TEXT NOT NULL,
+  metadata JSONB,
+  resolved BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX idx_system_logs_level ON system_logs(level);
+CREATE INDEX idx_system_logs_service ON system_logs(service);
+CREATE INDEX idx_system_logs_resolved ON system_logs(resolved);
+CREATE INDEX idx_system_logs_created_at ON system_logs(created_at DESC);
+```
+
+**Technical Constraints:**
+- Used for application-level event sourcing and error tracking (e.g., Stripe webhook failures, cron job successes).
+- Only SuperAdmins can view and update.
+
+### system_settings
+
+```sql
+CREATE TABLE public.system_settings (
+  key VARCHAR(255) PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_by UUID REFERENCES public.users(id)
+);
+```
+
+**Technical Constraints:**
+- Global key-value store for platform configurations (e.g., `pause_wednesday_cutoff`).
+- RLS restricted so only SuperAdmins can view, insert, or update.
+
 ---
 
 **Back to:** [Database Schema](./schema.md)

@@ -1,5 +1,9 @@
 # Epic 2: Worker Onboarding & Profile Management
 
+> [!NOTE]
+> **Implementation Status**: ✅ COMPLETE
+> *Please refer to `task.md` in the AI workspace for the granular, real-time checklist of completed stories within this Epic.*
+
 **Epic Goal:** Enable workers to create comprehensive profiles, allow admins to manage company rosters, implement insurance verification workflows, and enable workers to be listed in the marketplace. This epic delivers the complete worker lifecycle from invitation to marketplace listing.
 
 ## Worker State Machine
@@ -240,7 +244,7 @@ sequenceDiagram
     end
 ```
 
-## Story 2.1: Company Onboarding Wizard {#story-21-company-onboarding-wizard}
+## Story 2.1: Company Onboarding Wizard {#story-21-company-onboarding-wizard} — ✅ IMPLEMENTED
 
 As a new company admin,
 I want to complete a guided onboarding process,
@@ -379,7 +383,7 @@ sequenceDiagram
     end
 ```
 
-## Story 2.2: Solopreneur Auto-Role Assignment {#story-22-solopreneur-auto-role-assignment}
+## Story 2.2: Solopreneur Auto-Role Assignment {#story-22-solopreneur-auto-role-assignment} — ✅ IMPLEMENTED
 
 As a solopreneur creating an account,
 I want to automatically receive all necessary roles,
@@ -391,22 +395,22 @@ so that I can immediately use all platform features.
 3. User can access all features (list self, book workers, verify hours, manage financials)
 4. No additional role assignment required
 
-## Story 2.3: Bulk Roster Invite {#story-23-bulk-roster-invite}
+## Story 2.3: Bulk Roster Invite {#story-23-bulk-roster-invite} — ✅ IMPLEMENTED
 
 As a company admin or manager,
 I want to invite multiple workers at once via bulk import,
 so that I can quickly onboard my entire crew.
 
 **Acceptance Criteria:**
-1. "Add Crew" input form accepts list of Mobile Numbers + First Names
-2. System creates User records with State = 'Invited' for each entry
-3. SMS Magic Links sent to each mobile number
-4. Duplicate mobile number detection prevents multiple invites
+1. Admin can upload or enter multiple email addresses to invite workers to the platform simultaneously.
+2. System sends email Magic Links to all invited workers.
+3. System creates User records with State = 'Invited' for each entry.
+4. Duplicate email address detection prevents multiple invites.
 5. Admin and Manager see list of invited users with status (Invited, Pending_Profile, Profile_Complete)
 6. Admin and Manager can resend invite if needed
 7. **Role-Based Access:** Admin and Manager can invite workers via bulk roster. Manager can invite workers and supervisors, but cannot assign Manager or Admin roles (Admin only).
 
-## Story 2.4: Worker Profile Creation {#story-24-worker-profile-creation}
+## Story 2.4: Worker Profile Creation {#story-24-worker-profile-creation} — ✅ IMPLEMENTED
 
 As an invited worker,
 I want to complete my profile with skills, experience, and certifications,
@@ -430,7 +434,7 @@ so that I can be listed in the marketplace.
 - **Network Error During Submission:** If network error occurs during profile submission, show: "Network error. Your profile has been saved locally and will sync when online." Display sync status indicator.
 - **Duplicate Profile Submission:** If profile already submitted, show: "Profile already submitted. Please wait for admin review." Redirect to profile status page.
 
-## Story 2.5: Profile Review and Listing {#story-25-profile-review-and-listing}
+## Story 2.5: Profile Review and Listing {#story-25-profile-review-and-listing} — ✅ IMPLEMENTED
 
 As a lender company admin or manager,
 I want to review worker profiles and control marketplace listing,
@@ -455,7 +459,7 @@ so that I can ensure quality and set appropriate rates.
 - **Rate Validation Failure:** If rate is invalid (e.g., negative, too high), show: "Invalid rate. Please enter a valid hourly rate between $0.01 and $999.99." Inline validation prevents submission.
 - **Network Error During Update:** If network error occurs during rate or listing update, show: "Network error. Your changes may not have been saved. Please try again." Retry button provided with status check.
 
-## Story 2.6: Enhanced Worker Profile Features {#story-26-company-settings-configuration}
+## Story 2.6: Enhanced Worker Profile Features {#story-26-company-settings-configuration} — ✅ IMPLEMENTED
 
 As a worker or admin,
 I want to add detailed profile information including testimonials,
@@ -470,7 +474,7 @@ so that borrowers can make informed booking decisions.
 6. Profile shows aggregate rating and individual dimension scores (Punctuality, Attitude, Effort, Teamwork)
 7. Skills breakdown shows ratings per skill: "Carpentry: 5/5 (3 ratings), Painting: 4.5/5 (2 ratings)"
 
-## Story 2.7: Insurance Upload and Lender Self-Certification {#story-27-insurance-upload-and-lender-self-certification}
+## Story 2.7: Insurance Upload and Lender Self-Certification {#story-27-insurance-upload-and-lender-self-certification} — ✅ IMPLEMENTED
 
 As a lender company admin,
 I want to upload insurance documents and self-certify expiration dates,
@@ -675,7 +679,7 @@ sequenceDiagram
 7. **Policy Activation/Deactivation:** Automatic deactivation on expiration or new policy upload
 8. **Independent Operation:** Insurance validation is completely separate from payment processing. The Wednesday payment loop only processes bookings with status `Active` and assumes compliance.
 
-## Story 2.9: Lender Policy Configuration {#story-29-lender-policy-configuration}
+## Story 2.9: Lender Policy Configuration {#story-29-lender-policy-configuration} — ✅ IMPLEMENTED
 
 As a lender company admin,
 I want to configure break/lunch policies and overtime authorization settings,
@@ -753,7 +757,7 @@ so that my company policies are enforced according to my configured settings (I 
 - **Mid-Day Policy Changes:** If a lender changes policies mid-day (e.g., at 2 PM), and a worker has already clocked in for a booking created before the policy change (e.g., booking created at 8 AM), the worker's shift uses the policies that were in effect at booking creation time (8 AM policies), not the new policies (2 PM policies).
 - **New Bookings:** Any bookings created after a policy change (e.g., after 2 PM) will use the new policies. The policy change timestamp is tracked in the `user_agreements` table via the self-attestation record.
 
-## Story 2.8: Subscription Management {#story-28-subscription-management}
+## Story 2.8: Subscription Management — ✅ IMPLEMENTED {#story-28-subscription-management}
 
 As a system,
 I want to manage borrower subscriptions and enforce booking gates,

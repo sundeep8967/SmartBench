@@ -12,10 +12,10 @@ This document contains complete SQL table definitions, constraints, indexes, and
 
 ## Fulfillment Domain
 
-### time_log
+### time_entries
 
 ```sql
-CREATE TABLE time_log (
+CREATE TABLE time_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   worker_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -37,13 +37,13 @@ CREATE TABLE time_log (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_time_log_booking_id ON time_log(booking_id);
-CREATE INDEX idx_time_log_worker_id ON time_log(worker_id);
-CREATE INDEX idx_time_log_status ON time_log(status);
-CREATE INDEX idx_time_log_clock_in_time ON time_log(clock_in_time);
-CREATE INDEX idx_time_log_verified_metrics ON time_log(worker_id, status, clock_in_time, clock_out_time, verified_at) 
+CREATE INDEX idx_time_entries_booking_id ON time_entries(booking_id);
+CREATE INDEX idx_time_entries_worker_id ON time_entries(worker_id);
+CREATE INDEX idx_time_entries_status ON time_entries(status);
+CREATE INDEX idx_time_entries_clock_in_time ON time_entries(clock_in_time);
+CREATE INDEX idx_time_entries_verified_metrics ON time_entries(worker_id, status, clock_in_time, clock_out_time, verified_at) 
   WHERE status = 'Verified';
-CREATE INDEX idx_time_log_auto_approval_time ON time_log(auto_approval_time) 
+CREATE INDEX idx_time_entries_auto_approval_time ON time_entries(auto_approval_time) 
   WHERE status IN ('Pending_Worker_Review', 'Pending_Supervisor_Reevaluation', 'Pending_Supervisor_Verification');
 ```
 
