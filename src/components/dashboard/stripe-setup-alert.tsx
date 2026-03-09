@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function StripeSetupAlert() {
     const [status, setStatus] = useState<"loading" | "needs_setup" | "onboarded">("loading");
+    const [isConnecting, setIsConnecting] = useState(false);
 
     useEffect(() => {
         const checkStripeStatus = async () => {
@@ -31,6 +32,23 @@ export function StripeSetupAlert() {
         checkStripeStatus();
     }, []);
 
+    const handleConnectStripe = async () => {
+        setIsConnecting(true);
+        try {
+            const res = await fetch("/api/stripe/connect", { method: "POST" });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || "Failed to connect to Stripe");
+            }
+        } catch (err: any) {
+            console.error("Stripe connection error:", err);
+            alert(err.message || "Failed to connect to Stripe. Please try again.");
+            setIsConnecting(false);
+        }
+    };
+
     if (status !== "needs_setup") return null;
 
     return (
@@ -45,13 +63,14 @@ export function StripeSetupAlert() {
                         You need to set up your payout method to be able to list or hire a worker. It only takes a few minutes.
                     </p>
                 </div>
-                <Link
-                    href="/dashboard/settings"
+                <button
+                    onClick={handleConnectStripe}
+                    disabled={isConnecting}
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-yellow-600 text-white hover:bg-yellow-700 h-9 px-4 py-2 shrink-0"
                 >
-                    Setup Stripe
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                    {isConnecting ? "Opening..." : "Setup Stripe"}
+                    {!isConnecting && <ArrowRight className="ml-2 h-4 w-4" />}
+                </button>
             </CardContent>
         </Card>
     );
