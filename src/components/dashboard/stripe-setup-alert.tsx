@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export function StripeSetupAlert() {
     const [status, setStatus] = useState<"loading" | "needs_setup" | "onboarded">("loading");
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const checkStripeStatus = async () => {
@@ -15,6 +16,7 @@ export function StripeSetupAlert() {
                 const res = await fetch("/api/stripe/status");
                 if (res.ok) {
                     const data = await res.json();
+                    setIsAdmin(data.is_admin);
                     if (data.is_fully_onboarded) {
                         setStatus("onboarded");
                     } else {
@@ -49,7 +51,7 @@ export function StripeSetupAlert() {
         }
     };
 
-    if (status !== "needs_setup") return null;
+    if (status !== "needs_setup" || !isAdmin) return null;
 
     return (
         <Card className="shadow-sm border-yellow-200 bg-yellow-50 mb-6">

@@ -25,6 +25,12 @@ export async function createProjectAction(formData: any) {
         throw new Error("Insufficient permissions");
     }
 
+    // MVP geo-restriction: Minnesota only
+    const stateInput = (formData.state || "").toLowerCase();
+    if (stateInput && stateInput !== "minnesota" && stateInput !== "mn") {
+        throw new Error("SmartBench is currently only available in Minnesota.");
+    }
+
     // Auto-derive timezone from project coordinates
     const timezone = (formData.lat && formData.lng)
         ? tzlookup(formData.lat, formData.lng)
@@ -105,9 +111,16 @@ export async function updateProjectAction(projectId: string, formData: any) {
 
     if (!member) throw new Error("Forbidden");
 
+    // Check Role
     const roles = (member.roles as string[]).map(r => r.toLowerCase());
     if (!roles.includes('admin') && !roles.includes('manager')) {
         throw new Error("Insufficient permissions");
+    }
+
+    // MVP geo-restriction: Minnesota only
+    const stateInput = (formData.state || "").toLowerCase();
+    if (stateInput && stateInput !== "minnesota" && stateInput !== "mn") {
+        throw new Error("SmartBench is currently only available in Minnesota.");
     }
 
     // Auto-derive timezone from project coordinates

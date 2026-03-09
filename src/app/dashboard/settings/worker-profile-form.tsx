@@ -81,6 +81,17 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                 <AddressInput
                                     value={formData.home_zip_code}
                                     onChange={(address, components) => {
+                                        // MVP geo-restriction: Minnesota only
+                                        const state = (components?.state || "").toLowerCase();
+                                        if (state && state !== "minnesota" && state !== "mn") {
+                                            toast({
+                                                title: "📍 Minnesota Only",
+                                                description: "Worker profiles are currently restricted to Minnesota.",
+                                                variant: "destructive",
+                                            });
+                                            setFormData(prev => ({ ...prev, home_zip_code: "", lat: undefined, lng: undefined }));
+                                            return;
+                                        }
                                         setIsPinMoved(false);
                                         setIsPinConfirmed(false);
                                         setFormData({

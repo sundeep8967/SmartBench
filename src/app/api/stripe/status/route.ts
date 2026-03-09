@@ -23,11 +23,10 @@ export async function GET(req: Request) {
             return NextResponse.json({ is_fully_onboarded: false });
         }
 
-        // 2. RBAC Check: Must be Admin to view Stripe Status
+        // 2. RBAC Check: We'll return basic status to everyone in company, 
+        // but withhold sensitive bank details from non-admins.
         const roles = (memberRecord.roles as unknown as string[]) || [];
-        if (!roles.some(r => r.toLowerCase() === 'admin')) {
-            return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
-        }
+        const isAdmin = roles.some(r => r.toLowerCase() === 'admin');
 
         // 2. Get company's stripe_account_id
         const { data: company, error: companyError } = await supabase
@@ -67,8 +66,9 @@ export async function GET(req: Request) {
             is_fully_onboarded: isFullyOnboarded,
             details_submitted: account.details_submitted,
             charges_enabled: account.charges_enabled,
-            last4: last4,
-            bank_name: bankName
+            last4: isAdmin ? last4 : null,
+            bank_name: isAdmin ? bankName : null,
+            is_admin: isAdmin
         });
 
     } catch (error: any) {

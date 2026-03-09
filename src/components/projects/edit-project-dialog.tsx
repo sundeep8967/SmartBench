@@ -125,7 +125,8 @@ export function EditProjectDialog({ project, trigger }: { project: Project, trig
                             value={formData.address}
                             onChange={(address, components) => {
                                 // MVP geo-restriction: Minnesota only
-                                if (components?.state && components.state !== "Minnesota") {
+                                const state = (components?.state || "").toLowerCase();
+                                if (state && state !== "minnesota" && state !== "mn") {
                                     toast({
                                         title: "📍 Currently Available in Minnesota Only",
                                         description: "SmartBench is currently available in Minnesota, USA. We're expanding soon — stay tuned!",

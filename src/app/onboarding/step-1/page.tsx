@@ -45,6 +45,14 @@ export default function Step1Info() {
 
     const handleAddressChange = (address: string, components?: AddressComponents) => {
         if (components) {
+            // MVP geo-restriction: Minnesota only
+            const state = (components.state || "").toLowerCase();
+            if (state && state !== "minnesota" && state !== "mn") {
+                alert("📍 SmartBench is currently available in Minnesota only. We're expanding soon!");
+                setFormData(prev => ({ ...prev, address: "", lat: undefined, lng: undefined }));
+                return;
+            }
+
             setFormData(prev => ({
                 ...prev,
                 address: components.street || address,
