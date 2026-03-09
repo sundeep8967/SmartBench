@@ -44,6 +44,7 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
 
     const [selectedType, setSelectedType] = useState("General_Liability");
     const [expirationDate, setExpirationDate] = useState("");
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [selfCertified, setSelfCertified] = useState(false);
 
     useEffect(() => {
@@ -80,23 +81,52 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
             return;
         }
 
+        if (!selectedFile) {
+            toast({ title: "File Required", description: "Please select your insurance policy PDF.", variant: "destructive" });
+            return;
+        }
+
+        if (selectedFile.type !== "application/pdf") {
+            toast({ title: "Invalid File Type", description: "Only PDF files are allowed.", variant: "destructive" });
+            return;
+        }
+
+        if (selectedFile.size > 10 * 1024 * 1024) {
+            toast({ title: "File Too Large", description: "Max file size is 10MB.", variant: "destructive" });
+            return;
+        }
+
         setSaving(true);
         try {
             const supabase = createClient();
 
-            // Deactivate any existing active policy of the same type
+            // 1. Upload to Storage
+            const fileExt = "pdf";
+            const fileName = `${companyId}/${selectedType}_${Date.now()}.${fileExt}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('insurance-docs')
+                .upload(fileName, selectedFile);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('insurance-docs')
+                .getPublicUrl(fileName);
+
+            // 2. Deactivate any existing active policy of the same type
             await supabase
                 .from('insurance_policies')
                 .update({ is_active: false })
-                .eq('company_id', companyId)
+                .eq('company_id', companyId!)
                 .eq('insurance_type', selectedType)
                 .eq('is_active', true);
 
-            // Insert new policy
+            // 3. Insert new policy
             const { error } = await supabase.from('insurance_policies').insert({
                 company_id: companyId,
                 insurance_type: selectedType,
                 expiration_date: expirationDate,
+                document_url: publicUrl,
                 is_active: true,
                 is_self_certified_by_lender: true,
             });
@@ -105,6 +135,7 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
 
             toast({ title: "Policy Uploaded ✓", description: `${POLICY_TYPES.find(t => t.value === selectedType)?.label} policy has been uploaded and certified.` });
             setExpirationDate("");
+            setSelectedFile(null);
             setSelfCertified(false);
             await loadPolicies();
         } catch (err: any) {
@@ -214,9 +245,40 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
                                     value={expirationDate}
                                     onChange={e => setExpirationDate(e.target.value)}
                                     min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
-                                    required
                                 />
                             </div>
+                        </div>
+
+                        {/* File Upload */}
+                        <div className="space-y-2">
+                            <Label>Insurance Policy Document (PDF)</Label>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
+                                    onClick={() => document.getElementById('policy-file-input')?.click()}
+                                >
+                                    <Upload className="h-4 w-4 mr-2 text-gray-400" />
+                                    {selectedFile ? "Change File" : "Choose PDF"}
+                                </Button>
+                                <input
+                                    id="policy-file-input"
+                                    type="file"
+                                    accept=".pdf"
+                                    className="hidden"
+                                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                                />
+                                {selectedFile && (
+                                    <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded border border-blue-100 animate-in fade-in slide-in-from-left-2">
+                                        <CheckCircle className="h-3 w-3 text-blue-500" />
+                                        <span className="text-xs font-medium text-blue-700 max-w-[200px] truncate">
+                                            {selectedFile.name}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[10px] text-gray-400">Max size 10MB. Only PDF files are supported.</p>
                         </div>
 
                         {/* Self-Certification */}
