@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 import { fetcher } from "@/lib/swr-fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ interface WorkOrder {
 export default function MarketplacePage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
     const [selectedTrade, setSelectedTrade] = useState("All");
     const [addingToCart, setAddingToCart] = useState<string | null>(null);
     const { refreshCart, cartItems } = useCart();
@@ -75,7 +77,7 @@ export default function MarketplacePage() {
 
     // Build SWR key from search params
     const params = new URLSearchParams();
-    if (searchTerm) params.set("q", searchTerm);
+    if (debouncedSearchTerm) params.set("q", debouncedSearchTerm);
     if (selectedTrade !== "All") params.set("trade", selectedTrade);
     if (selectedProjectId !== "All") params.set("projectId", selectedProjectId);
     if (shiftHours !== "Any") params.set("shift_hours", shiftHours);
