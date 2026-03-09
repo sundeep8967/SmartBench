@@ -34,6 +34,15 @@ export async function onboardCompany(
     params: CreateCompanyParams
 ): Promise<OnboardCompanyResult> {
     const supabase = await createClient()
+
+    // Create an admin client to bypass RLS during onboarding
+    // (User is not yet a member, so returning clause would fail)
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const { companyName, address, city, state, zipCode, ein, contactPhone, type, lat, lng } = params
 
     // 1. Check for existing membership (retry/resume flow)
@@ -48,8 +57,8 @@ export async function onboardCompany(
     let isNew = false
 
     if (existingMember) {
-        // Update existing company
-        const { error } = await supabase
+        // Update existing company (using admin client to be consistent and bypass RLS)
+        const { error } = await supabaseAdmin
             .from('companies')
             .update({
                 name: companyName,
@@ -67,8 +76,8 @@ export async function onboardCompany(
         if (error) throw new Error(`Failed to update company: ${error.message}`)
         companyId = existingMember.company_id
     } else {
-        // Create new company
-        const { data: company, error: companyError } = await supabase
+        // Create new company using admin client
+        const { data: company, error: companyError } = await supabaseAdmin
             .from('companies')
             .insert({
                 name: companyName,
@@ -88,8 +97,8 @@ export async function onboardCompany(
 
         if (companyError) throw new Error(`Failed to create company: ${companyError.message}`)
 
-        // Link user as admin
-        const { error: memberError } = await supabase
+        // Link user as admin using admin client
+        const { error: memberError } = await supabaseAdmin
             .from('company_members')
             .insert({
                 company_id: company.id,
@@ -105,14 +114,15 @@ export async function onboardCompany(
     }
 
     // 2. Mark onboarding complete in auth metadata (baked into JWT)
+    // Standard client is used here as it handles the current user's session
     const { error: metadataError } = await supabase.auth.updateUser({
         data: { is_onboarded: true },
     })
 
     if (metadataError) throw new Error(`Failed to update auth metadata: ${metadataError.message}`)
 
-    // 3. Also update public.users (for DB queries that don't read JWT)
-    const { data: userRow } = await supabase
+    // 3. Also update public.users (using admin client)
+    const { data: userRow } = await supabaseAdmin
         .from('users')
         .update({ is_onboarded: true })
         .eq('id', userId)
