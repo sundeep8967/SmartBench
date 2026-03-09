@@ -447,7 +447,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                     return (
                                         <tr
                                             key={project.id}
-                                            className={`border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-[1.005] origin-left animate-in fade-in slide-in-from-left-4 relative ${isSelected ? 'bg-primary/5' : ''}`}
+                                            className={`border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors duration-200 animate-in fade-in slide-in-from-left-4 relative ${isSelected ? 'bg-primary/5' : ''}`}
                                             style={{ animationFillMode: 'both', animationDelay: `${Math.min(filteredProjects.indexOf(project) * 30, 300)}ms` }}
                                             onClick={(e) => handleItemClick(project.id, e)}
                                             onMouseDown={(e) => handlePressStart(project.id, e)}
@@ -456,12 +456,12 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                                             onTouchStart={(e) => handlePressStart(project.id, e)}
                                             onTouchEnd={handlePressEnd}
                                         >
-                                            {isNavigatingThis && (
-                                                <td colSpan={100} className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-20 flex items-center justify-center">
-                                                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                                                </td>
-                                            )}
-                                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <td className="px-4 py-3 text-center relative" onClick={(e) => e.stopPropagation()}>
+                                                {isNavigatingThis && (
+                                                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-l-lg">
+                                                        <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                                                    </div>
+                                                )}
                                                 <input
                                                     type="checkbox"
                                                     checked={isSelected}

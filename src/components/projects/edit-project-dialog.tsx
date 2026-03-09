@@ -150,24 +150,6 @@ export function EditProjectDialog({ project, trigger }: { project: Project, trig
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">City</Label>
-                            <Input value={formData.city} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">State</Label>
-                            <Input value={formData.state} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Zip</Label>
-                            <Input value={formData.zip} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Timezone</Label>
-                            <Input value={formData.timezone} disabled className="h-8 text-sm bg-gray-50" />
-                        </div>
-                    </div>
 
                     {formData.lat !== undefined && formData.lng !== undefined && (
                         <div className="space-y-2">
@@ -188,6 +170,25 @@ export function EditProjectDialog({ project, trigger }: { project: Project, trig
                                     }))
                                 }}
                             />
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">City</Label>
+                                    <Input value={formData.city} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">State</Label>
+                                    <Input value={formData.state} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Zip</Label>
+                                    <Input value={formData.zip} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                    <Input value={formData.timezone} disabled className="h-8 text-sm bg-gray-50" />
+                                </div>
+                            </div>
                         </div>
                     )}
 

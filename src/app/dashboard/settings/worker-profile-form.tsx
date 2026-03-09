@@ -108,40 +108,6 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">City</Label>
-                                    <Input
-                                        value={formData.city}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">State</Label>
-                                    <Input
-                                        value={formData.state}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">Zip Code</Label>
-                                    <Input
-                                        value={formData.home_zip_code}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, home_zip_code: e.target.value }))}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">Timezone</Label>
-                                    <Input
-                                        value={formData.timezone}
-                                        disabled
-                                        className="h-8 text-sm bg-gray-50"
-                                    />
-                                </div>
-                            </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="travel_radius_miles">Travel Radius (miles)</Label>
@@ -191,6 +157,41 @@ export function WorkerProfileForm({ initialData }: { initialData?: ExtendedWorke
                                             }))
                                         }}
                                     />
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">City</Label>
+                                        <Input
+                                            value={formData.city}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">State</Label>
+                                        <Input
+                                            value={formData.state}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Zip Code</Label>
+                                        <Input
+                                            value={formData.home_zip_code}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, home_zip_code: e.target.value }))}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                        <Input
+                                            value={formData.timezone}
+                                            disabled
+                                            className="h-8 text-sm bg-gray-50"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}

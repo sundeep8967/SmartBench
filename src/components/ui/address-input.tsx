@@ -105,7 +105,7 @@ export function AddressInput({ value, onChange, placeholder = "Search for an add
                 onLoad={onLoad}
                 onPlaceChanged={onPlaceChanged}
                 options={{
-                    types: types || undefined,
+                    ...(types ? { types } : {}),
                     componentRestrictions: { country: 'us' },
                     // Biasing towards Minnesota bounds
                     bounds: {
