@@ -94,7 +94,7 @@ export default function RosterPage() {
         return (
             <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                <span className="ml-3 text-gray-500">Loading roster...</span>
+                <span className="ml-3 text-gray-500">Loading employee...</span>
             </div>
         );
     }

@@ -96,6 +96,24 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
             return;
         }
 
+        const logToSystem = async (level: 'info' | 'warning' | 'error' | 'critical', message: string, metadata?: any) => {
+            try {
+                const supabase = createClient();
+                await supabase.from('system_logs').insert({
+                    level,
+                    service: 'InsuranceVault',
+                    message,
+                    metadata: {
+                        company_id: companyId,
+                        user_id: (await supabase.auth.getUser()).data.user?.id,
+                        ...metadata
+                    }
+                });
+            } catch (loggingErr) {
+                console.error('Failed to write to system_logs:', loggingErr);
+            }
+        };
+
         setSaving(true);
         try {
             const supabase = createClient();
@@ -107,7 +125,10 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
                 .from('insurance-docs')
                 .upload(fileName, selectedFile);
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                await logToSystem('error', `Storage upload failed: ${uploadError.message}`, { fileName, selectedType });
+                throw uploadError;
+            }
 
             const { data: { publicUrl } } = supabase.storage
                 .from('insurance-docs')
@@ -131,7 +152,12 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
                 is_self_certified_by_lender: true,
             });
 
-            if (error) throw error;
+            if (error) {
+                await logToSystem('error', `Database insert failed: ${error.message}`, { selectedType, expirationDate });
+                throw error;
+            }
+
+            await logToSystem('info', `Insurance policy uploaded successfully: ${selectedType}`, { expirationDate });
 
             toast({ title: "Policy Uploaded ✓", description: `${POLICY_TYPES.find(t => t.value === selectedType)?.label} policy has been uploaded and certified.` });
             setExpirationDate("");
@@ -139,6 +165,7 @@ export function InsuranceVault({ companyId }: { companyId?: string }) {
             setSelfCertified(false);
             await loadPolicies();
         } catch (err: any) {
+            console.error('Upload error:', err);
             toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
         } finally {
             setSaving(false);

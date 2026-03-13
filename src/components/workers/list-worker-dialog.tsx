@@ -100,7 +100,7 @@ export function ListWorkerDialog({ workerId, workerName, trade, rate, homeZipCod
                             </div>
                             <div className="flex justify-between items-center text-sm mt-1">
                                 <span className="text-gray-500">Current Rate:</span>
-                                <span className="font-medium text-gray-900">{rate ? `$${rate}/hr` : 'N/A'}</span>
+                                <span className="font-medium text-gray-900">{hourlyRate ? `$${hourlyRate}/hr` : 'N/A'}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm mt-1">
                                 <span className="text-gray-500">Home Zip Code:</span>
