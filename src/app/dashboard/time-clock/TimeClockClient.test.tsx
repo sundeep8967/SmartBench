@@ -48,7 +48,9 @@ describe('TimeClockClient', () => {
         break_start: null,
         total_break_minutes: 0,
         status: 'Active',
-        project: { name: 'Downtown Highrise' }
+        project: { name: 'Downtown Highrise' },
+        travel_start: null,
+        travel_duration_minutes: 0
     };
 
     beforeEach(() => {

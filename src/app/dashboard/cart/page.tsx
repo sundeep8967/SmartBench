@@ -11,37 +11,23 @@ import Link from "next/link";
 // Ideally update src/types/index.ts or similar if CartItem is defined there.
 // For now, I'll update the component usage.
 import { CartItem } from "@/types"; // We will check this file next.
+import { useCart } from "@/lib/contexts/CartContext";
 
 export default function CartPage() {
     const router = useRouter();
     const { toast } = useToast();
-    const [cartItems, setCartItems] = useState<CartItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { cartItems, loading, refreshCart } = useCart();
     const [checkingOut, setCheckingOut] = useState(false);
 
     useEffect(() => {
-        fetchCart();
-    }, []);
-
-    const fetchCart = async () => {
-        try {
-            const res = await fetch("/api/cart");
-            if (res.ok) {
-                const data = await res.json();
-                setCartItems(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch cart", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        refreshCart();
+    }, [refreshCart]);
 
     const handleRemove = async (id: string) => {
         try {
             const res = await fetch(`/api/cart/${id}`, { method: "DELETE" });
             if (res.ok) {
-                setCartItems(prev => prev.filter(item => item.id !== id));
+                await refreshCart();
                 toast({ title: "Removed", description: "Item removed from cart." });
             }
         } catch (error) {

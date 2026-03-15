@@ -12,6 +12,7 @@ import { CheckCircle2, ChevronLeft, Loader2, AlertCircle, Briefcase, Calendar } 
 import { useToast } from "@/components/ui/use-toast";
 import { CartItem } from "@/types";
 import { CheckoutStripeProvider } from "@/components/checkout/stripe-checkout-form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function CheckoutContent() {
     const router = useRouter();
@@ -20,8 +21,11 @@ function CheckoutContent() {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [selectedProjectId, setSelectedProjectId] = useState<string>('');
     const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
     const [bookingType, setBookingType] = useState('Short-Term');
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     useEffect(() => {
         fetchCart();
@@ -33,6 +37,16 @@ function CheckoutContent() {
             if (res.ok) {
                 const data = await res.json();
                 setCartItems(data);
+                
+                // If we have items with project_id, pre-select it
+                if (data.length > 0 && data[0].project_id) {
+                    setSelectedProjectId(data[0].project_id);
+                }
+                
+                if (data.length > 0) {
+                    // Fetch projects using the borrower_company_id of the first cart item
+                    fetchProjects((data[0] as any).borrower_company_id);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch cart", error);
@@ -42,9 +56,31 @@ function CheckoutContent() {
         }
     };
 
+    const fetchProjects = async (companyId: string) => {
+        try {
+            const res = await fetch(`/api/projects/list?companyId=${companyId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setProjects(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch projects", error);
+        }
+    };
+
     const handleConfirm = async () => {
+        if (!selectedProjectId) {
+            toast({ title: "Project Required", description: "Please select a project to proceed.", variant: "destructive" });
+            return;
+        }
+
         if (!paymentMethodId) {
             toast({ title: "Payment Required", description: "Please save a payment method first.", variant: "destructive" });
+            return;
+        }
+        
+        if (!agreedToTerms) {
+            toast({ title: "Agreement Required", description: "Please agree to the Master Service Agreement and Privacy Policy.", variant: "destructive" });
             return;
         }
 
@@ -53,7 +89,7 @@ function CheckoutContent() {
             const res = await fetch("/api/bookings/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentMethodId, bookingType })
+                body: JSON.stringify({ paymentMethodId, bookingType, projectId: selectedProjectId })
             });
             const data = await res.json();
 
@@ -174,10 +210,37 @@ function CheckoutContent() {
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Project</Label>
-                                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
-                                    {(cartItems[0] as any)?.project?.name || "Direct Hire"}
-                                </div>
+                                <Label>Select Project</Label>
+                                {projects.length === 0 ? (
+                                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800 flex flex-col space-y-2">
+                                        <p className="font-medium flex items-center">
+                                            <AlertCircle className="w-4 h-4 mr-2" />
+                                            No projects available
+                                        </p>
+                                        <p className="text-xs">You must create a project before you can book workers.</p>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="w-full bg-white hover:bg-yellow-100 text-yellow-900 border-yellow-300 mt-2"
+                                            onClick={() => router.push('/dashboard/projects')}
+                                        >
+                                            Create a Project
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                                        <SelectTrigger className="w-full bg-white">
+                                            <SelectValue placeholder="Select a project" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {projects.map((proj) => (
+                                                <SelectItem key={proj.id} value={proj.id}>
+                                                    {proj.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="dates">Duration</Label>
@@ -188,7 +251,7 @@ function CheckoutContent() {
                             <div className="col-span-1 md:col-span-2 space-y-2">
                                 <Label>Site Address</Label>
                                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
-                                    {(cartItems[0] as any)?.project?.address || "No address provided"}
+                                    {projects.find(p => p.id === selectedProjectId)?.address || "No address provided for selected project"}
                                 </div>
                             </div>
                         </div>
@@ -252,11 +315,21 @@ function CheckoutContent() {
                         )}
 
                         <div className="mt-6 space-y-4">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="terms" />
-                                <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                    I agree to the <a href="#" className="underline text-blue-600">Master Service Agreement</a> and <a href="#" className="underline text-blue-600">Privacy Policy</a>
-                                </label>
+                            <div className="flex items-start space-x-3">
+                                <Checkbox 
+                                    id="terms" 
+                                    checked={agreedToTerms} 
+                                    onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)} 
+                                    className="mt-1"
+                                />
+                                <div className="space-y-1 leading-none">
+                                    <label htmlFor="terms" className="text-sm font-medium cursor-pointer text-gray-900">
+                                        I adhere to the Terms & Conditions
+                                    </label>
+                                    <p className="text-xs text-gray-500">
+                                        I agree to the <a href="#" className="underline text-blue-600 hover:text-blue-800">Master Service Agreement</a> and <a href="#" className="underline text-blue-600 hover:text-blue-800">Privacy Policy</a>
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </Card>
@@ -305,9 +378,9 @@ function CheckoutContent() {
                         </div>
 
                         <Button
-                            className="w-full mt-8 bg-blue-900 hover:bg-blue-800 h-12 text-lg text-white"
+                            className="w-full mt-8 bg-blue-900 hover:bg-blue-800 h-12 text-lg text-white disabled:bg-gray-300 disabled:text-gray-500"
                             onClick={handleConfirm}
-                            disabled={processing || !paymentMethodId}
+                            disabled={processing || !paymentMethodId || !selectedProjectId || !agreedToTerms}
                         >
                             {processing ? (
                                 <>

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     const body = await request.json();
-    const { paymentMethodId, bookingType = 'Short-Term' } = body;
+    const { paymentMethodId, bookingType = 'Short-Term', projectId } = body;
 
     if (!paymentMethodId) {
         return NextResponse.json({ error: "paymentMethodId is required" }, { status: 400 });
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
             };
 
             const booking: any = {
-                project_id: item.project_id || null,
+                project_id: item.project_id || projectId,
                 worker_id: item.worker_id,
                 borrower_company_id: member.company_id,
                 lender_company_id: lenderCompanyId,

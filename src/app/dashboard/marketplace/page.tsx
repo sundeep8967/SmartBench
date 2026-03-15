@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ViewReviewsDialog } from "@/components/workers/view-reviews-dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type SavedSearch = {
     id: string;
@@ -73,6 +74,11 @@ export default function MarketplacePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [shiftHours, setShiftHours] = useState("Any");
 
+    // Booking Date Selection State
+    const [workerToBook, setWorkerToBook] = useState<WorkerData | null>(null);
+    const [bookingStartDate, setBookingStartDate] = useState<Date>(new Date());
+    const [bookingEndDate, setBookingEndDate] = useState<Date>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+
 
     // Build SWR key from search params
     const params = new URLSearchParams();
@@ -107,14 +113,21 @@ export default function MarketplacePage() {
         // SWR auto-refetches when searchTerm/selectedTrade change the key
     };
 
-    const handleAddToCart = async (worker: WorkerData) => {
-        setAddingToCart(worker.user_id);
+    const handleAddToCartClick = (worker: WorkerData) => {
+        setWorkerToBook(worker);
+        setBookingStartDate(new Date());
+        setBookingEndDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+    };
+
+    const confirmAddToCart = async () => {
+        if (!workerToBook || !bookingStartDate || !bookingEndDate) return;
+        setAddingToCart(workerToBook.user_id);
         try {
             const payload = {
-                worker_id: worker.user_id,
-                hourly_rate: worker.hourly_rate,
-                start_date: new Date().toISOString(),
-                end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                worker_id: workerToBook.user_id,
+                hourly_rate: workerToBook.hourly_rate,
+                start_date: bookingStartDate.toISOString(),
+                end_date: bookingEndDate.toISOString(),
             };
 
             const res = await fetch("/api/cart", {
@@ -132,9 +145,10 @@ export default function MarketplacePage() {
 
             toast({
                 title: "Added to cart",
-                description: `${worker.user?.full_name} has been added to your cart.`,
+                description: `${workerToBook.user?.full_name} has been added to your cart.`,
                 variant: "success",
             });
+            setWorkerToBook(null);
         } catch (f) {
             toast({
                 title: "Error",
@@ -512,7 +526,7 @@ export default function MarketplacePage() {
                                                 variant="outline"
                                                 size="sm"
                                                 className="text-blue-900 border-blue-200 hover:bg-blue-50 cursor-pointer"
-                                                onClick={() => handleAddToCart(worker)}
+                                                onClick={() => handleAddToCartClick(worker)}
                                                 disabled={addingToCart === worker.user_id || isInCart}
                                             >
                                                 {addingToCart === worker.user_id ? (
@@ -602,6 +616,44 @@ export default function MarketplacePage() {
                     </div>
                 </div>
             )}
+            {/* Booking Date Selection Modal */}
+            <Dialog open={!!workerToBook} onOpenChange={(open) => !open && setWorkerToBook(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Select Booking Dates</DialogTitle>
+                        <DialogDescription>
+                            Please select the expected start and end dates for {workerToBook?.user?.full_name}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Start Date</Label>
+                            <DatePicker 
+                                value={bookingStartDate} 
+                                onChange={(date) => date && setBookingStartDate(date)} 
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>End Date</Label>
+                            <DatePicker 
+                                value={bookingEndDate} 
+                                onChange={(date) => date && setBookingEndDate(date)} 
+                            />
+                        </div>
+                    </div>
+                    
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setWorkerToBook(null)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={confirmAddToCart} disabled={!!addingToCart}>
+                            {addingToCart ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Confirm & Add to Cart
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
