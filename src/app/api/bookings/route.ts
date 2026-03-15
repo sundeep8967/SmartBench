@@ -25,8 +25,7 @@ export async function GET(request: NextRequest) {
         .select(`
             *,
             project:projects(name, address),
-            worker:users!bookings_worker_id_fkey(full_name, email),
-            work_order:work_orders(role)
+            worker:users!bookings_worker_id_fkey(full_name, email)
         `)
         .eq('borrower_company_id', member.company_id)
         .order('created_at', { ascending: false });

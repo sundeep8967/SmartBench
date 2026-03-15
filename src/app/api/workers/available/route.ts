@@ -59,12 +59,7 @@ export async function GET(request: NextRequest) {
     const listedWorkerIds = Array.from(availabilityMap.keys());
 
     if (listedWorkerIds.length === 0) {
-        const { data: workOrders } = await supabase
-            .from('work_orders')
-            .select('id, role, project:projects!inner(company_id)')
-            .eq('projects.company_id', member.company_id)
-            .in('status', ['Open', 'Draft']);
-        return NextResponse.json({ workers: [], work_orders: workOrders || [] });
+        return NextResponse.json({ workers: [] });
     }
 
     // Get worker profiles — only listed workers
@@ -95,12 +90,6 @@ export async function GET(request: NextRequest) {
 
     const ratesMap = new Map((rates || []).map(r => [r.worker_id, r]));
 
-    // Get available work orders for this company
-    const { data: workOrders } = await supabase
-        .from('work_orders')
-        .select('id, role, project:projects!inner(company_id)')
-        .eq('projects.company_id', member.company_id)
-        .in('status', ['Open', 'Draft']);
 
     // Filter by search query (name, trade, skills)
     let filteredWorkers: any[] = workers || [];
@@ -253,6 +242,5 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
         workers: workersWithRates,
-        work_orders: workOrders || [],
     });
 }

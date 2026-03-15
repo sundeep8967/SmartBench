@@ -152,8 +152,9 @@ export type Database = {
           end_date: string
           hourly_rate: number
           id: string
+          project_id: string | null
           start_date: string
-          work_order_id: string
+          work_order_id: string | null
           worker_id: string
         }
         Insert: {
@@ -162,8 +163,9 @@ export type Database = {
           end_date: string
           hourly_rate: number
           id?: string
+          project_id?: string | null
           start_date: string
-          work_order_id: string
+          work_order_id?: string | null
           worker_id: string
         }
         Update: {
@@ -172,8 +174,9 @@ export type Database = {
           end_date?: string
           hourly_rate?: number
           id?: string
+          project_id?: string | null
           start_date?: string
-          work_order_id?: string
+          work_order_id?: string | null
           worker_id?: string
         }
         Relationships: [
@@ -182,6 +185,13 @@ export type Database = {
             columns: ["borrower_company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {

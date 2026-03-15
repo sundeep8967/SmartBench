@@ -117,7 +117,7 @@ export default function CartPage() {
                                 <div className="grid gap-6 text-sm" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
                                     <div className="space-y-1">
                                         <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Role & Rate</span>
-                                        <p className="font-medium text-gray-900">{(item as any).work_order?.role || 'General Labor'}</p>
+                                        <p className="font-medium text-gray-900">{(item as any).worker_profile?.trade || 'General Labor'}</p>
                                         <p className="text-gray-600">${(item.hourly_rate * 1.30).toFixed(2)}/hr <span className="text-[10px] text-gray-400 font-medium">(All-inclusive)</span></p>
                                     </div>
                                     <div className="space-y-1">
@@ -126,8 +126,8 @@ export default function CartPage() {
                                         <p className="text-gray-600">Est. 40 hrs/week</p>
                                     </div>
                                     <div className="space-y-1">
-                                        <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Project</span>
-                                        <p className="font-medium text-gray-900">Work Order #{item.work_order_id.slice(0, 8)}...</p>
+                                        <span className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Assignment</span>
+                                        <p className="font-medium text-gray-900">Direct Hire</p>
                                     </div>
                                 </div>
                             </CardContent>

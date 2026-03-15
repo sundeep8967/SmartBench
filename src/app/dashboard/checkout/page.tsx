@@ -176,7 +176,7 @@ function CheckoutContent() {
                             <div className="space-y-2">
                                 <Label>Project</Label>
                                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
-                                    {(cartItems[0] as any)?.work_order?.project?.name || "Untitled Project"}
+                                    {(cartItems[0] as any)?.project?.name || "Direct Hire"}
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -188,7 +188,7 @@ function CheckoutContent() {
                             <div className="col-span-1 md:col-span-2 space-y-2">
                                 <Label>Site Address</Label>
                                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
-                                    {(cartItems[0] as any)?.work_order?.project?.address || "No address provided"}
+                                    {(cartItems[0] as any)?.project?.address || "No address provided"}
                                 </div>
                             </div>
                         </div>
@@ -275,7 +275,7 @@ function CheckoutContent() {
                                     </div>
                                     <div className="flex-grow">
                                         <h4 className="font-bold text-gray-900 text-sm">{(item as any).worker?.full_name || 'Worker'}</h4>
-                                        <p className="text-xs text-gray-500">{(item as any).work_order?.role}</p>
+                                        <p className="text-xs text-gray-500">{(item as any).worker_profile?.trade || 'General Labor'}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-medium text-gray-900">${(item.hourly_rate * 1.30).toFixed(2)}/hr</p>

@@ -153,8 +153,7 @@ export default function BookingsPage() {
             const matchesSearch =
                 !searchTerm ||
                 (b.worker?.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (b.project?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (b.work_order?.role || "").toLowerCase().includes(searchTerm.toLowerCase());
+                (b.project?.name || "").toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === "All" || b.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
@@ -323,7 +322,7 @@ export default function BookingsPage() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-gray-900 truncate">{booking.worker?.full_name || "Unknown Worker"}</p>
-                                        <p className="text-sm text-gray-500">{booking.work_order?.role || "General Labor"}</p>
+                                        <p className="text-sm text-gray-500">{booking.project?.name || "Direct Hire"}</p>
                                     </div>
                                 </div>
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 ${statusBadgeClass(booking.status)}`}>
@@ -403,7 +402,7 @@ export default function BookingsPage() {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-blue-700">{booking.worker?.full_name || "Unknown"}</p>
-                                                    <p className="text-xs text-gray-400">{booking.work_order?.role || "General Labor"}</p>
+                                                    <p className="text-xs text-gray-400">{booking.project?.name || "Direct Hire"}</p>
                                                 </div>
                                             </div>
                                         </td>

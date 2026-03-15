@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
             .from('cart_items')
             .select(`
                 *,
-                work_order:work_orders(project_id, quantity),
                 worker_profile:worker_profiles(user_id)
             `)
             .eq('borrower_company_id', member.company_id);
@@ -136,7 +135,7 @@ export async function POST(request: NextRequest) {
             };
 
             const booking: any = {
-                project_id: item.work_order?.project_id,
+                project_id: item.project_id || null,
                 worker_id: item.worker_id,
                 borrower_company_id: member.company_id,
                 lender_company_id: lenderCompanyId,
@@ -148,7 +147,6 @@ export async function POST(request: NextRequest) {
                 total_amount: fees.totalAmount,
                 service_fee_amount: fees.serviceFee,
                 worker_payout_amount: fees.workerPayout,
-                work_order_id: item.work_order_id,
                 booking_type: bookingType,
                 ot_terms_snapshot: otTermsSnapshot,
             };

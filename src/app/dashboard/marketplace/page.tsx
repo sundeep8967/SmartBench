@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { fetcher } from "@/lib/swr-fetcher";
@@ -52,13 +53,10 @@ interface WorkerData {
     review_count?: number;
 }
 
-interface WorkOrder {
-    id: string;
-    role: string;
-}
 
 export default function MarketplacePage() {
     const { toast } = useToast();
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
     const [selectedTrade, setSelectedTrade] = useState("All");
@@ -74,6 +72,7 @@ export default function MarketplacePage() {
     const [alertPref, setAlertPref] = useState("daily");
     const [isSaving, setIsSaving] = useState(false);
     const [shiftHours, setShiftHours] = useState("Any");
+
 
     // Build SWR key from search params
     const params = new URLSearchParams();
@@ -102,7 +101,6 @@ export default function MarketplacePage() {
     const companyProjects = projectsData || [];
 
     const workers: WorkerData[] = searchData?.workers || [];
-    const workOrders: WorkOrder[] = searchData?.work_orders || [];
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,19 +108,9 @@ export default function MarketplacePage() {
     };
 
     const handleAddToCart = async (worker: WorkerData) => {
-        if (workOrders.length === 0) {
-            toast({
-                title: "No Work Orders",
-                description: "Create a work order under a project first before adding workers.",
-                variant: "destructive",
-            });
-            return;
-        }
-
         setAddingToCart(worker.user_id);
         try {
             const payload = {
-                work_order_id: workOrders[0].id,
                 worker_id: worker.user_id,
                 hourly_rate: worker.hourly_rate,
                 start_date: new Date().toISOString(),
@@ -243,6 +231,7 @@ export default function MarketplacePage() {
                     workerName={reviewTarget.user?.full_name || "Unknown Worker"}
                 />
             )}
+
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 gap-6">

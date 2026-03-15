@@ -25,7 +25,6 @@ interface Worker {
 
 export default function WorkerSearchPage() {
     const searchParams = useSearchParams();
-    const workOrderId = searchParams.get('workOrderId');
     const projectId = searchParams.get('projectId');
     const router = useRouter();
     const { toast } = useToast();
@@ -43,7 +42,7 @@ export default function WorkerSearchPage() {
             const res = await fetch("/api/workers/available");
             if (res.ok) {
                 const data = await res.json();
-                setWorkers(data);
+                setWorkers(data?.workers || data);
             }
         } catch (error) {
             console.error("Failed to fetch workers", error);
@@ -53,21 +52,15 @@ export default function WorkerSearchPage() {
     };
 
     const handleAddToCart = async (worker: Worker) => {
-        if (!workOrderId) {
-            toast({ title: "Error", description: "No Work Order selected. Start from a Project page.", variant: "destructive" });
-            return;
-        }
-
         setAddingToCart(worker.id);
         try {
             const res = await fetch("/api/cart", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    work_order_id: workOrderId,
-                    worker_id: worker.user_id, // Use User ID for booking
+                    worker_id: worker.user_id,
                     hourly_rate: worker.hourly_rate,
-                    start_date: new Date().toISOString(), // Mock dates for now
+                    start_date: new Date().toISOString(),
                     end_date: new Date(Date.now() + 86400000 * 5).toISOString() // +5 days
                 })
             });
@@ -80,7 +73,6 @@ export default function WorkerSearchPage() {
             toast({ title: "Success", description: "Worker added to cart." });
             if (projectId) {
                 // Optional: Redirect back or stay to add more
-                // router.push(`/dashboard/projects/${projectId}`);
             }
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -94,9 +86,7 @@ export default function WorkerSearchPage() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight mb-2">Find Workers</h1>
-                    <p className="text-muted-foreground">
-                        {workOrderId ? "Select workers to fulfill your work order." : "Browse available talent."}
-                    </p>
+                    <p className="text-muted-foreground">Browse available talent.</p>
                 </div>
                 {projectId && (
                     <div className="flex gap-2">
@@ -149,7 +139,6 @@ export default function WorkerSearchPage() {
                                             {worker.trade}
                                         </div>
                                         <div className="flex flex-wrap gap-1">
-                                            {/* Skills are JSONB, might come as string or array depending on Supabase client */}
                                             {Array.isArray(worker.skills) ? worker.skills.map(s => (
                                                 <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
                                             )) : (

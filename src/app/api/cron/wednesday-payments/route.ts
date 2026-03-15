@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
         .from("bookings")
         .select(`
             id, total_amount, worker_payout_amount, service_fee_amount,
-            borrower_company_id, lender_company_id, worker_id, work_order_id,
+            borrower_company_id, lender_company_id, worker_id,
             stripe_payment_intent_id,
             worker:users!bookings_worker_id_fkey(full_name, email),
             project:projects(name),

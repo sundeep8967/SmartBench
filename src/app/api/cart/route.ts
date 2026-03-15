@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
         .from('cart_items')
         .select(`
             *,
-            work_order:work_orders(*, project:projects(*)),
             worker_profile:worker_profiles(*),
             worker_user:users!cart_items_worker_id_fkey(
                 full_name,
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { work_order_id, worker_id, hourly_rate, start_date, end_date } = body;
+    const { worker_id, hourly_rate, start_date, end_date } = body;
 
     // Get Company
     const { data: member } = await supabase
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (!member) return NextResponse.json({ error: "No active company" }, { status: 403 });
 
     // Validate inputs
-    if (!work_order_id || !worker_id || !start_date || !end_date) {
+    if (!worker_id || !start_date || !end_date) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -69,7 +68,6 @@ export async function POST(request: NextRequest) {
         .from('cart_items')
         .insert({
             borrower_company_id: member.company_id,
-            work_order_id,
             worker_id,
             hourly_rate,
             start_date,
@@ -80,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
         if (error.code === '23505') { // Unique violation
-            return NextResponse.json({ error: "Worker is already in cart for this work order" }, { status: 409 });
+            return NextResponse.json({ error: "Worker is already in cart" }, { status: 409 });
         }
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
