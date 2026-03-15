@@ -12,6 +12,7 @@ import { DeleteProjectButton } from "@/components/projects/delete-project-button
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Project } from "@/types";
 import { bulkDeleteProjectsAction, bulkImportProjectsAction } from "@/app/dashboard/projects/actions";
+import { BulkDeleteProjectsDialog } from "@/components/projects/bulk-delete-projects-dialog";
 import Papa from "papaparse";
 
 function formatAddress(address: string): [string, string] {
@@ -161,7 +162,6 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
     };
 
     const handleBulkDelete = async () => {
-        if (!confirm(`Are you sure you want to delete ${selectedProjects.size} projects?`)) return;
         setIsDeleting(true);
         try {
             await bulkDeleteProjectsAction(Array.from(selectedProjects));
@@ -538,14 +538,11 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                         {selectedProjects.size} selected
                     </span>
                     <div className="h-5 w-px bg-gray-200" />
-                    <button
-                        onClick={handleBulkDelete}
-                        disabled={isDeleting || selectedProjects.size === 0}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center transition-colors disabled:opacity-50"
-                    >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                    </button>
+                    <BulkDeleteProjectsDialog 
+                        selectedCount={selectedProjects.size} 
+                        onConfirm={handleBulkDelete}
+                        isDeleting={isDeleting}
+                    />
                     <button
                         onClick={() => setSelectedProjects(new Set())}
                         className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
