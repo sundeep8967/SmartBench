@@ -44,6 +44,7 @@ export default function SettingsPage() {
     const [userPrefs, setUserPrefs] = useState<any>(null);
     const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
     const [isStripeFullyOnboarded, setIsStripeFullyOnboarded] = useState(false);
+    const [stripeNeedsAction, setStripeNeedsAction] = useState(false);
     const [isLoadingStripe, setIsLoadingStripe] = useState(true);
     const [bankDetails, setBankDetails] = useState<{ last4: string, bankName: string } | null>(null);
     const [isConnectingStripe, setIsConnectingStripe] = useState(false);
@@ -108,7 +109,11 @@ export default function SettingsPage() {
                                 const statusData = await statusRes.ok ? await statusRes.json() : null;
                                 if (statusData) {
                                     setIsStripeFullyOnboarded(statusData.is_fully_onboarded);
+                                    setStripeNeedsAction(statusData.needs_action);
                                     if (statusData.last4) setBankDetails({ last4: statusData.last4, bankName: statusData.bank_name || 'Bank Account' });
+
+                                    // Dispatch custom event to notify layout alert to refresh
+                                    window.dispatchEvent(new CustomEvent("smartbench:stripe_status_refresh"));
                                 }
                             }
                         } catch { /* ignore */ }
@@ -279,10 +284,15 @@ export default function SettingsPage() {
                                                     <p className="font-bold text-gray-900 flex items-center">Stripe Connected <Check size={14} className="ml-1 text-green-600" /></p>
                                                     {bankDetails && <p className="text-sm text-gray-500">{bankDetails.bankName} ending in •••• {bankDetails.last4}</p>}
                                                 </>
+                                            ) : stripeNeedsAction ? (
+                                                <>
+                                                    <p className="font-bold text-gray-900">Action Required <AlertTriangle size={14} className="inline ml-1 text-yellow-500" /></p>
+                                                    <p className="text-sm text-gray-500">Finish onboarding to enable payouts.</p>
+                                                </>
                                             ) : stripeAccountId ? (
                                                 <>
-                                                    <p className="font-bold text-gray-900">Account Created <AlertTriangle size={14} className="inline ml-1 text-yellow-500" /></p>
-                                                    <p className="text-sm text-gray-500">Action Required: Finish onboarding.</p>
+                                                    <p className="font-bold text-gray-900 flex items-center text-blue-700">Verification in Progress <Clock size={14} className="ml-1" /></p>
+                                                    <p className="text-sm text-gray-500">Stripe is verifying your details.</p>
                                                 </>
                                             ) : (
                                                 <>
@@ -379,8 +389,12 @@ export default function SettingsPage() {
                                         </>
                                     ) : (
                                         <>
-                                            <p className="font-bold text-gray-900">{stripeAccountId ? "Onboarding Incomplete" : "Not Connected"}</p>
-                                            <p className="text-sm text-gray-500">{stripeAccountId ? "Action required — finish Stripe setup." : "Connect your bank account to receive payouts."}</p>
+                                            <p className="font-bold text-gray-900">
+                                                {stripeNeedsAction ? "Action Required" : stripeAccountId ? "Verification in Progress" : "Not Connected"}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {stripeNeedsAction ? "Finish Stripe setup to enable payouts." : stripeAccountId ? "Stripe is currently verifying your details." : "Connect your bank account to receive payouts."}
+                                            </p>
                                         </>
                                     )}
                                 </div>

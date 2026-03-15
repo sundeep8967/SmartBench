@@ -52,9 +52,8 @@ export async function GET(req: Request) {
         // 3. Retrieve account details from Stripe
         const account = await stripe.accounts.retrieve(company.stripe_account_id);
 
-        const isFullyOnboarded =
-            account.charges_enabled &&
-            account.details_submitted;
+        const needsAction = !account.details_submitted || (account.requirements?.currently_due && account.requirements.currently_due.length > 0);
+        const isFullyOnboarded = account.charges_enabled && account.details_submitted && !needsAction;
 
         let last4 = null;
         let bankName = null;
@@ -83,6 +82,7 @@ export async function GET(req: Request) {
             details_submitted: account.details_submitted,
             charges_enabled: account.charges_enabled,
             requirements: account.requirements,
+            needs_action: needsAction,
             last4: isAdmin ? last4 : null,
             bank_name: isAdmin ? bankName : null,
             is_admin: isAdmin,

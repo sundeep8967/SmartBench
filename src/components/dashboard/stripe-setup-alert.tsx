@@ -11,34 +11,38 @@ export function StripeSetupAlert() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [companyName, setCompanyName] = useState("");
 
-    useEffect(() => {
-        const checkStripeStatus = async () => {
-            try {
-                const res = await fetch("/api/stripe/status");
-                if (res.ok) {
-                    const data = await res.json();
-                    setIsAdmin(data.is_admin);
-                    setCompanyName(data.company_name);
+    const fetchStripeStatus = async () => {
+        try {
+            const res = await fetch("/api/stripe/status");
+            if (res.ok) {
+                const data = await res.json();
+                setIsAdmin(data.is_admin);
+                setCompanyName(data.company_name);
 
-                    if (data.is_fully_onboarded) {
-                        setStatus("onboarded");
-                    } else if (!data.has_account) {
-                        setStatus("needs_setup");
-                    } else if (!data.details_submitted) {
-                        setStatus("needs_details");
-                    } else {
-                        setStatus("pending_verification");
-                    }
-                } else {
+                if (data.is_fully_onboarded) {
+                    setStatus("onboarded");
+                } else if (!data.has_account) {
                     setStatus("needs_setup");
+                } else if (data.needs_action) {
+                    setStatus("needs_details");
+                } else {
+                    setStatus("pending_verification");
                 }
-            } catch (err) {
-                console.error("Failed to check Stripe status:", err);
+            } else {
                 setStatus("needs_setup");
             }
-        };
+        } catch (err) {
+            console.error("Failed to check Stripe status:", err);
+            setStatus("needs_setup");
+        }
+    };
 
-        checkStripeStatus();
+    useEffect(() => {
+        fetchStripeStatus();
+
+        // Listen for custom refresh event
+        window.addEventListener("smartbench:stripe_status_refresh", fetchStripeStatus);
+        return () => window.removeEventListener("smartbench:stripe_status_refresh", fetchStripeStatus);
     }, []);
 
     const handleConnectStripe = async () => {
@@ -69,7 +73,7 @@ export function StripeSetupAlert() {
         },
         needs_details: {
             title: "Action Required: Complete Stripe Setup",
-            description: `Stripe needs more information for ${companyName || 'your company'} to enable payouts.`,
+            description: `Stripe needs more information for your account to enable payouts.`,
             buttonText: "Complete Setup",
             color: "orange"
         },
